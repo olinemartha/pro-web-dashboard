@@ -39,8 +39,8 @@ function Stage() {
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     const er: Record<string, string> = {};
-    if (!f.periode.trim()) er.periode = "Indiquez la période concernée.";
-    if (f.activites.trim().length < 20) er.activites = "Décrivez vos activités (20 caractères minimum).";
+    if (!f.periode.trim()) er["periode"] = "Indiquez la période concernée.";
+    if (f.activites.trim().length < 20) er["activites"] = "Décrivez vos activités (20 caractères minimum).";
     setErr(er); if (Object.keys(er).length) return;
     setLoading(true);
     setTimeout(() => { addReport(f); setF(empty); setLoading(false); toast.success("Rapport soumis à votre encadreur"); }, 600);

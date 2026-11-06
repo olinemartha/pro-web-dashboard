@@ -14,7 +14,7 @@ export const Route = createFileRoute("/aide")({
   component: Help,
 });
 
-const FAQ = [
+const FAQ: [string, string][] = [
   ["Comment postuler à une offre ?", "Complétez les informations essentielles de votre profil (dont votre CV), ouvrez une offre puis cliquez sur « Postuler maintenant »."],
   ["Puis-je accepter plusieurs stages ?", "Vous pouvez recevoir plusieurs réponses positives, mais vous ne confirmez qu'une seule entreprise. Les autres sont informées de votre choix."],
   ["Qui peut voir mon CV ?", "Uniquement les entreprises auxquelles vous avez soumis une candidature."],

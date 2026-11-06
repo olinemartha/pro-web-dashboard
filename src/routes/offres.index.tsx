@@ -8,7 +8,7 @@ import { companies, offers } from "@/lib/mock-data";
 import { useStore } from "@/lib/store";
 
 export const Route = createFileRoute("/offres/")({
-  validateSearch: (s: Record<string, unknown>) => ({ q: typeof s.q === "string" ? s.q : undefined }),
+  validateSearch: (s: Record<string, unknown>): { q?: string } => (typeof s["q"] === "string" ? { q: s["q"] } : {}),
   head: () => ({
     meta: [
       { title: "Offres de stage — StageManager" },
