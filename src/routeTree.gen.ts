@@ -10,33 +10,154 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AideRouteImport } from './routes/aide'
+import { Route as CandidaturesRouteImport } from './routes/candidatures'
+import { Route as DocumentsRouteImport } from './routes/documents'
+import { Route as NotificationsRouteImport } from './routes/notifications'
+import { Route as ParametresRouteImport } from './routes/parametres'
+import { Route as ProfilRouteImport } from './routes/profil'
+import { Route as StageRouteImport } from './routes/stage'
+import { Route as OffresIndexRouteImport } from './routes/offres.index'
+import { Route as OffresIdRouteImport } from './routes/offres.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AideRoute = AideRouteImport.update({
+  id: '/aide',
+  path: '/aide',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CandidaturesRoute = CandidaturesRouteImport.update({
+  id: '/candidatures',
+  path: '/candidatures',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DocumentsRoute = DocumentsRouteImport.update({
+  id: '/documents',
+  path: '/documents',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NotificationsRoute = NotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ParametresRoute = ParametresRouteImport.update({
+  id: '/parametres',
+  path: '/parametres',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfilRoute = ProfilRouteImport.update({
+  id: '/profil',
+  path: '/profil',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StageRoute = StageRouteImport.update({
+  id: '/stage',
+  path: '/stage',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OffresIndexRoute = OffresIndexRouteImport.update({
+  id: '/offres/',
+  path: '/offres/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OffresIdRoute = OffresIdRouteImport.update({
+  id: '/offres/$id',
+  path: '/offres/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/aide': typeof AideRoute
+  '/candidatures': typeof CandidaturesRoute
+  '/documents': typeof DocumentsRoute
+  '/notifications': typeof NotificationsRoute
+  '/parametres': typeof ParametresRoute
+  '/profil': typeof ProfilRoute
+  '/stage': typeof StageRoute
+  '/offres/$id': typeof OffresIdRoute
+  '/offres/': typeof OffresIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/aide': typeof AideRoute
+  '/candidatures': typeof CandidaturesRoute
+  '/documents': typeof DocumentsRoute
+  '/notifications': typeof NotificationsRoute
+  '/parametres': typeof ParametresRoute
+  '/profil': typeof ProfilRoute
+  '/stage': typeof StageRoute
+  '/offres/$id': typeof OffresIdRoute
+  '/offres': typeof OffresIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/aide': typeof AideRoute
+  '/candidatures': typeof CandidaturesRoute
+  '/documents': typeof DocumentsRoute
+  '/notifications': typeof NotificationsRoute
+  '/parametres': typeof ParametresRoute
+  '/profil': typeof ProfilRoute
+  '/stage': typeof StageRoute
+  '/offres/$id': typeof OffresIdRoute
+  '/offres/': typeof OffresIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/aide'
+    | '/candidatures'
+    | '/documents'
+    | '/notifications'
+    | '/parametres'
+    | '/profil'
+    | '/stage'
+    | '/offres/$id'
+    | '/offres/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/aide'
+    | '/candidatures'
+    | '/documents'
+    | '/notifications'
+    | '/parametres'
+    | '/profil'
+    | '/stage'
+    | '/offres/$id'
+    | '/offres'
+  id:
+    | '__root__'
+    | '/'
+    | '/aide'
+    | '/candidatures'
+    | '/documents'
+    | '/notifications'
+    | '/parametres'
+    | '/profil'
+    | '/stage'
+    | '/offres/$id'
+    | '/offres/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AideRoute: typeof AideRoute
+  CandidaturesRoute: typeof CandidaturesRoute
+  DocumentsRoute: typeof DocumentsRoute
+  NotificationsRoute: typeof NotificationsRoute
+  ParametresRoute: typeof ParametresRoute
+  ProfilRoute: typeof ProfilRoute
+  StageRoute: typeof StageRoute
+  OffresIdRoute: typeof OffresIdRoute
+  OffresIndexRoute: typeof OffresIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +169,83 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/aide': {
+      id: '/aide'
+      path: '/aide'
+      fullPath: '/aide'
+      preLoaderRoute: typeof AideRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/candidatures': {
+      id: '/candidatures'
+      path: '/candidatures'
+      fullPath: '/candidatures'
+      preLoaderRoute: typeof CandidaturesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/documents': {
+      id: '/documents'
+      path: '/documents'
+      fullPath: '/documents'
+      preLoaderRoute: typeof DocumentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/notifications': {
+      id: '/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof NotificationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/parametres': {
+      id: '/parametres'
+      path: '/parametres'
+      fullPath: '/parametres'
+      preLoaderRoute: typeof ParametresRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profil': {
+      id: '/profil'
+      path: '/profil'
+      fullPath: '/profil'
+      preLoaderRoute: typeof ProfilRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/stage': {
+      id: '/stage'
+      path: '/stage'
+      fullPath: '/stage'
+      preLoaderRoute: typeof StageRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/offres/': {
+      id: '/offres/'
+      path: '/offres'
+      fullPath: '/offres/'
+      preLoaderRoute: typeof OffresIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/offres/$id': {
+      id: '/offres/$id'
+      path: '/offres/$id'
+      fullPath: '/offres/$id'
+      preLoaderRoute: typeof OffresIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AideRoute: AideRoute,
+  CandidaturesRoute: CandidaturesRoute,
+  DocumentsRoute: DocumentsRoute,
+  NotificationsRoute: NotificationsRoute,
+  ParametresRoute: ParametresRoute,
+  ProfilRoute: ProfilRoute,
+  StageRoute: StageRoute,
+  OffresIdRoute: OffresIdRoute,
+  OffresIndexRoute: OffresIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
