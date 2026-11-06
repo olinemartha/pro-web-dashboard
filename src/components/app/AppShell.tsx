@@ -118,7 +118,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b bg-card/90 px-4 backdrop-blur sm:px-6">
           <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setMobile(true)} aria-label="Ouvrir le menu"><Menu className="size-5" /></Button>
           <h2 className="truncate font-semibold">{title}</h2>
-          <form className="ml-auto hidden md:block" onSubmit={(e) => { e.preventDefault(); navigate({ to: "/offres", search: { q } }); }}>
+          <form className="ml-auto hidden md:block" onSubmit={(e) => { e.preventDefault(); navigate({ to: "/offres", search: q ? { q } : {} }); }}>
             <div className="relative"><Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
               <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Rechercher un stage…" className="h-9 w-64 rounded-md border bg-background pl-9 pr-3 text-sm outline-none transition focus:border-accent focus:ring-2 focus:ring-ring/30" /></div>
           </form>

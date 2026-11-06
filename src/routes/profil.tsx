@@ -46,12 +46,12 @@ function ProfilePage() {
     if (!/^\S+@\S+\.\S+$/.test(d.email)) e.email = "Adresse email invalide.";
     if (d.telephone && !/^[+\d\s]{8,}$/.test(d.telephone)) e.telephone = "Numéro invalide.";
     setErr(e);
-    if (Object.keys(e).length) return toast.error("Veuillez corriger les champs signalés");
+    if (Object.keys(e).length) { toast.error("Veuillez corriger les champs signalés"); return; }
     updateProfile(d); toast.success("Profil enregistré");
   };
   const addSkill = () => { const s = skill.trim(); if (!s || d.competences.includes(s)) return; set("competences", [...d.competences, s]); setSkill(""); };
-  const onPhoto = (f?: File) => { if (!f) return; if (!f.type.startsWith("image/")) return toast.error("Format d'image non pris en charge"); const r = new FileReader(); r.onload = () => { set("photo", r.result as string); updateProfile({ photo: r.result as string }); toast.success("Photo mise à jour"); }; r.readAsDataURL(f); };
-  const onCv = (f?: File) => { if (!f) return; if (f.type !== "application/pdf") return toast.error("Le CV doit être au format PDF"); if (f.size > 5e6) return toast.error("Fichier trop volumineux (5 Mo max)"); const cv = { name: f.name, size: f.size, date: new Date().toISOString() }; set("cv", cv); updateProfile({ cv }); toast.success("CV téléversé"); };
+  const onPhoto = (f?: File) => { if (!f) return; if (!f.type.startsWith("image/")) { toast.error("Format d'image non pris en charge"); return; } const r = new FileReader(); r.onload = () => { set("photo", r.result as string); updateProfile({ photo: r.result as string }); toast.success("Photo mise à jour"); }; r.readAsDataURL(f); };
+  const onCv = (f?: File) => { if (!f) return; if (f.type !== "application/pdf") { toast.error("Le CV doit être au format PDF"); return; } if (f.size > 5e6) { toast.error("Fichier trop volumineux (5 Mo max)"); return; } const cv = { name: f.name, size: f.size, date: new Date().toISOString() }; set("cv", cv); updateProfile({ cv }); toast.success("CV téléversé"); };
   const initials = `${d.prenom[0] ?? ""}${d.nom[0] ?? ""}`;
 
   return (
