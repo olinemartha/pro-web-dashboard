@@ -1,0 +1,29 @@
+# Dépendances
+node_modules/
+
+# Build
+dist/
+build.log
+*.tsbuildinfo
+
+# Fichiers temporaires TanStack Router
+.tanstack/
+
+# Variables d'environnement (secrets Supabase, etc.)
+.env
+.env.*
+!.env.example
+
+# Outils IA (configuration locale, binaires volumineux)
+.agents/
+.opencode/
+.codex/
+.impeccable/config.local.json
+.claude/settings.local.json
+
+# Système / éditeurs
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.log

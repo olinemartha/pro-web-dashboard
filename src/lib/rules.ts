@@ -1,0 +1,108 @@
+// Règles métier de l'espace étudiant — framework-free, testables.
+// Conforme au PRD StageManager (§4.1, §7, règles RG-07 à RG-21).
+
+export type AppStatus =
+  | "envoyee"
+  | "examen"
+  | "preselectionnee"
+  | "entretien"
+  | "acceptee"
+  | "refusee"
+  | "declinee"
+  | "confirmee";
+
+export const STATUS_LABELS: Record<AppStatus, { label: string; color: string }> = {
+  envoyee: { label: "Envoyée", color: "muted" },
+  examen: { label: "En cours d'examen", color: "primary" },
+  preselectionnee: { label: "Présélectionnée", color: "accent" },
+  entretien: { label: "En entretien", color: "primary" },
+  acceptee: { label: "Acceptée", color: "success" },
+  refusee: { label: "Refusée", color: "destructive" },
+  declinee: { label: "Déclinée", color: "muted" },
+  confirmee: { label: "Confirmée", color: "success" },
+};
+
+export interface Profile {
+  nom: string;
+  postnom: string;
+  prenom: string;
+  adresse: string;
+  email: string;
+  telephone: string;
+  photo: string | null;
+  universite: string;
+  faculte: string;
+  filiere: string;
+  niveau: string;
+  competences: string[];
+  experiences: string;
+  projets: string;
+  infos: string;
+  cv: { name: string; size: number; date: string } | null;
+  visible: boolean;
+}
+
+export interface Application {
+  id: string;
+  offerId: string;
+  date: string;
+  status: AppStatus;
+}
+
+/** Champs comptés dans le taux de complétion. */
+export const COMPLETION_FIELDS: { key: keyof Profile; label: string }[] = [
+  { key: "nom", label: "Nom" },
+  { key: "postnom", label: "Postnom" },
+  { key: "prenom", label: "Prénom" },
+  { key: "adresse", label: "Adresse" },
+  { key: "email", label: "Email" },
+  { key: "telephone", label: "Téléphone" },
+  { key: "photo", label: "Photo de profil" },
+  { key: "universite", label: "Université" },
+  { key: "faculte", label: "Faculté" },
+  { key: "filiere", label: "Filière" },
+  { key: "niveau", label: "Niveau d'études" },
+  { key: "competences", label: "Compétences" },
+  { key: "experiences", label: "Expériences" },
+  { key: "cv", label: "CV" },
+];
+
+/** Champs requis avant tout dépôt de candidature (RG-07, RG-08). */
+export const ESSENTIAL_FIELDS: (keyof Profile)[] = [
+  "nom", "prenom", "email", "telephone", "universite", "filiere", "niveau", "cv",
+];
+
+function filled(v: unknown) {
+  if (Array.isArray(v)) return v.length > 0;
+  if (typeof v === "string") return v.trim().length > 0;
+  return v !== null && v !== undefined;
+}
+
+export function profileCompletion(p: Profile): number {
+  const done = COMPLETION_FIELDS.filter((f) => filled(p[f.key])).length;
+  return Math.round((done / COMPLETION_FIELDS.length) * 100);
+}
+
+export function missingFields(p: Profile) {
+  return COMPLETION_FIELDS.filter((f) => !filled(p[f.key]));
+}
+
+export function missingEssentials(p: Profile) {
+  return ESSENTIAL_FIELDS.filter((k) => !filled(p[k]));
+}
+
+export function canApply(p: Profile, apps: Application[], offerId: string) {
+  if (missingEssentials(p).length) return { ok: false as const, reason: "profil" };
+  if (apps.some((a) => a.offerId === offerId)) return { ok: false as const, reason: "deja" };
+  return { ok: true as const };
+}
+
+/** Confirme une offre acceptée : elle devient "confirmee", les autres acceptées deviennent "declinee" (RG-21). */
+export function confirmOffer(apps: Application[], appId: string): Application[] {
+  const target = apps.find((a) => a.id === appId);
+  if (!target || target.status !== "acceptee") return apps;
+  if (apps.some((a) => a.status === "confirmee")) return apps;
+  return apps.map((a) =>
+    a.id === appId ? { ...a, status: "confirmee" } : a.status === "acceptee" ? { ...a, status: "declinee" } : a,
+  );
+}

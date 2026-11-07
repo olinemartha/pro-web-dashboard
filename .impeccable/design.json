@@ -1,0 +1,238 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-06T00:00:00.000Z",
+  "title": "Design System: StageManager",
+  "extensions": {
+    "colorMeta": {
+      "navy-institutional": {
+        "role": "primary",
+        "displayName": "Bleu marine institutionnel",
+        "canonical": "#142D4E",
+        "tonalRamp": ["#10233D", "#1B3D69", "#275796", "#3271C3", "#5D91D5", "#8DB2E2", "#BED3EE", "#EBF1FA"]
+      },
+      "navy-soft": {
+        "role": "primary",
+        "displayName": "Marine adouci",
+        "canonical": "#E7EEF9",
+        "tonalRamp": ["#10233D", "#1B3D69", "#275796", "#3271C3", "#5D91D5", "#8DB2E2", "#BED3EE", "#EBF1FA"]
+      },
+      "sky-indicator": {
+        "role": "secondary",
+        "displayName": "Bleu ciel indicateur",
+        "canonical": "#75B8E7",
+        "tonalRamp": ["#0B2B41", "#144A71", "#1C69A0", "#2589D0", "#52A5E0", "#86C0EA", "#BADBF3", "#E9F4FB"]
+      },
+      "sky-soft": {
+        "role": "secondary",
+        "displayName": "Bleu ciel adouci",
+        "canonical": "#DCEDF9",
+        "tonalRamp": ["#0B2B41", "#144A71", "#1C69A0", "#2589D0", "#52A5E0", "#86C0EA", "#BADBF3", "#E9F4FB"]
+      },
+      "paper-white": {
+        "role": "neutral",
+        "displayName": "Blanc papier",
+        "canonical": "#FFFFFF",
+        "tonalRamp": ["#0F0F0F", "#3D3D3D", "#6B6B6B", "#999999", "#C7C7C7", "#E3E3E3", "#F5F5F5", "#FFFFFF"]
+      },
+      "warm-ink": {
+        "role": "neutral",
+        "displayName": "Encre chaude",
+        "canonical": "#2C2421",
+        "tonalRamp": ["#2C2421", "#4C3F38", "#6D5A50", "#8D7468", "#A8948A", "#C2B4AD", "#DCD4D0", "#F4F2F0"]
+      },
+      "slate-muted": {
+        "role": "neutral",
+        "displayName": "Gris ardoise très clair",
+        "canonical": "#F1F5F9",
+        "tonalRamp": ["#172636", "#28425D", "#395E84", "#497AAB", "#7099C2", "#9BB8D4", "#C6D6E7", "#EDF2F7"]
+      },
+      "slate-text-muted": {
+        "role": "neutral",
+        "displayName": "Gris texte secondaire",
+        "canonical": "#65758B",
+        "tonalRamp": ["#23262A", "#38414D", "#4F5C6D", "#67778E", "#8996A9", "#ACB6C3", "#D0D5DD", "#F1F2F3"]
+      },
+      "line-border": {
+        "role": "neutral",
+        "displayName": "Ligne discrète",
+        "canonical": "#DAE0E7",
+        "tonalRamp": ["#1F252E", "#354150", "#4B5C71", "#627793", "#8596AD", "#A9B6C6", "#CED5DE", "#F0F2F5"]
+      },
+      "success-green": {
+        "role": "tertiary",
+        "displayName": "Vert validation",
+        "canonical": "#27865A",
+        "tonalRamp": ["#113B28", "#1E6745", "#2A9262", "#37BE7F", "#61D19D", "#90DFBA", "#C0EDD8", "#EBF9F3"]
+      },
+      "success-soft": {
+        "role": "tertiary",
+        "displayName": "Vert très clair",
+        "canonical": "#E7F8F0",
+        "tonalRamp": ["#113B28", "#1E6745", "#2A9262", "#37BE7F", "#61D19D", "#90DFBA", "#C0EDD8", "#EBF9F3"]
+      },
+      "warning-amber": {
+        "role": "tertiary",
+        "displayName": "Ambre vigilance",
+        "canonical": "#B45309",
+        "tonalRamp": ["#492904", "#7E4607", "#B36409", "#E9820C", "#F59F3D", "#F8BC77", "#FBD9B1", "#FEF3E7"]
+      },
+      "warning-soft": {
+        "role": "tertiary",
+        "displayName": "Ambre très clair",
+        "canonical": "#FFFBEB",
+        "tonalRamp": ["#492904", "#7E4607", "#B36409", "#E9820C", "#F59F3D", "#F8BC77", "#FBD9B1", "#FEF3E7"]
+      },
+      "destructive-red": {
+        "role": "tertiary",
+        "displayName": "Rouge destructif",
+        "canonical": "#DC2828",
+        "tonalRamp": ["#420B0B", "#721313", "#A21A1A", "#D32222", "#E25050", "#EB8484", "#F4B9B9", "#FBE9E9"]
+      },
+      "destructive-soft": {
+        "role": "tertiary",
+        "displayName": "Rouge très clair",
+        "canonical": "#FBE9E9",
+        "tonalRamp": ["#420B0B", "#721313", "#A21A1A", "#D32222", "#E25050", "#EB8484", "#F4B9B9", "#FBE9E9"]
+      }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Valeurs des indicateurs KPI uniquement." },
+      "headline": { "displayName": "Headline", "purpose": "Titre d'accueil du tableau de bord." },
+      "title": { "displayName": "Title", "purpose": "Barre supérieure, modales, sections fortes." },
+      "body": { "displayName": "Body", "purpose": "Texte courant, descriptions, formulaires." },
+      "label": { "displayName": "Label", "purpose": "Libellés de champs, boutons compacts, métadonnées." }
+    },
+    "shadows": [
+      { "name": "card-rest", "value": "0 1px 2px 0 rgb(0 0 0 / 0.05)", "purpose": "Cartes et panneaux au repos, toujours avec une bordure 1 px." },
+      { "name": "modal", "value": "0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)", "purpose": "Dialogues et tiroirs mobiles." },
+      { "name": "toast", "value": "0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)", "purpose": "Notifications Sonner." }
+    ],
+    "motion": [
+      { "name": "ease-standard", "value": "cubic-bezier(0.4, 0, 0.2, 1)", "purpose": "Transition par défaut des couleurs et états." },
+      { "name": "duration-fast", "value": "150ms", "purpose": "Survol, focus, changement de couleur." },
+      { "name": "duration-base", "value": "200ms", "purpose": "Ouverture de menus et modales." },
+      { "name": "reduced-motion", "value": "0.01ms", "purpose": "Respect de prefers-reduced-motion." }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "768px" },
+      { "name": "lg", "value": "1024px" },
+      { "name": "xl", "value": "1280px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Action principale d'un écran : une seule par zone.",
+      "html": "<button class=\"ds-btn-primary\">Publier une offre</button>",
+      "css": ".ds-btn-primary { display:inline-flex; align-items:center; justify-content:center; height:40px; padding:0 16px; border:1px solid transparent; border-radius:6px; background:#142D4E; color:#FFFFFF; font-family:Inter,sans-serif; font-size:14px; font-weight:500; line-height:1; cursor:pointer; transition:background-color 150ms cubic-bezier(0.4,0,0.2,1); } .ds-btn-primary:hover { background:#2C4260; } .ds-btn-primary:focus-visible { outline:2px solid #142D4E; outline-offset:2px; } .ds-btn-primary:active { transform:translateY(1px); }"
+    },
+    {
+      "name": "Outline Button",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "Action secondaire discrète, sur contour blanc.",
+      "html": "<button class=\"ds-btn-outline\">Enregistrer les modifications</button>",
+      "css": ".ds-btn-outline { display:inline-flex; align-items:center; justify-content:center; height:40px; padding:0 16px; border:1px solid #DAE0E7; border-radius:6px; background:#FFFFFF; color:#2C2421; font-family:Inter,sans-serif; font-size:14px; font-weight:500; line-height:1; cursor:pointer; transition:background-color 150ms cubic-bezier(0.4,0,0.2,1), border-color 150ms; } .ds-btn-outline:hover { background:#F1F5F9; border-color:#C6D0DC; } .ds-btn-outline:focus-visible { outline:2px solid #142D4E; outline-offset:2px; }"
+    },
+    {
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Action tertiaire ou compacte dans les listes.",
+      "html": "<button class=\"ds-btn-ghost\">Modifier</button>",
+      "css": ".ds-btn-ghost { display:inline-flex; align-items:center; justify-content:center; height:32px; padding:0 12px; border:1px solid transparent; border-radius:6px; background:transparent; color:#2C2421; font-family:Inter,sans-serif; font-size:12px; font-weight:500; line-height:1; cursor:pointer; transition:background-color 150ms cubic-bezier(0.4,0,0.2,1); } .ds-btn-ghost:hover { background:#F1F5F9; } .ds-btn-ghost:focus-visible { outline:2px solid #142D4E; outline-offset:2px; }"
+    },
+    {
+      "name": "Text Field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Champ texte avec libellé au-dessus et indication facultative.",
+      "html": "<div class=\"ds-field\"><label class=\"ds-label\" for=\"ds-email\">E-mail professionnel <span class=\"ds-required\">*</span></label><input id=\"ds-email\" class=\"ds-input\" type=\"email\" placeholder=\"contact@finca.cd\" /><p class=\"ds-hint\">Utilisé pour les notifications de recrutement.</p></div>",
+      "css": ".ds-field { display:flex; flex-direction:column; gap:6px; max-width:360px; } .ds-label { font-family:Inter,sans-serif; font-size:12px; font-weight:500; color:#2C2421; } .ds-required { color:#DC2828; } .ds-input { height:40px; padding:0 12px; border:1px solid #DAE0E7; border-radius:6px; background:#FFFFFF; color:#2C2421; font-family:Inter,sans-serif; font-size:14px; outline:none; transition:border-color 150ms, box-shadow 150ms; } .ds-input::placeholder { color:#65758B; } .ds-input:focus { border-color:#75B8E7; box-shadow:0 0 0 3px rgba(117,184,231,0.25); } .ds-hint { margin:0; font-family:Inter,sans-serif; font-size:12px; color:#65758B; }"
+    },
+    {
+      "name": "Section Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Conteneur blanc bordé pour une section de contenu.",
+      "html": "<section class=\"ds-card\"><h2 class=\"ds-card-title\">Candidatures récentes</h2><p class=\"ds-card-body\">Grâce Mukendi — Analyste Crédit · 22 oct. 2026</p></section>",
+      "css": ".ds-card { padding:24px; border:1px solid #DAE0E7; border-radius:8px; background:#FFFFFF; box-shadow:0 1px 2px 0 rgb(0 0 0 / 0.05); font-family:Inter,sans-serif; } .ds-card-title { margin:0 0 16px; font-size:12px; font-weight:600; letter-spacing:0.05em; text-transform:uppercase; color:#65758B; } .ds-card-body { margin:0; font-size:14px; line-height:1.5; color:#2C2421; }"
+    },
+    {
+      "name": "KPI Card",
+      "kind": "card",
+      "description": "Indicateur synthétique : libellé, valeur, précision et icône discrète.",
+      "html": "<div class=\"ds-kpi\"><div class=\"ds-kpi-head\"><span class=\"ds-kpi-label\">Offres actives</span><span class=\"ds-kpi-icon\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#142D4E\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"2\" y=\"7\" width=\"20\" height=\"14\" rx=\"2\"/><path d=\"M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16\"/></svg></span></div><p class=\"ds-kpi-value\">3</p><p class=\"ds-kpi-hint\">5 offres au total</p></div>",
+      "css": ".ds-kpi { width:220px; padding:20px; border:1px solid #DAE0E7; border-radius:8px; background:#FFFFFF; box-shadow:0 1px 2px 0 rgb(0 0 0 / 0.05); font-family:Inter,sans-serif; } .ds-kpi-head { display:flex; align-items:center; justify-content:space-between; gap:12px; } .ds-kpi-label { font-size:13px; font-weight:500; color:#65758B; } .ds-kpi-icon { display:grid; place-items:center; width:32px; height:32px; border-radius:6px; background:#E7EEF9; } .ds-kpi-value { margin:12px 0 0; font-size:30px; font-weight:600; line-height:1.15; letter-spacing:-0.025em; color:#2C2421; } .ds-kpi-hint { margin:4px 0 0; font-size:12px; color:#65758B; }"
+    },
+    {
+      "name": "Status Badges",
+      "kind": "chip",
+      "refersTo": "badge-success",
+      "description": "Statuts toujours lisibles par le texte, la couleur ne fait que renforcer.",
+      "html": "<div class=\"ds-badges\"><span class=\"ds-badge ds-badge-success\">Acceptée</span><span class=\"ds-badge ds-badge-primary\">Programmé</span><span class=\"ds-badge ds-badge-warning\">À confirmer</span><span class=\"ds-badge ds-badge-danger\">Refusée</span></div>",
+      "css": ".ds-badges { display:flex; flex-wrap:wrap; gap:8px; font-family:Inter,sans-serif; } .ds-badge { display:inline-flex; align-items:center; border:1px solid; border-radius:9999px; padding:2px 10px; font-size:12px; font-weight:600; line-height:1.4; white-space:nowrap; } .ds-badge-success { background:#E7F8F0; color:#27865A; border-color:rgba(39,134,90,0.3); } .ds-badge-primary { background:#E7EEF9; color:#142D4E; border-color:rgba(20,45,78,0.25); } .ds-badge-warning { background:#FFFBEB; color:#B45309; border-color:rgba(180,83,9,0.3); } .ds-badge-danger { background:#FBE9E9; color:#DC2828; border-color:rgba(220,40,40,0.3); }"
+    },
+    {
+      "name": "Sidebar Navigation Item",
+      "kind": "nav",
+      "refersTo": "nav-item-active",
+      "description": "Navigation marine avec indicateur actif bleu ciel.",
+      "html": "<nav class=\"ds-nav\"><a class=\"ds-nav-item ds-nav-item-active\" href=\"#\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"3\" y=\"3\" width=\"18\" height=\"18\" rx=\"2\"/><path d=\"M3 9h18M9 21V9\"/></svg>Tableau de bord</a><a class=\"ds-nav-item\" href=\"#\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"2\" y=\"7\" width=\"20\" height=\"14\" rx=\"2\"/><path d=\"M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16\"/></svg>Mes offres</a></nav>",
+      "css": ".ds-nav { display:flex; flex-direction:column; gap:4px; width:232px; padding:16px; border-radius:8px; background:#142D4E; font-family:Inter,sans-serif; } .ds-nav-item { position:relative; display:flex; align-items:center; gap:12px; padding:8px 12px; border-radius:6px; color:rgba(255,255,255,0.7); font-size:14px; font-weight:500; text-decoration:none; transition:background-color 150ms, color 150ms; } .ds-nav-item:hover { background:rgba(255,255,255,0.05); color:#FFFFFF; } .ds-nav-item-active { background:rgba(255,255,255,0.1); color:#FFFFFF; } .ds-nav-item-active::before { content:\"\"; position:absolute; left:0; top:4px; bottom:4px; width:2px; border-radius:9999px; background:#75B8E7; } .ds-nav-item:focus-visible { outline:2px solid #75B8E7; outline-offset:2px; }"
+    },
+    {
+      "name": "Modal Dialog",
+      "kind": "custom",
+      "description": "Dialogue de confirmation ou de formulaire, légèrement surélevé.",
+      "html": "<div class=\"ds-modal\"><div class=\"ds-modal-head\"><h2 class=\"ds-modal-title\">Publier une offre de stage</h2><button class=\"ds-modal-close\" aria-label=\"Fermer\">×</button></div><div class=\"ds-modal-body\"><p>Les champs marqués d'un astérisque sont obligatoires.</p></div><div class=\"ds-modal-foot\"><button class=\"ds-modal-cancel\">Annuler</button><button class=\"ds-modal-confirm\">Créer l'offre</button></div></div>",
+      "css": ".ds-modal { width:100%; max-width:576px; border:1px solid #DAE0E7; border-radius:12px; background:#FFFFFF; box-shadow:0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1); font-family:Inter,sans-serif; overflow:hidden; } .ds-modal-head { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; padding:16px 20px; border-bottom:1px solid #DAE0E7; } .ds-modal-title { margin:0; font-size:18px; font-weight:600; color:#2C2421; } .ds-modal-close { border:0; background:transparent; color:#65758B; font-size:20px; line-height:1; padding:4px 8px; border-radius:6px; cursor:pointer; } .ds-modal-close:hover { background:#F1F5F9; color:#2C2421; } .ds-modal-body { padding:16px 20px; font-size:14px; line-height:1.5; color:#65758B; } .ds-modal-body p { margin:0; } .ds-modal-foot { display:flex; justify-content:flex-end; gap:8px; padding:12px 20px; border-top:1px solid #DAE0E7; } .ds-modal-cancel, .ds-modal-confirm { height:36px; padding:0 14px; border-radius:6px; font-size:13px; font-weight:500; cursor:pointer; } .ds-modal-cancel { background:#FFFFFF; border:1px solid #DAE0E7; color:#2C2421; } .ds-modal-cancel:hover { background:#F1F5F9; } .ds-modal-confirm { background:#142D4E; border:1px solid transparent; color:#FFFFFF; } .ds-modal-confirm:hover { background:#2C4260; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "Le Guichet de confiance",
+    "overview": "StageManager est un service administratif moderne : un guichet calme, lisible et fiable où l'étudiant, l'entreprise et l'administrateur savent immédiatement où ils se trouvent et quelle est la prochaine action. Le cadre est institutionnel — bleu marine, blanc, typographie Inter — mais jamais froid ni bureaucratique. La confiance vient de la précision : hiérarchie nette, statuts explicites, formulaires guidés, aucune décoration qui détourne de la tâche.\n\nLa composition repose sur un cadre navy fixe (navigation latérale) et une surface de travail blanche posée sur un canevas gris très clair. Les actions principales sont marine, les accents bleu ciel signalent la sélection et l'activité, et les couleurs fonctionnelles restent réservées aux statuts. Les cartes sont légèrement surélevées : bordure fine et ombre discrète suffisent à séparer les plans.\n\nLe système est sobre par doctrine. Il privilégie la lisibilité, les libellés français explicites et la constance entre les trois espaces. La couleur ne porte jamais seule une information ; chaque badge associe une teinte et un texte. Les animations restent courtes et fonctionnelles, et respectent prefers-reduced-motion.",
+    "keyCharacteristics": [
+      "Cadre bleu marine, surface blanche, canevas gris froid très clair.",
+      "Inter uniquement, avec une échelle compacte de 12 à 30 px.",
+      "Coins légèrement arrondis (6–8 px), pilules complètes réservées aux badges et avatars.",
+      "Bordures 1 px systématiques, ombres rares et douces.",
+      "Bleu ciel en accent de sélection, jamais en texte courant.",
+      "Statuts toujours exprimés par un badge texte + couleur.",
+      "Densité professionnelle : 20–24 px de padding dans les cartes, sections espacées de 24 px."
+    ],
+    "rules": [
+      { "name": "The Navy Frame Rule", "body": "Le marine encadre et commande ; il ne remplit jamais une grande zone de contenu. Navigation, action principale et focus uniquement.", "section": "colors" },
+      { "name": "The Sky Accent Rule", "body": "Le bleu ciel occupe moins de 10 % de l'écran. Il marque la sélection et l'activité ; il n'est jamais utilisé pour du texte courant sur fond blanc.", "section": "colors" },
+      { "name": "The Status Is Never Colour Alone Rule", "body": "Un statut est toujours un badge avec un libellé français explicite. La teinte renforce le texte, elle ne le remplace pas.", "section": "colors" },
+      { "name": "The One Family Rule", "body": "Inter est la seule famille. La hiérarchie se construit par la taille et la graisse, jamais par une seconde police décorative.", "section": "typography" },
+      { "name": "The Compact Scale Rule", "body": "Aucun texte d'interface ne dépasse 30 px. Les titres de page restent entre 18 et 20 px ; les chiffres KPI sont la seule exception.", "section": "typography" },
+      { "name": "The 768 Rule", "body": "La navigation latérale n'apparaît qu'à partir de 768 px. En dessous, le tiroir et la barre supérieure compacte sont la seule navigation.", "section": "layout" },
+      { "name": "The 24-Pixel Rhythm Rule", "body": "L'espacement vertical entre sections est de 24 px ; à l'intérieur d'une carte, 16 à 24 px. Ne pas improviser des écarts de 30 ou 40 px.", "section": "layout" },
+      { "name": "The One-Step Elevation Rule", "body": "Une carte ne s'élève que d'un cran au-dessus du canevas. Pas d'ombre au survol, pas de superposition de cartes flottantes.", "section": "elevation" },
+      { "name": "The Border Does the Work Rule", "body": "La séparation vient d'abord de la bordure 1 px ; l'ombre confirme, elle ne structure pas.", "section": "elevation" },
+      { "name": "The 8-Pixel Default Rule", "body": "En cas de doute, utiliser 8 px. 12 px est réservé aux modales et au logo ; au-delà, seulement les pilules.", "section": "shapes" }
+    ],
+    "dos": [
+      "Utiliser le marine #142D4E pour l'action principale et le cadre de navigation, et réserver le bleu ciel aux accents de sélection.",
+      "Accompagner chaque statut d'un libellé français explicite dans un badge.",
+      "Conserver les cartes blanches sur canevas #F1F5F9 avec une bordure 1 px et une ombre shadow-sm.",
+      "Utiliser Inter à 14 px pour le corps de texte et 12 px pour les libellés, avec des libellés de champs au-dessus.",
+      "Employer des verbes précis en français : « Publier une offre », « Valider l'affectation », « Enregistrer les modifications ».",
+      "Respecter les rayons 6–8 px et la limite de 30 px pour les chiffres KPI.",
+      "Garder la navigation latérale visible dès 768 px et la remplacer par un tiroir en dessous."
+    ],
+    "donts": [
+      "Ne pas utiliser le bleu ciel pour du texte courant ou de grands aplats de fond.",
+      "Ne pas ajouter de dégradés, de néons, d'ombres colorées ou d'effets décoratifs absents du Design Brief.",
+      "Ne pas dépasser 12 px de rayon, sauf pour les pilules, avatars et barres de progression.",
+      "Ne pas coder un statut uniquement par la couleur.",
+      "Ne pas empiler plusieurs ombres ou faire flotter les cartes au survol.",
+      "Ne pas utiliser une seconde police ou des tailles de titre supérieures à 30 px.",
+      "Ne pas inventer des icônes illustratives, des logos partenaires ou des visuels non fournis."
+    ]
+  }
+}

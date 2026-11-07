@@ -1,0 +1,138 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Design Brief StageManager — palette officielle */
+    --background: 0 0% 100%;           /* #FFFFFF */
+    --foreground: 20 15% 15%;          /* presque noir, texte principal */
+    --card: 0 0% 100%;
+    --card-foreground: 20 15% 15%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 20 15% 15%;
+    --primary: 214 59% 19%;            /* #142D4E Bleu marine */
+    --primary-foreground: 0 0% 100%;
+    --primary-hover: 214 37% 27%;      /* #2C4260 marine éclairci au survol */
+    --primary-soft: 214 59% 94%;       /* teinte claire du bleu marine */
+    --canvas: 213 33% 96%;             /* canevas de travail, légèrement bleuté */
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222 47% 11%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 17% 42%;
+    --accent: 205 70% 68%;             /* #75B8E7 Bleu ciel */
+    --accent-foreground: 214 59% 19%;
+    --accent-soft: 205 70% 92%;        /* teinte claire du bleu ciel */
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --destructive-soft: 0 72% 95%;
+    --destructive-ink: 0 72% 43%;      /* texte sur fond rouge très clair */
+    --success: 152 55% 34%;
+    --success-foreground: 0 0% 100%;
+    --success-soft: 152 55% 94%;
+    --success-ink: 152 55% 26%;        /* texte sur fond vert très clair */
+    --warning: 26 90% 37%;             /* #B45309 Ambre vigilance */
+    --warning-foreground: 0 0% 100%;
+    --warning-soft: 48 100% 96%;       /* #FFFBEB */
+    --border: 214 20% 88%;
+    --input: 214 20% 88%;
+    --ring: 214 59% 19%;
+    --radius: 0.5rem;
+    --font-sans: "Inter", sans-serif;
+  }
+
+  .dark {
+    --background: 222 47% 6%;
+    --foreground: 210 40% 98%;
+    --card: 222 47% 6%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222 47% 6%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 201 64% 58%;
+    --primary-foreground: 222 47% 11%;
+    --primary-hover: 201 70% 70%;
+    --primary-soft: 206 73% 15%;
+    --canvas: 222 42% 9%;
+    --secondary: 217 33% 17%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 68%;
+    --accent: 201 64% 58%;
+    --accent-foreground: 222 47% 11%;
+    --accent-soft: 201 64% 15%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 210 40% 98%;
+    --destructive-soft: 0 40% 16%;
+    --destructive-ink: 0 85% 72%;
+    --success: 152 45% 45%;
+    --success-foreground: 222 47% 11%;
+    --success-soft: 152 35% 14%;
+    --success-ink: 152 55% 68%;
+    --warning: 38 92% 58%;
+    --warning-foreground: 222 47% 11%;
+    --warning-soft: 32 45% 14%;
+    --border: 217 33% 17%;
+    --input: 217 33% 17%;
+    --ring: 201 64% 58%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-sans);
+  }
+
+  /* Surfaces du navigateur : la sélection et le curseur viennent de la palette. */
+  ::selection {
+    background-color: hsl(var(--accent) / 0.4);
+    color: hsl(var(--primary));
+  }
+
+  :where(input, textarea, select) {
+    caret-color: hsl(var(--primary));
+  }
+}
+
+@layer components {
+  .card-surface {
+    @apply rounded-lg border bg-card text-card-foreground shadow-sm;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Tampon du guichet                                                   */
+/* ------------------------------------------------------------------ */
+
+/**
+ * L'acte s'appuie une fois, puis reste immobile. 280 ms : le temps de lire
+ * un geste, pas d'attendre une animation. Immobile sous reduced-motion.
+ */
+@keyframes stamp-press {
+  0% {
+    opacity: 0;
+    transform: rotate(-7deg) scale(1.16);
+  }
+  60% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    transform: rotate(-2deg) scale(1);
+  }
+}
+
+@layer utilities {
+  .stamp-press {
+    animation: stamp-press 280ms cubic-bezier(0.22, 0.9, 0.28, 1) both;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stamp-press {
+    animation: none;
+  }
+}
