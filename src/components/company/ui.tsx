@@ -224,7 +224,7 @@ export function Modal({
         <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-border sm:hidden" aria-hidden />
         <div className="flex items-start gap-3.5 px-5 pb-4 pt-4 sm:px-6 sm:pt-5">
           {Icon && (
-            <span className="grid size-10 shrink-0 place-items-center rounded-xl border bg-card text-muted-foreground shadow-sm">
+            <span className="mt-0.5 grid size-6 shrink-0 place-items-center text-muted-foreground">
               <Icon className="size-[18px]" />
             </span>
           )}

@@ -544,7 +544,7 @@ function CompanyDashboard() {
               className="card-surface hover-lift group flex h-full flex-col gap-4 p-4 sm:p-5"
             >
               <div className="flex items-center gap-2.5">
-                <span className="grid size-9 shrink-0 place-items-center rounded-lg border bg-card text-muted-foreground transition-colors group-hover:text-foreground">
+                <span className="grid size-5 shrink-0 place-items-center text-muted-foreground transition-colors duration-200 group-hover:text-foreground">
                   <stat.icon className="size-[18px]" />
                 </span>
                 <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-muted-foreground">{stat.label}</span>
@@ -633,7 +633,7 @@ function CompanyDashboard() {
                         todo={todo}
                         className="group flex items-center gap-3.5 px-5 py-3 transition-colors duration-150 hover:bg-muted/50"
                       >
-                        <span className="grid size-9 shrink-0 place-items-center rounded-lg border bg-card text-muted-foreground transition-colors group-hover:text-foreground">
+                        <span className="grid size-5 shrink-0 place-items-center text-muted-foreground transition-colors duration-200 group-hover:text-foreground">
                           <meta.icon className="size-[18px]" />
                         </span>
                         <span className="min-w-0 flex-1">
@@ -691,7 +691,7 @@ function CompanyDashboard() {
                         className="group grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-3 px-5 py-3.5 transition-colors hover:bg-muted/40 md:grid-cols-[minmax(0,2.2fr)_minmax(0,0.8fr)_minmax(0,0.8fr)_minmax(0,1.4fr)_minmax(0,0.6fr)]"
                       >
                         <span className="flex min-w-0 items-center gap-3">
-                          <span className="grid size-9 shrink-0 place-items-center rounded-lg border bg-card text-muted-foreground transition-colors group-hover:text-foreground">
+                          <span className="grid size-5 shrink-0 place-items-center text-muted-foreground transition-colors duration-200 group-hover:text-foreground">
                             <Briefcase className="size-[18px]" />
                           </span>
                           <span className="min-w-0">
