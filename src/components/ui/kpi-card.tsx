@@ -59,14 +59,14 @@ export function KpiCard({
         </span>
       </div>
 
-      <p className="mt-1 text-[28px] font-semibold leading-none tracking-tight sm:text-[32px]">
+      <p className="mt-2 text-[26px] font-semibold leading-none tracking-tight sm:text-[28px]">
         {typeof value === "number" ? <AnimatedNumber value={value} /> : value}
       </p>
 
       {chip && (
         <span
           className={cn(
-            "mt-3 inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-xs font-semibold",
+            "mt-2.5 inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-medium",
             CHIP_TONES[chip.tone ?? "muted"]
           )}
         >
@@ -75,7 +75,7 @@ export function KpiCard({
         </span>
       )}
 
-      <p className={cn("text-xs leading-relaxed text-muted-foreground", chip ? "mt-2" : "mt-3")}>
+      <p className={cn("text-xs leading-relaxed text-muted-foreground", chip ? "mt-2" : "mt-3", bars && "sm:pr-16")}>
         {hint}
       </p>
 
