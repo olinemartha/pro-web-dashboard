@@ -476,7 +476,7 @@ function CompanyDashboard() {
       }))
     )
     .sort((a, b) => b.date.localeCompare(a.date))
-    .slice(0, 5);
+    .slice(0, 4);
 
   const nextStep = (internId: string): { label: string; tone: Tone } => {
     const intern = interns.find((entry) => entry.id === internId);
@@ -571,7 +571,7 @@ function CompanyDashboard() {
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
-        {/* ============================ Colonne principale ============================ */}
+        {/* Ligne 1 : vue d'ensemble et actions | entreprise et agenda */}
         <div className="min-w-0 space-y-6">
           {/* Pipeline de recrutement */}
           <Reveal as="section" delay={80} className="card-surface p-5">
@@ -657,143 +657,7 @@ function CompanyDashboard() {
             )}
           </Reveal>
 
-          {/* Offres publiées : tableau */}
-          <Reveal as="section" delay={200} className="card-surface overflow-hidden">
-            <div className="px-5 pb-4 pt-5">
-              <SectionHeader title="Offres publiées" count={activeOffers.length} to="/entreprise/offres" linkLabel="Gérer les offres" />
-            </div>
-            {activeOffers.length === 0 ? (
-              <div className="flex flex-col items-center border-t p-8 text-center">
-                <Briefcase className="size-6 text-muted-foreground" />
-                <p className="mt-2 text-sm font-medium">Aucune offre publiée</p>
-                <p className="text-xs text-muted-foreground">Publiez une offre pour commencer à recevoir des candidatures.</p>
-              </div>
-            ) : (
-              <ul className="divide-y border-t">
-                <li className="hidden grid-cols-[minmax(0,2.2fr)_minmax(0,0.8fr)_minmax(0,0.8fr)_minmax(0,1.4fr)_minmax(0,0.6fr)] gap-4 bg-muted/40 px-5 py-2.5 text-xs font-medium text-muted-foreground md:grid">
-                  <span>Offre</span>
-                  <span>Candidatures</span>
-                  <span>À examiner</span>
-                  <span>Examinées</span>
-                  <span className="text-right">Clôture</span>
-                </li>
-                {activeOffers.map((offer, index) => {
-                  const pipeline = candidates.filter((c) => c.offerId === offer.id && c.status !== "retiree");
-                  const waiting = pipeline.filter((c) => c.status === "en_attente" || c.status === "examen").length;
-                  const examined = pipeline.length - pipeline.filter((c) => c.status === "en_attente").length;
-                  const pct = pipeline.length ? Math.round((examined / pipeline.length) * 100) : 0;
-                  const daysLeft = Math.ceil((new Date(`${offer.deadline}T23:59:59`).getTime() - now) / DAY);
-                  const urgent = daysLeft >= 0 && daysLeft <= 7;
-                  return (
-                    <li key={offer.id}>
-                      <Link
-                        to="/entreprise/offres"
-                        className="group grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-3 px-5 py-3.5 transition-colors hover:bg-muted/40 md:grid-cols-[minmax(0,2.2fr)_minmax(0,0.8fr)_minmax(0,0.8fr)_minmax(0,1.4fr)_minmax(0,0.6fr)]"
-                      >
-                        <span className="flex min-w-0 items-center gap-3">
-                          <span className="grid size-5 shrink-0 place-items-center text-muted-foreground transition-colors duration-200 group-hover:text-foreground">
-                            <Briefcase className="size-[18px]" />
-                          </span>
-                          <span className="min-w-0">
-                            <span className="block truncate text-sm font-medium group-hover:text-primary">{offer.title}</span>
-                            <span className="block truncate text-xs text-muted-foreground">{offer.department}</span>
-                          </span>
-                        </span>
-                        {/* Téléphone : clôture à droite du titre */}
-                        <span className={cn("text-xs tabular-nums md:hidden", urgent ? "font-medium text-destructive-ink" : "text-muted-foreground")}>
-                          {daysLeft < 0 ? "Échue" : `J-${daysLeft}`}
-                        </span>
-                        <span className="hidden text-sm tabular-nums md:block">{pipeline.length}</span>
-                        <span className={cn("hidden text-sm tabular-nums md:block", waiting > 0 && "font-medium text-warning")}>
-                          {waiting}
-                        </span>
-                        <span className="col-span-2 flex items-center gap-2.5 md:col-span-1">
-                          <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
-                            <span
-                              className="animate-grow-x block h-full rounded-full bg-primary"
-                              style={{ width: `${pct}%`, ["--delay" as string]: `${320 + index * 80}ms` }}
-                            />
-                          </span>
-                          <span className="w-10 text-right text-xs font-medium tabular-nums">{pct} %</span>
-                        </span>
-                        <span className={cn("hidden text-right text-sm tabular-nums md:block", urgent ? "font-medium text-destructive-ink" : "text-muted-foreground")}>
-                          {daysLeft < 0 ? "Échue" : `J-${daysLeft}`}
-                        </span>
-                      </Link>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </Reveal>
-
-          {/* Dossiers stagiaires */}
-          <Reveal as="section" delay={260} className="card-surface overflow-hidden">
-            <div className="px-5 pb-4 pt-5">
-              <SectionHeader title="Dossiers stagiaires" count={interns.length} to="/entreprise/stagiaires" />
-            </div>
-            {interns.length === 0 ? (
-              <p className="border-t px-5 py-6 text-sm text-muted-foreground">Aucun dossier stagiaire pour le moment.</p>
-            ) : (
-              <>
-                <table className="hidden w-full text-sm md:table">
-                  <thead>
-                    <tr className="border-y bg-muted/40 text-left text-xs text-muted-foreground">
-                      <th className="px-5 py-2.5 font-medium">Stagiaire</th>
-                      <th className="px-3 py-2.5 font-medium">Service</th>
-                      <th className="px-3 py-2.5 font-medium">Période</th>
-                      <th className="px-5 py-2.5 font-medium">Prochaine étape</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y">
-                    {interns.slice(0, 5).map((intern) => {
-                      const step = nextStep(intern.id);
-                      return (
-                        <tr key={intern.id} className="group transition-colors hover:bg-muted/40">
-                          <td className="px-5 py-3">
-                            <Link to="/entreprise/stagiaires/$internId" params={{ internId: intern.id }} className="flex items-center gap-3">
-                              <AvatarInitials initials={intern.initials} className="size-8 text-xs" />
-                              <span className="min-w-0">
-                                <span className="block truncate font-medium group-hover:text-primary">{intern.name}</span>
-                                <span className="block truncate text-xs text-muted-foreground">{offerTitle(intern.offerId)}</span>
-                              </span>
-                            </Link>
-                          </td>
-                          <td className="px-3 py-3 text-muted-foreground">{intern.service || "—"}</td>
-                          <td className="whitespace-nowrap px-3 py-3 text-muted-foreground">
-                            {intern.start ? `${fmtDate(intern.start, false)} → ${fmtDate(intern.end, false)}` : "À définir"}
-                          </td>
-                          <td className="px-5 py-3">
-                            <Badge label={step.label} tone={step.tone} />
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-                <ul className="divide-y border-t md:hidden">
-                  {interns.slice(0, 5).map((intern) => {
-                    const step = nextStep(intern.id);
-                    return (
-                      <li key={intern.id}>
-                        <Link to="/entreprise/stagiaires/$internId" params={{ internId: intern.id }} className="flex items-center gap-3 px-5 py-3">
-                          <AvatarInitials initials={intern.initials} className="size-8 text-xs" />
-                          <div className="min-w-0 flex-1">
-                            <p className="truncate text-sm font-medium">{intern.name}</p>
-                            <p className="truncate text-xs text-muted-foreground">{intern.service || "Service à définir"}</p>
-                          </div>
-                          <Badge label={step.label} tone={step.tone} className="shrink-0" />
-                        </Link>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </>
-            )}
-          </Reveal>
         </div>
-
-        {/* ============================ Colonne latérale ============================ */}
         <aside className="space-y-6">
           {/* Carte entreprise — version d'origine, conservée telle quelle (logo ajoutable) */}
           <Reveal delay={120} className="card-surface overflow-hidden">
@@ -885,9 +749,85 @@ function CompanyDashboard() {
             )}
           </Reveal>
 
+        </aside>
+
+        {/* Ligne 2 : offres et activité, alignées en haut et de même hauteur */}
+        <div className="min-w-0">
+          {/* Offres publiées : tableau */}
+          <Reveal as="section" delay={200} className="card-surface h-full overflow-hidden">
+            <div className="px-5 pb-4 pt-5">
+              <SectionHeader title="Offres publiées" count={activeOffers.length} to="/entreprise/offres" linkLabel="Gérer les offres" />
+            </div>
+            {activeOffers.length === 0 ? (
+              <div className="flex flex-col items-center border-t p-8 text-center">
+                <Briefcase className="size-6 text-muted-foreground" />
+                <p className="mt-2 text-sm font-medium">Aucune offre publiée</p>
+                <p className="text-xs text-muted-foreground">Publiez une offre pour commencer à recevoir des candidatures.</p>
+              </div>
+            ) : (
+              <ul className="divide-y border-t">
+                <li className="hidden grid-cols-[minmax(0,2.2fr)_minmax(0,0.8fr)_minmax(0,0.8fr)_minmax(0,1.4fr)_minmax(0,0.6fr)] gap-4 bg-muted/40 px-5 py-2.5 text-xs font-medium text-muted-foreground md:grid">
+                  <span>Offre</span>
+                  <span>Candidatures</span>
+                  <span>À examiner</span>
+                  <span>Examinées</span>
+                  <span className="text-right">Clôture</span>
+                </li>
+                {activeOffers.map((offer, index) => {
+                  const pipeline = candidates.filter((c) => c.offerId === offer.id && c.status !== "retiree");
+                  const waiting = pipeline.filter((c) => c.status === "en_attente" || c.status === "examen").length;
+                  const examined = pipeline.length - pipeline.filter((c) => c.status === "en_attente").length;
+                  const pct = pipeline.length ? Math.round((examined / pipeline.length) * 100) : 0;
+                  const daysLeft = Math.ceil((new Date(`${offer.deadline}T23:59:59`).getTime() - now) / DAY);
+                  const urgent = daysLeft >= 0 && daysLeft <= 7;
+                  return (
+                    <li key={offer.id}>
+                      <Link
+                        to="/entreprise/offres"
+                        className="group grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-3 px-5 py-3.5 transition-colors hover:bg-muted/40 md:grid-cols-[minmax(0,2.2fr)_minmax(0,0.8fr)_minmax(0,0.8fr)_minmax(0,1.4fr)_minmax(0,0.6fr)]"
+                      >
+                        <span className="flex min-w-0 items-center gap-3">
+                          <span className="grid size-5 shrink-0 place-items-center text-muted-foreground transition-colors duration-200 group-hover:text-foreground">
+                            <Briefcase className="size-[18px]" />
+                          </span>
+                          <span className="min-w-0">
+                            <span className="block truncate text-sm font-medium group-hover:text-primary">{offer.title}</span>
+                            <span className="block truncate text-xs text-muted-foreground">{offer.department}</span>
+                          </span>
+                        </span>
+                        {/* Téléphone : clôture à droite du titre */}
+                        <span className={cn("text-xs tabular-nums md:hidden", urgent ? "font-medium text-destructive-ink" : "text-muted-foreground")}>
+                          {daysLeft < 0 ? "Échue" : `J-${daysLeft}`}
+                        </span>
+                        <span className="hidden text-sm tabular-nums md:block">{pipeline.length}</span>
+                        <span className={cn("hidden text-sm tabular-nums md:block", waiting > 0 && "font-medium text-warning")}>
+                          {waiting}
+                        </span>
+                        <span className="col-span-2 flex items-center gap-2.5 md:col-span-1">
+                          <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
+                            <span
+                              className="animate-grow-x block h-full rounded-full bg-primary"
+                              style={{ width: `${pct}%`, ["--delay" as string]: `${320 + index * 80}ms` }}
+                            />
+                          </span>
+                          <span className="w-10 text-right text-xs font-medium tabular-nums">{pct} %</span>
+                        </span>
+                        <span className={cn("hidden text-right text-sm tabular-nums md:block", urgent ? "font-medium text-destructive-ink" : "text-muted-foreground")}>
+                          {daysLeft < 0 ? "Échue" : `J-${daysLeft}`}
+                        </span>
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </Reveal>
+
+        </div>
+        <div className="min-w-0">
           {/* Activité récente : fil chronologique */}
-          <Reveal delay={240} className="card-surface p-5">
-            <SectionHeader title="Activité récente" />
+          <Reveal delay={240} className="card-surface h-full p-5">
+            <SectionHeader title="Activité récente" to="/entreprise/candidatures" />
             {activity.length === 0 ? (
               <p className="mt-4 text-sm text-muted-foreground">Aucune activité pour le moment.</p>
             ) : (
@@ -915,7 +855,75 @@ function CompanyDashboard() {
               </ol>
             )}
           </Reveal>
-        </aside>
+        </div>
+
+        {/* Ligne 3 : dossiers stagiaires */}
+        <div className="min-w-0">
+          {/* Dossiers stagiaires */}
+          <Reveal as="section" delay={260} className="card-surface overflow-hidden">
+            <div className="px-5 pb-4 pt-5">
+              <SectionHeader title="Dossiers stagiaires" count={interns.length} to="/entreprise/stagiaires" />
+            </div>
+            {interns.length === 0 ? (
+              <p className="border-t px-5 py-6 text-sm text-muted-foreground">Aucun dossier stagiaire pour le moment.</p>
+            ) : (
+              <>
+                <table className="hidden w-full text-sm md:table">
+                  <thead>
+                    <tr className="border-y bg-muted/40 text-left text-xs text-muted-foreground">
+                      <th className="px-5 py-2.5 font-medium">Stagiaire</th>
+                      <th className="px-3 py-2.5 font-medium">Service</th>
+                      <th className="px-3 py-2.5 font-medium">Période</th>
+                      <th className="px-5 py-2.5 font-medium">Prochaine étape</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y">
+                    {interns.slice(0, 5).map((intern) => {
+                      const step = nextStep(intern.id);
+                      return (
+                        <tr key={intern.id} className="group transition-colors hover:bg-muted/40">
+                          <td className="px-5 py-3">
+                            <Link to="/entreprise/stagiaires/$internId" params={{ internId: intern.id }} className="flex items-center gap-3">
+                              <AvatarInitials initials={intern.initials} className="size-8 text-xs" />
+                              <span className="min-w-0">
+                                <span className="block truncate font-medium group-hover:text-primary">{intern.name}</span>
+                                <span className="block truncate text-xs text-muted-foreground">{offerTitle(intern.offerId)}</span>
+                              </span>
+                            </Link>
+                          </td>
+                          <td className="px-3 py-3 text-muted-foreground">{intern.service || "—"}</td>
+                          <td className="whitespace-nowrap px-3 py-3 text-muted-foreground">
+                            {intern.start ? `${fmtDate(intern.start, false)} → ${fmtDate(intern.end, false)}` : "À définir"}
+                          </td>
+                          <td className="px-5 py-3">
+                            <Badge label={step.label} tone={step.tone} />
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+                <ul className="divide-y border-t md:hidden">
+                  {interns.slice(0, 5).map((intern) => {
+                    const step = nextStep(intern.id);
+                    return (
+                      <li key={intern.id}>
+                        <Link to="/entreprise/stagiaires/$internId" params={{ internId: intern.id }} className="flex items-center gap-3 px-5 py-3">
+                          <AvatarInitials initials={intern.initials} className="size-8 text-xs" />
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm font-medium">{intern.name}</p>
+                            <p className="truncate text-xs text-muted-foreground">{intern.service || "Service à définir"}</p>
+                          </div>
+                          <Badge label={step.label} tone={step.tone} className="shrink-0" />
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </>
+            )}
+          </Reveal>
+        </div>
       </div>
     </div>
   );

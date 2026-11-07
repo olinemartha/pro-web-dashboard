@@ -410,6 +410,7 @@ export const demoInterviews: Interview[] = [
   { id: "i2", candidateId: "c2", date: "2026-11-14", time: "14:30", location: "Siège FINCA — Salle 1", status: "programme" },
   { id: "i3", candidateId: "c6", date: "2026-10-30", time: "09:00", location: "Visio", status: "realise" },
   { id: "i4", candidateId: "c7", date: "2026-11-18", time: "11:00", location: "Siège FINCA — Salle 3", status: "programme" },
+  { id: "i5", candidateId: "c4", date: "2026-11-21", time: "09:30", location: "Visio", status: "programme" },
 ];
 
 /* ------------------------------------------------------------------ */
