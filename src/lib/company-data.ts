@@ -206,6 +206,8 @@ export function isContactVisible(kind: "email" | "phone", status: CandidateStatu
 export interface CompanyProfile {
   name: string;
   initials: string;
+  /** Logo facultatif (PRD §4.2.2) : à défaut, les initiales sont affichées. */
+  logo?: string | null;
   sector: string;
   description: string;
   address: string;

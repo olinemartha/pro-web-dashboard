@@ -3,11 +3,11 @@ import {
   ArrowRight,
   Briefcase,
   CalendarClock,
-  Check,
   CheckCircle2,
   FileText,
   Inbox,
   Layers,
+  MapPin,
   Send,
   Sparkles,
   TrendingUp,
@@ -16,8 +16,8 @@ import {
 } from "lucide-react";
 import { AvatarInitials, Badge, KpiCard, type Tone } from "@/components/company/ui";
 import { AnimatedNumber, Reveal } from "@/components/ui/motion";
+import { CompanyLogoUploader } from "@/components/company/company-logo";
 import { useCompanyStore } from "@/lib/company-store";
-import { latestRunFor } from "@/lib/expert-engine";
 import { cn } from "@/lib/utils";
 import { offerStatusLabels } from "@/lib/company-data";
 
@@ -149,7 +149,7 @@ function TodoTarget({ todo, className, children }: { todo: Todo; className: stri
 /* ------------------------------------------------------------------ */
 
 function CompanyDashboard() {
-  const { offers, candidates, interns, interviews, services, expertRuns } = useCompanyStore();
+  const { profile, offers, candidates, interns, interviews, services } = useCompanyStore();
 
   const now = Date.now();
   const todayIso = new Date().toISOString().split("T")[0];
@@ -264,12 +264,6 @@ function CompanyDashboard() {
     if (intern.certificate === "generee") return { label: "Attestation à valider", tone: "warning" };
     return { label: "Dossier à jour", tone: "success" };
   };
-
-  /* ---- Recommandation mise en avant ---- */
-  const focusIntern = pendingAssignments[0];
-  const focusRun = focusIntern ? latestRunFor(expertRuns, focusIntern.id) : undefined;
-  const focusProposal = focusRun?.proposals[0];
-  const focusCriteria = focusProposal?.satisfied.filter((criterion) => criterion.satisfied) ?? [];
 
   return (
     <div className="space-y-6">
@@ -521,80 +515,49 @@ function CompanyDashboard() {
 
         {/* ============================ Colonne latérale ============================ */}
         <aside className="space-y-6">
-          {/* Système expert : le moment focal */}
-          <Reveal delay={220} className="relative overflow-hidden rounded-xl bg-primary text-primary-foreground shadow-sm">
-            <div className="absolute -right-12 -top-12 size-40 rounded-full bg-accent/15" aria-hidden />
-            <div className="absolute -bottom-16 -right-4 size-32 rounded-full border-[14px] border-accent/10" aria-hidden />
-            <div className="relative p-5">
-              <div className="flex items-center justify-between">
-                <span className="inline-flex items-center gap-1.5 text-xs font-medium text-accent">
-                  <Sparkles className="size-3.5" /> Système expert
-                </span>
-                {pendingAssignments.length > 0 && (
-                  <span className="rounded-md bg-white/10 px-1.5 py-0.5 text-[11px] font-medium tabular-nums">
-                    {pendingAssignments.length} en attente
-                  </span>
-                )}
-              </div>
-
-              {focusIntern ? (
-                <>
-                  <div className="mt-4 flex items-center gap-3">
-                    <span className="grid size-10 shrink-0 place-items-center rounded-full bg-white/10 text-sm font-semibold">
-                      {focusIntern.initials}
-                    </span>
-                    <div className="min-w-0">
-                      <p className="truncate font-semibold">{focusIntern.name}</p>
-                      <p className="truncate text-xs text-white/60">{offerTitle(focusIntern.offerId)}</p>
-                    </div>
-                  </div>
-
-                  <div className="mt-4 rounded-lg bg-white/[0.07] p-3.5 ring-1 ring-inset ring-white/10">
-                    {focusProposal ? (
-                      <>
-                        <p className="text-[11px] uppercase tracking-[0.08em] text-white/50">Service recommandé</p>
-                        <p className="mt-0.5 text-lg font-semibold">{focusProposal.serviceName}</p>
-                        {focusCriteria.length > 0 && (
-                          <ul className="mt-2.5 space-y-1.5">
-                            {focusCriteria.slice(0, 3).map((criterion) => (
-                              <li key={criterion.ruleId + criterion.label} className="flex items-start gap-2 text-xs text-white/80">
-                                <Check className="mt-0.5 size-3.5 shrink-0 text-accent" />
-                                <span>{criterion.label}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        )}
-                      </>
-                    ) : (
-                      <>
-                        <p className="text-sm font-medium">Analyse non lancée</p>
-                        <p className="mt-0.5 text-xs text-white/60">
-                          Lancez l'analyse pour obtenir une recommandation expliquée.
-                        </p>
-                      </>
-                    )}
-                  </div>
-
-                  <Link
-                    to="/entreprise/stagiaires/$internId"
-                    params={{ internId: focusIntern.id }}
-                    className="press mt-4 flex h-9 w-full items-center justify-center gap-1.5 rounded-lg bg-white text-sm font-semibold text-primary transition-colors hover:bg-accent-soft"
-                  >
-                    {focusProposal ? "Examiner la recommandation" : "Ouvrir le dossier"}
-                    <ArrowRight className="size-4" />
-                  </Link>
-                  <p className="mt-2.5 text-center text-[11px] text-white/50">
-                    Le système recommande, vous décidez.
-                  </p>
-                </>
-              ) : (
-                <div className="mt-4">
-                  <p className="text-lg font-semibold">Aucune affectation en attente</p>
-                  <p className="mt-1 text-sm text-white/60">
-                    Les recommandations apparaîtront ici dès qu'un candidat sera retenu.
+          {/* Carte entreprise : logo, identité, chiffres clés */}
+          <Reveal delay={160} className="card-surface overflow-hidden">
+            <div className="relative h-20 bg-gradient-to-br from-primary via-primary to-[hsl(205_55%_38%)]">
+              <div className="absolute -right-6 -top-10 size-32 rounded-full border-[14px] border-accent/20" aria-hidden />
+              <div className="absolute right-20 top-6 size-10 rounded-full bg-accent/15" aria-hidden />
+            </div>
+            <div className="px-5 pb-5">
+              <CompanyLogoUploader className="-mt-10 size-20 rounded-2xl shadow-md ring-4 ring-card" />
+              <div className="mt-3 flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="truncate text-lg font-semibold tracking-tight">{profile.name}</p>
+                  <p className="flex items-center gap-1 truncate text-xs text-muted-foreground">
+                    {profile.sector}
+                    <span aria-hidden>·</span>
+                    <MapPin className="size-3 shrink-0" /> {profile.city}
                   </p>
                 </div>
+                <Link
+                  to="/entreprise/profil"
+                  className="shrink-0 rounded-lg border px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:border-accent/60 hover:text-primary"
+                >
+                  Voir le profil
+                </Link>
+              </div>
+              {!profile.logo && (
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Ajoutez votre logo : il apparaîtra sur vos offres et attestations.
+                </p>
               )}
+              <dl className="mt-4 grid grid-cols-3 divide-x rounded-lg border text-center">
+                <div className="py-2.5">
+                  <dt className="text-[11px] text-muted-foreground">Offres</dt>
+                  <dd className="text-base font-semibold tabular-nums">{activeOffers.length}</dd>
+                </div>
+                <div className="py-2.5">
+                  <dt className="text-[11px] text-muted-foreground">Stagiaires</dt>
+                  <dd className="text-base font-semibold tabular-nums">{interns.length}</dd>
+                </div>
+                <div className="py-2.5">
+                  <dt className="text-[11px] text-muted-foreground">Services</dt>
+                  <dd className="text-base font-semibold tabular-nums">{services.length}</dd>
+                </div>
+              </dl>
             </div>
           </Reveal>
 

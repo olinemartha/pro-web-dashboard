@@ -21,6 +21,7 @@ import {
   X,
 } from "lucide-react";
 import { ShellPageTitleProvider } from "@/components/app/ui";
+import { CompanyLogo } from "@/components/company/company-logo";
 import { cn } from "@/lib/utils";
 import { useCompanyStore } from "@/lib/company-store";
 
@@ -312,9 +313,7 @@ function AccountMenu({ collapsed = false, onNavigate }: { collapsed?: boolean; o
           open && "bg-muted/70"
         )}
       >
-        <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-accent-soft text-xs font-semibold text-primary">
-          {profile.initials || "E"}
-        </span>
+        <CompanyLogo className="size-8 rounded-lg text-xs" />
         {!collapsed && (
           <>
             <span className="min-w-0 flex-1 leading-tight">
