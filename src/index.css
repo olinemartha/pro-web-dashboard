@@ -312,3 +312,21 @@
     stroke-dasharray: none;
   }
 }
+
+/* Anneau : chaque arc se dessine à son tour. */
+@keyframes donut-draw {
+  from {
+    stroke-dasharray: 0 1000;
+  }
+}
+
+.donut-arc {
+  animation: donut-draw 900ms var(--ease-soft) both;
+  animation-delay: var(--delay, 200ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .donut-arc {
+    animation: none;
+  }
+}

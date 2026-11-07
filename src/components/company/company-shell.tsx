@@ -1,7 +1,6 @@
-import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
+import { Link, useRouterState } from "@tanstack/react-router";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
-  Bell,
   Briefcase,
   Building2,
   CalendarClock,
@@ -14,7 +13,6 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Plus,
-  Search,
   Send,
   Settings,
   Users,
@@ -22,6 +20,7 @@ import {
 } from "lucide-react";
 import { ShellPageTitleProvider } from "@/components/app/ui";
 import { CompanyLogo } from "@/components/company/company-logo";
+import { NotificationBell, SearchCommand } from "@/components/company/topbar";
 import { cn } from "@/lib/utils";
 import { useCompanyStore } from "@/lib/company-store";
 
@@ -366,74 +365,43 @@ function AccountMenu({ collapsed = false, onNavigate }: { collapsed?: boolean; o
 /* Barre supérieure                                                    */
 /* ------------------------------------------------------------------ */
 
-function SearchBox({ className }: { className?: string }) {
-  const navigate = useNavigate();
-  const [query, setQuery] = useState("");
-  return (
-    <form
-      role="search"
-      className={cn("relative", className)}
-      onSubmit={(event) => {
-        event.preventDefault();
-        const q = query.trim();
-        navigate({ to: "/entreprise/candidatures", search: q ? { q } : {} });
-        setQuery("");
-      }}
-    >
-      <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-      <input
-        value={query}
-        onChange={(event) => setQuery(event.target.value)}
-        placeholder="Rechercher un candidat…"
-        aria-label="Rechercher un candidat"
-        className="h-9 w-full rounded-lg border bg-card pl-9 pr-3 text-sm outline-none transition-all duration-200 placeholder:text-muted-foreground focus:border-accent focus:ring-4 focus:ring-accent/15"
-      />
-    </form>
-  );
-}
-
-function BellLink({ hasNews }: { hasNews: boolean }) {
-  return (
-    <Link
-      to="/entreprise/candidatures"
-      className="press relative grid size-9 shrink-0 place-items-center rounded-lg border bg-card text-muted-foreground transition-colors hover:text-foreground"
-      aria-label={hasNews ? "Notifications : nouveautés à consulter" : "Notifications"}
-    >
-      <Bell className="size-[17px]" />
-      {hasNews && (
-        <span className="absolute right-2 top-2 size-2 rounded-full bg-destructive ring-2 ring-card" aria-hidden />
-      )}
-    </Link>
-  );
-}
-
 function TopBar({ pathname }: { pathname: string }) {
   const { profile } = useCompanyStore();
-  const counts = useNavCounts();
   const isDashboard = normalize(pathname) === "/entreprise";
   const date = new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
-  const greeting = new Date().getHours() < 18 ? "Bonjour" : "Bonsoir";
+  const hour = new Date().getHours();
+  const greeting = hour < 18 ? "Bonjour" : "Bonsoir";
   const showPublish = !pathname.startsWith("/entreprise/offres");
 
   return (
-    <header className="sticky top-0 z-30 hidden h-16 shrink-0 items-center justify-between gap-4 border-b border-border/70 bg-canvas/80 px-6 backdrop-blur-md lg:flex xl:px-8">
-      <div className="min-w-0">
-        <h1 className="truncate text-[17px] font-semibold tracking-tight text-foreground">
-          {isDashboard ? `${greeting}, ${profile.name}` : pageTitle(pathname)}
+    <header className="sticky top-0 z-30 hidden h-[72px] shrink-0 items-center justify-between gap-6 border-b border-border/60 bg-canvas/75 px-6 backdrop-blur-xl backdrop-saturate-150 lg:flex xl:px-8">
+      <div key={pathname} className="animate-fade-up min-w-0">
+        <p className="truncate text-[11px] font-medium uppercase tracking-[0.1em] text-muted-foreground first-letter:uppercase">
+          {isDashboard ? date : `Espace entreprise · ${date}`}
+        </p>
+        <h1 className="mt-0.5 truncate text-[20px] font-semibold leading-tight tracking-tight text-foreground">
+          {isDashboard ? (
+            <>
+              {greeting}, <span className="text-primary">{profile.name}</span>
+            </>
+          ) : (
+            pageTitle(pathname)
+          )}
         </h1>
-        <p className="truncate text-xs text-muted-foreground first-letter:uppercase">{date}</p>
       </div>
 
-      <div className="flex shrink-0 items-center gap-2">
-        <SearchBox className="w-60 xl:w-72" />
-        <BellLink hasNews={counts.candidatures > 0} />
+      <div className="flex shrink-0 items-center gap-2.5">
+        <SearchCommand />
+        <NotificationBell />
         {showPublish && (
           <Link
             to="/entreprise/offres"
             search={{ nouveau: true }}
-            className="press inline-flex h-9 items-center gap-1.5 rounded-lg bg-primary px-3.5 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary-hover"
+            className="press group inline-flex h-10 items-center gap-2 rounded-xl bg-primary pl-3 pr-4 text-sm font-medium text-primary-foreground shadow-[0_6px_16px_-6px_hsl(var(--primary)/0.55)] transition-all duration-200 hover:bg-primary-hover hover:shadow-[0_10px_22px_-8px_hsl(var(--primary)/0.6)]"
           >
-            <Plus className="size-4" />
+            <span className="grid size-6 place-items-center rounded-lg bg-white/15 transition-transform duration-300 group-hover:rotate-90">
+              <Plus className="size-4" />
+            </span>
             Publier une offre
           </Link>
         )}
@@ -448,7 +416,6 @@ function TopBar({ pathname }: { pathname: string }) {
 
 function MobileBar({ pathname }: { pathname: string }) {
   const [open, setOpen] = useState(false);
-  const counts = useNavCounts();
 
   useEffect(() => {
     if (!open) return;
@@ -471,7 +438,7 @@ function MobileBar({ pathname }: { pathname: string }) {
         <h1 className="min-w-0 flex-1 truncate text-center text-sm font-semibold tracking-tight">
           {pageTitle(pathname)}
         </h1>
-        <BellLink hasNews={counts.candidatures > 0} />
+        <NotificationBell />
       </header>
 
       {open && (
@@ -492,7 +459,7 @@ function MobileBar({ pathname }: { pathname: string }) {
               </button>
             </div>
             <div className="px-4 pb-2">
-              <SearchBox />
+              <SearchCommand compact />
             </div>
             <div className="flex-1 overflow-y-auto px-4 py-3">
               <SidebarNav pathname={pathname} onNavigate={() => setOpen(false)} />

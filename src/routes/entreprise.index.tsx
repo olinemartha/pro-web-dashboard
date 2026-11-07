@@ -2,7 +2,6 @@ import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   ArrowRight,
-  ArrowUpRight,
   Briefcase,
   CalendarClock,
   CheckCircle2,
@@ -97,7 +96,7 @@ function SectionHeader({
       {to && (
         <Link
           to={to}
-          className="group inline-flex items-center gap-1 text-[13px] font-medium text-muted-foreground transition-colors hover:text-primary"
+          className="press group inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border bg-card px-3 text-[13px] font-medium text-foreground shadow-sm transition-all duration-200 hover:border-foreground hover:bg-foreground hover:text-background hover:shadow-md"
         >
           {linkLabel}
           <ArrowRight className="size-3.5 transition-transform duration-200 group-hover:translate-x-0.5" />
@@ -202,13 +201,136 @@ function TodoTarget({ todo, className, children }: { todo: Todo; className: stri
 /* Pipeline                                                            */
 /* ------------------------------------------------------------------ */
 
+/**
+ * Une seule famille de bleus, du plus clair (en attente) au plus foncé
+ * (acceptée) ; le refus reste en gris neutre. Pas d'arc-en-ciel.
+ */
 const PIPELINE: { status: CandidateStatus; color: string }[] = [
-  { status: "en_attente", color: "bg-slate-300" },
-  { status: "examen", color: "bg-accent" },
-  { status: "entretien", color: "bg-primary/70" },
-  { status: "acceptee", color: "bg-success" },
-  { status: "refusee", color: "bg-destructive/70" },
+  { status: "en_attente", color: "hsl(214 25% 84%)" },
+  { status: "examen", color: "hsl(205 70% 68%)" },
+  { status: "entretien", color: "hsl(210 50% 45%)" },
+  { status: "acceptee", color: "hsl(214 59% 19%)" },
+  { status: "refusee", color: "hsl(215 14% 62%)" },
 ];
+
+type PipelineStep = { status: CandidateStatus; color: string; count: number };
+
+/** Anneau interactif + barres comparatives : survoler un statut le met en avant partout. */
+function PipelineChart({
+  steps,
+  total,
+  acceptanceRate,
+}: {
+  steps: PipelineStep[];
+  total: number;
+  acceptanceRate: number;
+}) {
+  const [hover, setHover] = useState<CandidateStatus | null>(null);
+  const size = 168;
+  const stroke = 22;
+  const r = (size - stroke) / 2;
+  const c = 2 * Math.PI * r;
+  const gap = total > 0 && steps.filter((s) => s.count > 0).length > 1 ? 3 : 0;
+  const max = Math.max(1, ...steps.map((s) => s.count));
+  const active = steps.find((s) => s.status === hover);
+
+  let offset = 0;
+  const arcs = steps
+    .filter((s) => s.count > 0)
+    .map((s) => {
+      const len = (s.count / Math.max(1, total)) * c;
+      const arc = { ...s, dash: Math.max(0, len - gap), offset };
+      offset += len;
+      return arc;
+    });
+
+  return (
+    <div className="mt-5 grid items-center gap-6 sm:grid-cols-[auto_minmax(0,1fr)] sm:gap-8">
+      {/* Anneau */}
+      <div className="relative mx-auto" style={{ width: size, height: size }}>
+        <svg viewBox={`0 0 ${size} ${size}`} className="-rotate-90" role="img" aria-label="Répartition des candidatures par statut">
+          <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="hsl(var(--muted))" strokeWidth={stroke} />
+          {arcs.map((arc, index) => (
+            <circle
+              key={arc.status}
+              cx={size / 2}
+              cy={size / 2}
+              r={r}
+              fill="none"
+              stroke={arc.color}
+              strokeWidth={hover === arc.status ? stroke + 4 : stroke}
+              strokeDasharray={`${arc.dash} ${c}`}
+              strokeDashoffset={-arc.offset}
+              className="donut-arc cursor-pointer transition-[stroke-width,opacity] duration-200"
+              style={{
+                opacity: hover && hover !== arc.status ? 0.35 : 1,
+                ["--arc-len" as string]: `${arc.dash}`,
+                ["--delay" as string]: `${200 + index * 120}ms`,
+              }}
+              onMouseEnter={() => setHover(arc.status)}
+              onMouseLeave={() => setHover(null)}
+            />
+          ))}
+        </svg>
+        <div className="pointer-events-none absolute inset-0 grid place-items-center text-center">
+          <div>
+            <p className="text-[28px] font-semibold leading-none tracking-tight tabular-nums">
+              {active ? active.count : <AnimatedNumber value={total} />}
+            </p>
+            <p className="mt-1 max-w-[96px] text-[11px] leading-tight text-muted-foreground">
+              {active ? candidateStatusLabels[active.status].label : "candidatures"}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Barres comparatives */}
+      <div className="min-w-0 space-y-1">
+        {steps.map((step, index) => {
+          const pct = total ? Math.round((step.count / total) * 100) : 0;
+          const dim = hover && hover !== step.status;
+          return (
+            <div
+              key={step.status}
+              onMouseEnter={() => setHover(step.status)}
+              onMouseLeave={() => setHover(null)}
+              className={cn(
+                "grid cursor-default grid-cols-[minmax(0,130px)_minmax(0,1fr)_auto] items-center gap-3 rounded-lg px-2 py-1.5 transition-all duration-200",
+                hover === step.status && "bg-muted/60",
+                dim && "opacity-50"
+              )}
+            >
+              <span className="flex min-w-0 items-center gap-2 text-[13px]">
+                <span className="size-2.5 shrink-0 rounded-[3px]" style={{ background: step.color }} aria-hidden />
+                <span className="truncate">{candidateStatusLabels[step.status].label}</span>
+              </span>
+              <span className="h-2 overflow-hidden rounded-full bg-muted">
+                <span
+                  className="animate-grow-x block h-full rounded-full"
+                  style={{
+                    width: `${(step.count / max) * 100}%`,
+                    background: step.color,
+                    ["--delay" as string]: `${300 + index * 80}ms`,
+                  }}
+                />
+              </span>
+              <span className="w-16 text-right text-[13px] tabular-nums">
+                <span className="font-semibold">{step.count}</span>
+                <span className="ml-1 text-xs text-muted-foreground">{pct} %</span>
+              </span>
+            </div>
+          );
+        })}
+        <div className="mt-3 flex items-center justify-between border-t px-2 pt-3">
+          <span className="text-[13px] text-muted-foreground">Taux d'acceptation (décisions prises)</span>
+          <span className="text-[15px] font-semibold tabular-nums">
+            <AnimatedNumber value={acceptanceRate} suffix=" %" />
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 /* ------------------------------------------------------------------ */
 /* Tableau de bord                                                     */
@@ -414,42 +536,39 @@ function CompanyDashboard() {
   return (
     <div className="space-y-6">
       {/* ============================ Bandeau d'indicateurs ============================ */}
-      <Reveal className="card-surface grid grid-cols-2 overflow-hidden lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         {stats.map((stat, index) => (
-          <Link
-            key={stat.label}
-            to={stat.to}
-            className={cn(
-              "group relative flex flex-col gap-3 p-4 transition-colors duration-200 hover:bg-muted/40 sm:p-5",
-              index % 2 === 1 && "border-l",
-              index >= 2 && "border-t lg:border-t-0",
-              index === 2 && "lg:border-l"
-            )}
-          >
-            <div className="flex items-center gap-2 text-[13px] text-muted-foreground">
-              <stat.icon className="size-4 shrink-0 text-muted-foreground/80" />
-              <span className="truncate">{stat.label}</span>
-              <ArrowUpRight className="ml-auto size-3.5 shrink-0 opacity-0 transition-all duration-200 group-hover:translate-x-0.5 group-hover:opacity-100" />
-            </div>
-            <div className="flex items-end justify-between gap-2">
-              <p className="text-[30px] font-semibold leading-none tracking-tight">
-                <AnimatedNumber value={stat.value} />
-              </p>
-              {stat.spark && <Sparkline values={stat.spark} className="hidden sm:block" />}
-            </div>
-            <p
-              className={cn(
-                "flex items-center gap-1 text-xs",
-                stat.trend ? "font-medium text-success-ink" : stat.alert ? "font-medium text-warning" : "text-muted-foreground"
-              )}
+          <Reveal key={stat.label} delay={index * 60} className="min-w-0">
+            <Link
+              to={stat.to}
+              className="card-surface hover-lift group flex h-full flex-col gap-4 p-4 sm:p-5"
             >
-              {stat.trend && <TrendingUp className="size-3.5 shrink-0" />}
-              {stat.alert && <Clock className="size-3.5 shrink-0" />}
-              <span className="truncate">{stat.foot}</span>
-            </p>
-          </Link>
+              <div className="flex items-center gap-2.5">
+                <span className="grid size-9 shrink-0 place-items-center rounded-lg border bg-card text-muted-foreground transition-colors group-hover:text-foreground">
+                  <stat.icon className="size-[18px]" />
+                </span>
+                <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-muted-foreground">{stat.label}</span>
+              </div>
+              <div className="flex items-end justify-between gap-2">
+                <p className="text-[30px] font-semibold leading-none tracking-tight">
+                  <AnimatedNumber value={stat.value} />
+                </p>
+                {stat.spark && <Sparkline values={stat.spark} className="hidden sm:block" />}
+              </div>
+              <p
+                className={cn(
+                  "mt-auto flex items-center gap-1 border-t pt-3 text-xs",
+                  stat.trend ? "font-medium text-success-ink" : stat.alert ? "font-medium text-warning" : "text-muted-foreground"
+                )}
+              >
+                {stat.trend && <TrendingUp className="size-3.5 shrink-0" />}
+                {stat.alert && <Clock className="size-3.5 shrink-0" />}
+                <span className="truncate">{stat.foot}</span>
+              </p>
+            </Link>
+          </Reveal>
         ))}
-      </Reveal>
+      </div>
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
         {/* ============================ Colonne principale ============================ */}
@@ -458,7 +577,7 @@ function CompanyDashboard() {
           <Reveal as="section" delay={80} className="card-surface overflow-hidden">
             <div className="space-y-4 px-5 pt-5">
               <SectionHeader title="À traiter" description="Les décisions qui vous attendent, de la plus urgente à la moins urgente." />
-              <div role="tablist" aria-label="Filtrer les actions" className="-mx-1 flex gap-1 overflow-x-auto px-1 pb-px">
+              <div role="tablist" aria-label="Filtrer les actions" className="flex flex-wrap gap-1.5">
                 {tabs.map((entry) => {
                   const active = tab === entry.key;
                   return (
@@ -535,35 +654,7 @@ function CompanyDashboard() {
               description={`${inPipeline.length} candidature${inPipeline.length > 1 ? "s" : ""} en cours, toutes offres confondues`}
               to="/entreprise/candidatures"
             />
-            <div className="mt-5 flex h-3 gap-1" role="img" aria-label="Répartition des candidatures par statut">
-              {pipelineCounts
-                .filter((step) => step.count > 0)
-                .map((step, index) => (
-                  <span
-                    key={step.status}
-                    className={cn("animate-grow-x h-full rounded-full", step.color)}
-                    style={{ flexGrow: step.count, flexBasis: 0, ["--delay" as string]: `${260 + index * 90}ms` }}
-                    title={`${candidateStatusLabels[step.status].label} : ${step.count}`}
-                  />
-                ))}
-            </div>
-            <dl className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
-              {pipelineCounts.map((step) => (
-                <div key={step.status} className="min-w-0">
-                  <dt className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                    <span className={cn("size-2 shrink-0 rounded-full", step.color)} aria-hidden />
-                    <span className="truncate">{candidateStatusLabels[step.status].label}</span>
-                  </dt>
-                  <dd className="mt-1 text-xl font-semibold tabular-nums">{step.count}</dd>
-                </div>
-              ))}
-              <div className="min-w-0 lg:border-l lg:pl-4">
-                <dt className="truncate text-xs text-muted-foreground">Taux d'acceptation</dt>
-                <dd className="mt-1 text-xl font-semibold tabular-nums text-success-ink">
-                  <AnimatedNumber value={acceptanceRate} suffix=" %" />
-                </dd>
-              </div>
-            </dl>
+            <PipelineChart steps={pipelineCounts} total={inPipeline.length} acceptanceRate={acceptanceRate} />
           </Reveal>
 
           {/* Offres publiées : tableau */}

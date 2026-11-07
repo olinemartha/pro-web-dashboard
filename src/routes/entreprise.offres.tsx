@@ -26,6 +26,7 @@ import {
   type Tone,
 } from "@/components/company/ui";
 import { useCompanyStore } from "@/lib/company-store";
+import { cn } from "@/lib/utils";
 import { offerStatusLabels, type CompanyOffer, type OfferStatus } from "@/lib/company-data";
 
 export const Route = createFileRoute("/entreprise/offres")({
@@ -102,7 +103,7 @@ function fmtDate(value: string) {
 }
 
 function CompanyOffersPage() {
-  const { offers, candidates, addOffer, updateOffer, setOfferStatus } = useCompanyStore();
+  const { offers, candidates, services, addOffer, updateOffer, setOfferStatus } = useCompanyStore();
   const { nouveau } = Route.useSearch();
   const navigate = useNavigate();
   const [filter, setFilter] = useState<OfferStatus | "tous">("tous");
@@ -381,6 +382,7 @@ function CompanyOffersPage() {
       <Modal
         open={formOpen}
         onClose={() => setFormOpen(false)}
+        icon={editingId ? Pencil : Briefcase}
         title={editingId ? "Modifier l'offre" : "Publier une offre de stage"}
         description="Les champs marqués d'un astérisque sont obligatoires."
         wide
@@ -389,136 +391,170 @@ function CompanyOffersPage() {
             <Button variant="outline" onClick={() => setFormOpen(false)}>
               Annuler
             </Button>
-            <Button onClick={submit}>{editingId ? "Enregistrer" : "Créer l'offre"}</Button>
+            <Button onClick={submit}>
+              {editingId
+                ? "Enregistrer les modifications"
+                : form.status === "publiee"
+                  ? "Publier l'offre"
+                  : "Enregistrer le brouillon"}
+            </Button>
           </>
         }
       >
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field
-            label="Titre de l'offre"
-            htmlFor="offre-titre"
-            required
-            error={errors.title}
-            className="sm:col-span-2"
-          >
-            <input
-              id="offre-titre"
-              className={inputClass}
-              placeholder="Ex. Stagiaire Analyste Crédit"
-              value={form.title}
-              onChange={(event) => set({ title: event.target.value })}
-            />
-          </Field>
-          <Field label="Service / département" htmlFor="offre-service" required error={errors.department}>
-            <input
-              id="offre-service"
-              className={inputClass}
-              placeholder="Ex. Direction Crédit"
-              value={form.department}
-              onChange={(event) => set({ department: event.target.value })}
-            />
-          </Field>
-          <Field label="Lieu" htmlFor="offre-lieu">
-            <input
-              id="offre-lieu"
-              className={inputClass}
-              value={form.location}
-              onChange={(event) => set({ location: event.target.value })}
-            />
-          </Field>
-          <Field label="Type de stage" htmlFor="offre-type">
-            <select
-              id="offre-type"
-              className={inputClass}
-              value={form.type}
-              onChange={(event) => set({ type: event.target.value })}
+        <div className="space-y-7">
+          <FormSection title="L'offre" desc="Ce que verront les étudiants en premier.">
+            <Field label="Titre de l'offre" htmlFor="offre-titre" required error={errors.title} className="sm:col-span-2">
+              <input
+                id="offre-titre"
+                className={inputClass}
+                placeholder="Ex. Stagiaire Analyste Crédit"
+                value={form.title}
+                onChange={(event) => set({ title: event.target.value })}
+              />
+            </Field>
+            <Field label="Service / département" htmlFor="offre-service" required error={errors.department}>
+              <input
+                id="offre-service"
+                className={inputClass}
+                placeholder="Ex. Direction Crédit"
+                list="offre-services"
+                value={form.department}
+                onChange={(event) => set({ department: event.target.value })}
+              />
+              <datalist id="offre-services">
+                {services.map((service) => (
+                  <option key={service.id} value={service.name} />
+                ))}
+              </datalist>
+            </Field>
+            <Field label="Lieu" htmlFor="offre-lieu">
+              <input
+                id="offre-lieu"
+                className={inputClass}
+                value={form.location}
+                onChange={(event) => set({ location: event.target.value })}
+              />
+            </Field>
+          </FormSection>
+
+          <FormSection title="Conditions" desc="Le cadre du stage proposé.">
+            <Field label="Type de stage" htmlFor="offre-type">
+              <select id="offre-type" className={inputClass} value={form.type} onChange={(event) => set({ type: event.target.value })}>
+                <option>Stage académique</option>
+                <option>Stage professionnel</option>
+                <option>Stage de fin d'études</option>
+              </select>
+            </Field>
+            <Field label="Niveau requis" htmlFor="offre-niveau">
+              <select id="offre-niveau" className={inputClass} value={form.level} onChange={(event) => set({ level: event.target.value })}>
+                <option>Licence (L2)</option>
+                <option>Licence (L3)</option>
+                <option>Master (M1)</option>
+                <option>Master (M2)</option>
+              </select>
+            </Field>
+            <Field label="Durée" htmlFor="offre-duree">
+              <input
+                id="offre-duree"
+                className={inputClass}
+                value={form.duration}
+                onChange={(event) => set({ duration: event.target.value })}
+              />
+            </Field>
+            <Field label="Date limite de candidature" htmlFor="offre-deadline" required error={errors.deadline}>
+              <input
+                id="offre-deadline"
+                type="date"
+                className={inputClass}
+                value={form.deadline}
+                onChange={(event) => set({ deadline: event.target.value })}
+              />
+            </Field>
+          </FormSection>
+
+          <FormSection title="Contenu" desc="Missions et compétences : elles servent aussi au système expert.">
+            <Field label="Description" htmlFor="offre-description" required error={errors.description} className="sm:col-span-2">
+              <textarea
+                id="offre-description"
+                className={textareaClass}
+                placeholder="Présentez la mission proposée au stagiaire."
+                value={form.description}
+                onChange={(event) => set({ description: event.target.value })}
+              />
+            </Field>
+            <Field label="Missions" htmlFor="offre-missions" hint="Une mission par ligne." className="sm:col-span-2">
+              <textarea
+                id="offre-missions"
+                className={textareaClass}
+                placeholder={"Analyser les dossiers de crédit\nParticiper aux visites terrain"}
+                value={form.missions}
+                onChange={(event) => set({ missions: event.target.value })}
+              />
+            </Field>
+            <Field
+              label="Compétences recherchées"
+              htmlFor="offre-skills"
+              hint="Séparez les compétences par des virgules."
+              className="sm:col-span-2"
             >
-              <option>Stage académique</option>
-              <option>Stage professionnel</option>
-              <option>Stage de fin d'études</option>
-            </select>
-          </Field>
-          <Field label="Durée" htmlFor="offre-duree">
-            <input
-              id="offre-duree"
-              className={inputClass}
-              value={form.duration}
-              onChange={(event) => set({ duration: event.target.value })}
-            />
-          </Field>
-          <Field label="Niveau requis" htmlFor="offre-niveau">
-            <select
-              id="offre-niveau"
-              className={inputClass}
-              value={form.level}
-              onChange={(event) => set({ level: event.target.value })}
-            >
-              <option>Licence (L2)</option>
-              <option>Licence (L3)</option>
-              <option>Master (M1)</option>
-              <option>Master (M2)</option>
-            </select>
-          </Field>
-          <Field label="Date limite de candidature" htmlFor="offre-deadline" required error={errors.deadline}>
-            <input
-              id="offre-deadline"
-              type="date"
-              className={inputClass}
-              value={form.deadline}
-              onChange={(event) => set({ deadline: event.target.value })}
-            />
-          </Field>
-          <Field
-            label="Description"
-            htmlFor="offre-description"
-            required
-            error={errors.description}
-            className="sm:col-span-2"
-          >
-            <textarea
-              id="offre-description"
-              className={textareaClass}
-              placeholder="Présentez la mission proposée au stagiaire."
-              value={form.description}
-              onChange={(event) => set({ description: event.target.value })}
-            />
-          </Field>
-          <Field label="Missions" htmlFor="offre-missions" hint="Une mission par ligne." className="sm:col-span-2">
-            <textarea
-              id="offre-missions"
-              className={textareaClass}
-              placeholder={"Analyser les dossiers de crédit\nParticiper aux visites terrain"}
-              value={form.missions}
-              onChange={(event) => set({ missions: event.target.value })}
-            />
-          </Field>
-          <Field
-            label="Compétences recherchées"
-            htmlFor="offre-skills"
-            hint="Séparez les compétences par des virgules."
-            className="sm:col-span-2"
-          >
-            <input
-              id="offre-skills"
-              className={inputClass}
-              placeholder="Excel, Analyse financière, Rédaction"
-              value={form.skills}
-              onChange={(event) => set({ skills: event.target.value })}
-            />
-          </Field>
-          <Field label="Statut de l'offre" htmlFor="offre-statut">
-            <select
-              id="offre-statut"
-              className={inputClass}
-              value={form.status}
-              onChange={(event) => set({ status: event.target.value as OfferStatus })}
-            >
-              <option value="brouillon">Brouillon</option>
-              <option value="publiee">Publiée</option>
-              <option value="desactivee">Désactivée</option>
-              <option value="cloturee">Clôturée</option>
-            </select>
-          </Field>
+              <input
+                id="offre-skills"
+                className={inputClass}
+                placeholder="Excel, Analyse financière, Rédaction"
+                value={form.skills}
+                onChange={(event) => set({ skills: event.target.value })}
+              />
+              {form.skills.trim() && (
+                <div className="flex flex-wrap gap-1.5 pt-1">
+                  {form.skills
+                    .split(",")
+                    .map((skill) => skill.trim())
+                    .filter(Boolean)
+                    .map((skill) => (
+                      <span key={skill} className="rounded-md border bg-muted/50 px-2 py-0.5 text-xs text-foreground">
+                        {skill}
+                      </span>
+                    ))}
+                </div>
+              )}
+            </Field>
+          </FormSection>
+
+          <FormSection title="Publication" desc="Une offre publiée est visible immédiatement par les étudiants.">
+            <div role="radiogroup" aria-label="Statut de l'offre" className="grid grid-cols-2 gap-2 sm:col-span-2 sm:grid-cols-4">
+              {(editingId
+                ? (["brouillon", "publiee", "desactivee", "cloturee"] as OfferStatus[])
+                : (["brouillon", "publiee"] as OfferStatus[])
+              ).map((status) => {
+                const active = form.status === status;
+                return (
+                  <button
+                    key={status}
+                    type="button"
+                    role="radio"
+                    aria-checked={active}
+                    onClick={() => set({ status })}
+                    className={cn(
+                      "press flex items-center gap-2 rounded-xl border px-3 py-2.5 text-left text-sm transition-all duration-200",
+                      active
+                        ? "border-primary bg-primary-soft/60 font-medium text-primary ring-1 ring-primary"
+                        : "text-muted-foreground hover:border-foreground/30 hover:text-foreground"
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        "grid size-4 shrink-0 place-items-center rounded-full border",
+                        active ? "border-primary" : "border-muted-foreground/40"
+                      )}
+                    >
+                      {active && <span className="size-2 rounded-full bg-primary" />}
+                    </span>
+                    {offerStatusLabels[status].label}
+                  </button>
+                );
+              })}
+            </div>
+          </FormSection>
         </div>
       </Modal>
 
@@ -640,5 +676,18 @@ function CompanyOffersPage() {
         )}
       </Modal>
     </div>
+  );
+}
+
+/** Section de formulaire : un titre, une phrase d'aide, puis une grille de champs. */
+function FormSection({ title, desc, children }: { title: string; desc?: string; children: React.ReactNode }) {
+  return (
+    <section className="grid gap-x-6 gap-y-4 sm:grid-cols-[170px_minmax(0,1fr)]">
+      <div>
+        <h3 className="text-sm font-semibold">{title}</h3>
+        {desc && <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">{desc}</p>}
+      </div>
+      <div className="grid content-start gap-4 sm:grid-cols-2">{children}</div>
+    </section>
   );
 }

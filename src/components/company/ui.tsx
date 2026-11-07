@@ -1,4 +1,5 @@
 import * as React from "react";
+import { createPortal } from "react-dom";
 import { MoreHorizontal, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -135,7 +136,54 @@ export function Field({
 }
 
 /* ------------------------------------------------------------------ */
-/* Modale simple                                                       */
+/* Fenêtres : socle commun                                             */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Les fenêtres sont rendues dans <body> (portail) : elles couvrent tout
+ * l'écran, barre latérale comprise, quel que soit l'endroit où elles sont
+ * déclarées. Échap ferme, et la page derrière ne défile plus.
+ */
+function useOverlayBehaviour(open: boolean, onClose: () => void) {
+  React.useEffect(() => {
+    if (!open) return;
+    const onKey = (event: KeyboardEvent) => event.key === "Escape" && onClose();
+    document.addEventListener("keydown", onKey);
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = previous;
+    };
+  }, [open, onClose]);
+}
+
+/** Voile flouté : l'arrière-plan reste lisible mais s'efface doucement. */
+function Backdrop({ onClick }: { onClick: () => void }) {
+  return (
+    <div
+      className="animate-fade-in absolute inset-0 bg-slate-900/25 backdrop-blur-[6px] backdrop-saturate-150"
+      onClick={onClick}
+      aria-hidden
+    />
+  );
+}
+
+function CloseButton({ onClose }: { onClose: () => void }) {
+  return (
+    <button
+      type="button"
+      aria-label="Fermer"
+      onClick={onClose}
+      className="press grid size-8 shrink-0 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+    >
+      <X className="size-4" />
+    </button>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Modale                                                              */
 /* ------------------------------------------------------------------ */
 
 export function Modal({
@@ -146,6 +194,7 @@ export function Modal({
   children,
   footer,
   wide,
+  icon: Icon,
 }: {
   open: boolean;
   title: string;
@@ -154,43 +203,49 @@ export function Modal({
   children: React.ReactNode;
   footer?: React.ReactNode;
   wide?: boolean;
+  icon?: React.ComponentType<{ className?: string }>;
 }) {
-  if (!open) return null;
+  useOverlayBehaviour(open, onClose);
+  if (!open || typeof document === "undefined") return null;
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4">
-      <div className="animate-fade-in absolute inset-0 bg-slate-900/40 backdrop-blur-[2px]" onClick={onClose} aria-hidden />
+  return createPortal(
+    <div className="fixed inset-0 z-[60] flex items-end justify-center sm:items-center sm:p-6">
+      <Backdrop onClick={onClose} />
       <div
         role="dialog"
         aria-modal="true"
         aria-label={title}
         className={cn(
-          "animate-scale-in relative z-10 flex max-h-[92vh] w-full flex-col overflow-hidden rounded-t-2xl border bg-background shadow-2xl sm:rounded-2xl",
-          wide ? "sm:max-w-3xl" : "sm:max-w-xl"
+          "animate-scale-in relative z-10 flex max-h-[92dvh] w-full flex-col overflow-hidden rounded-t-2xl border bg-card shadow-[0_24px_64px_-16px_rgba(15,23,42,0.35)] sm:max-h-[86dvh] sm:rounded-2xl",
+          wide ? "sm:max-w-[720px]" : "sm:max-w-lg"
         )}
       >
-        <div className="flex items-start justify-between gap-4 border-b px-5 py-4">
-          <div className="min-w-0">
-            <h2 className="text-pretty text-lg font-semibold leading-snug tracking-tight">{title}</h2>
-            {description && (
-              <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{description}</p>
-            )}
+        {/* Poignée sur téléphone */}
+        <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-border sm:hidden" aria-hidden />
+        <div className="flex items-start gap-3.5 px-5 pb-4 pt-4 sm:px-6 sm:pt-5">
+          {Icon && (
+            <span className="grid size-10 shrink-0 place-items-center rounded-xl border bg-card text-muted-foreground shadow-sm">
+              <Icon className="size-[18px]" />
+            </span>
+          )}
+          <div className="min-w-0 flex-1">
+            <h2 className="text-pretty text-[17px] font-semibold leading-snug tracking-tight">{title}</h2>
+            {description && <p className="mt-0.5 text-[13px] leading-relaxed text-muted-foreground">{description}</p>}
           </div>
-          <button
-            type="button"
-            aria-label="Fermer"
-            onClick={onClose}
-            className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-          >
-            <X className="size-4" />
-          </button>
+          <CloseButton onClose={onClose} />
         </div>
-        <div className="flex-1 overflow-y-auto px-5 py-4">{children}</div>
-        {footer && <div className="flex flex-wrap justify-end gap-2 border-t px-5 py-3">{footer}</div>}
+        <div className="flex-1 overflow-y-auto border-t px-5 py-5 sm:px-6">{children}</div>
+        {footer && (
+          <div className="flex flex-col-reverse gap-2 border-t bg-muted/30 px-5 py-3.5 sm:flex-row sm:justify-end sm:px-6 [&>*]:w-full sm:[&>*]:w-auto">
+            {footer}
+          </div>
+        )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
+
 
 /* ------------------------------------------------------------------ */
 /* Divers                                                              */
@@ -245,11 +300,12 @@ export function Drawer({
   children: React.ReactNode;
   footer?: React.ReactNode;
 }) {
-  if (!open) return null;
+  useOverlayBehaviour(open, onClose);
+  if (!open || typeof document === "undefined") return null;
 
-  return (
-    <div className="fixed inset-0 z-50">
-      <div className="animate-fade-in absolute inset-0 bg-slate-900/40 backdrop-blur-[2px]" onClick={onClose} aria-hidden />
+  return createPortal(
+    <div className="fixed inset-0 z-[60]">
+      <Backdrop onClick={onClose} />
       <div
         role="dialog"
         aria-modal="true"
@@ -278,6 +334,8 @@ export function Drawer({
         )}
       </div>
     </div>
+,
+    document.body
   );
 }
 
