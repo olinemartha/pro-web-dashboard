@@ -159,13 +159,13 @@ export function Modal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4">
-      <div className="absolute inset-0 bg-slate-900/50" onClick={onClose} aria-hidden />
+      <div className="animate-fade-in absolute inset-0 bg-slate-900/40 backdrop-blur-[2px]" onClick={onClose} aria-hidden />
       <div
         role="dialog"
         aria-modal="true"
         aria-label={title}
         className={cn(
-          "relative z-10 flex max-h-[92vh] w-full flex-col overflow-hidden rounded-t-xl border bg-background shadow-xl sm:rounded-xl",
+          "animate-scale-in relative z-10 flex max-h-[92vh] w-full flex-col overflow-hidden rounded-t-2xl border bg-background shadow-2xl sm:rounded-2xl",
           wide ? "sm:max-w-3xl" : "sm:max-w-xl"
         )}
       >
@@ -249,12 +249,12 @@ export function Drawer({
 
   return (
     <div className="fixed inset-0 z-50">
-      <div className="absolute inset-0 bg-slate-900/50" onClick={onClose} aria-hidden />
+      <div className="animate-fade-in absolute inset-0 bg-slate-900/40 backdrop-blur-[2px]" onClick={onClose} aria-hidden />
       <div
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className="absolute inset-y-0 right-0 flex w-full flex-col border-l bg-background shadow-xl sm:max-w-2xl"
+        className="animate-slide-in-right absolute inset-y-0 right-0 flex w-full flex-col border-l bg-background shadow-2xl sm:max-w-2xl"
       >
         <div className="flex items-start justify-between gap-4 border-b px-5 py-4">
           <div className="min-w-0">
@@ -311,7 +311,7 @@ export function ActionMenu({
           <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} aria-hidden />
           <div
             role="menu"
-            className="absolute right-0 top-full z-20 mt-1 w-48 rounded-md border bg-popover p-1 text-popover-foreground shadow-md"
+            className="animate-scale-in absolute right-0 top-full z-20 mt-1 w-48 rounded-lg border bg-popover p-1 text-popover-foreground shadow-lg"
             onClick={() => setOpen(false)}
           >
             {children}

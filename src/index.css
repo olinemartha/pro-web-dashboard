@@ -99,7 +99,161 @@
 
 @layer components {
   .card-surface {
-    @apply rounded-lg border bg-card text-card-foreground shadow-sm;
+    @apply rounded-xl border border-border/80 bg-card text-card-foreground;
+    box-shadow: 0 1px 2px hsl(214 40% 20% / 0.04);
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Mouvements doux                                                     */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Courbe « ease-out quint » : départ vif, arrivée très douce, dans l'esprit
+ * des interfaces Apple. Durées courtes (200–500 ms) pour ne jamais faire
+ * attendre. Tout s'immobilise sous prefers-reduced-motion.
+ */
+:root {
+  --ease-soft: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes slide-in-left {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: none;
+  }
+}
+
+@keyframes slide-in-right {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: none;
+  }
+}
+
+@keyframes grow-x {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes grow-y {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
+@layer utilities {
+  .animate-fade-up {
+    animation: fade-up 520ms var(--ease-soft) both;
+    animation-delay: var(--delay, 0ms);
+  }
+  .animate-fade-in {
+    animation: fade-in 240ms ease-out both;
+  }
+  .animate-scale-in {
+    animation: scale-in 320ms var(--ease-soft) both;
+  }
+  .animate-slide-in-left {
+    animation: slide-in-left 360ms var(--ease-soft) both;
+  }
+  .animate-slide-in-right {
+    animation: slide-in-right 380ms var(--ease-soft) both;
+  }
+  .animate-grow-x {
+    transform-origin: left center;
+    animation: grow-x 900ms var(--ease-soft) both;
+    animation-delay: var(--delay, 150ms);
+  }
+  .animate-grow-y {
+    transform-origin: bottom center;
+    animation: grow-y 700ms var(--ease-soft) both;
+    animation-delay: var(--delay, 150ms);
+  }
+  .page-enter {
+    animation: fade-up 380ms var(--ease-soft) both;
+  }
+
+  /* Survol : la carte se soulève d'un souffle. */
+  .hover-lift {
+    transition:
+      transform 220ms var(--ease-soft),
+      box-shadow 220ms var(--ease-soft),
+      border-color 220ms var(--ease-soft);
+  }
+  .hover-lift:hover {
+    transform: translateY(-2px);
+    border-color: hsl(var(--accent) / 0.45);
+    box-shadow: 0 10px 24px -12px hsl(214 59% 19% / 0.18);
+  }
+
+  /* Pression : un léger enfoncement au clic. */
+  .press {
+    transition: transform 140ms var(--ease-soft);
+  }
+  .press:active {
+    transform: scale(0.97);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-up,
+  .animate-fade-in,
+  .animate-scale-in,
+  .animate-slide-in-left,
+  .animate-slide-in-right,
+  .animate-grow-x,
+  .animate-grow-y,
+  .page-enter {
+    animation: none;
+  }
+  .hover-lift,
+  .hover-lift:hover,
+  .press,
+  .press:active {
+    transition: none;
+    transform: none;
   }
 }
 
