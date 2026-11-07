@@ -290,3 +290,25 @@
     animation: none;
   }
 }
+
+/* Tracé progressif d'une courbe (sparkline). */
+@keyframes spark-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.spark-draw {
+  stroke-dasharray: 1;
+  animation: spark-draw 1100ms var(--ease-soft) 250ms both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spark-draw {
+    animation: none;
+    stroke-dasharray: none;
+  }
+}

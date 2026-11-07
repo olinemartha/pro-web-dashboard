@@ -34,7 +34,13 @@ export function CompanyLogo({ className }: { className?: string }) {
  * Pour l'instant le logo reste en mémoire (données fictives) ;
  * il sera enregistré dans Supabase Storage lors du branchement du backend.
  */
-export function CompanyLogoUploader({ className }: { className?: string }) {
+export function CompanyLogoUploader({
+  className,
+  radius = "rounded-2xl",
+}: {
+  className?: string;
+  radius?: string;
+}) {
   const { profile, updateProfile } = useCompanyStore();
   const inputRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(false);
@@ -65,12 +71,12 @@ export function CompanyLogoUploader({ className }: { className?: string }) {
 
   return (
     <div className={cn("group relative", className)}>
-      <CompanyLogo className="size-full rounded-2xl text-2xl" />
+      <CompanyLogo className={cn("size-full text-2xl", radius)} />
       <button
         type="button"
         onClick={() => inputRef.current?.click()}
         aria-label={profile.logo ? "Changer le logo de l'entreprise" : "Ajouter le logo de l'entreprise"}
-        className="absolute inset-0 grid place-items-center rounded-2xl bg-slate-900/0 text-white opacity-0 transition-all duration-200 hover:bg-slate-900/45 hover:opacity-100 focus-visible:bg-slate-900/45 focus-visible:opacity-100 focus-visible:outline-none"
+        className={cn("absolute inset-0 grid place-items-center bg-slate-900/0 text-white opacity-0 transition-all duration-200 hover:bg-slate-900/45 hover:opacity-100 focus-visible:bg-slate-900/45 focus-visible:opacity-100 focus-visible:outline-none", radius)}
       >
         <Camera className="size-5" />
       </button>

@@ -1,9 +1,12 @@
+import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   ArrowRight,
+  ArrowUpRight,
   Briefcase,
   CalendarClock,
   CheckCircle2,
+  Clock,
   FileText,
   Inbox,
   Layers,
@@ -14,12 +17,12 @@ import {
   Users,
   UserSearch,
 } from "lucide-react";
-import { AvatarInitials, Badge, KpiCard, type Tone } from "@/components/company/ui";
-import { AnimatedNumber, Reveal } from "@/components/ui/motion";
+import { AvatarInitials, Badge, type Tone } from "@/components/company/ui";
 import { CompanyLogoUploader } from "@/components/company/company-logo";
+import { AnimatedNumber, Reveal } from "@/components/ui/motion";
 import { useCompanyStore } from "@/lib/company-store";
 import { cn } from "@/lib/utils";
-import { offerStatusLabels } from "@/lib/company-data";
+import { candidateStatusLabels, type CandidateStatus } from "@/lib/company-data";
 
 export const Route = createFileRoute("/entreprise/")({
   head: () => ({
@@ -36,6 +39,15 @@ function fmtDate(value: string, withYear = true) {
     month: "short",
     ...(withYear ? { year: "numeric" } : {}),
   });
+}
+
+function relativeDay(value: string) {
+  const days = Math.round((Date.now() - new Date(`${value}T12:00:00`).getTime()) / DAY);
+  if (days <= 0) return "aujourd'hui";
+  if (days === 1) return "hier";
+  if (days < 7) return `il y a ${days} j`;
+  if (days < 30) return `il y a ${Math.round(days / 7)} sem.`;
+  return fmtDate(value, false);
 }
 
 function initialsOf(value: string) {
@@ -58,25 +70,30 @@ function initialsOf(value: string) {
 
 function SectionHeader({
   title,
+  description,
   count,
   to,
   linkLabel = "Tout voir",
 }: {
   title: string;
+  description?: string;
   count?: number;
   to?: string;
   linkLabel?: string;
 }) {
   return (
-    <div className="flex items-center justify-between gap-3">
-      <h2 className="flex items-center gap-2 text-[15px] font-semibold tracking-tight">
-        {title}
-        {count !== undefined && (
-          <span className="rounded-md bg-muted px-1.5 py-0.5 text-[11px] font-medium tabular-nums text-muted-foreground">
-            {count}
-          </span>
-        )}
-      </h2>
+    <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="min-w-0">
+        <h2 className="flex items-center gap-2 text-[15px] font-semibold tracking-tight">
+          {title}
+          {count !== undefined && (
+            <span className="rounded-md bg-muted px-1.5 py-0.5 text-[11px] font-medium tabular-nums text-muted-foreground">
+              {count}
+            </span>
+          )}
+        </h2>
+        {description && <p className="mt-0.5 text-xs text-muted-foreground">{description}</p>}
+      </div>
       {to && (
         <Link
           to={to}
@@ -90,11 +107,45 @@ function SectionHeader({
   );
 }
 
+/** Petite courbe : une vraie série (candidatures par semaine), dessinée sans bibliothèque. */
+function Sparkline({ values, className }: { values: number[]; className?: string }) {
+  const w = 96;
+  const h = 32;
+  const max = Math.max(1, ...values);
+  const step = w / Math.max(1, values.length - 1);
+  const points = values.map((v, i) => [i * step, h - 3 - (v / max) * (h - 6)] as const);
+  const line = points.map(([x, y], i) => `${i ? "L" : "M"}${x.toFixed(1)},${y.toFixed(1)}`).join(" ");
+  const area = `${line} L${w},${h} L0,${h} Z`;
+  const last = points[points.length - 1];
+  return (
+    <svg viewBox={`0 0 ${w} ${h}`} className={cn("h-8 w-24 overflow-visible", className)} aria-hidden>
+      <defs>
+        <linearGradient id="spark-fill" x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0%" stopColor="hsl(var(--accent))" stopOpacity="0.35" />
+          <stop offset="100%" stopColor="hsl(var(--accent))" stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <path d={area} fill="url(#spark-fill)" className="animate-fade-in" />
+      <path
+        d={line}
+        fill="none"
+        stroke="hsl(var(--accent))"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        pathLength={1}
+        className="spark-draw"
+      />
+      {last && <circle cx={last[0]} cy={last[1]} r="2.75" fill="hsl(var(--primary))" stroke="#fff" strokeWidth="1.5" />}
+    </svg>
+  );
+}
+
 /* ------------------------------------------------------------------ */
 /* File « À traiter »                                                  */
 /* ------------------------------------------------------------------ */
 
-type TodoKind = "candidature" | "affectation" | "rapport" | "entretien" | "service";
+type TodoKind = "affectation" | "candidature" | "rapport" | "entretien" | "service";
 
 type Todo = {
   kind: TodoKind;
@@ -106,12 +157,15 @@ type Todo = {
   internId?: string;
 };
 
-const TODO_META: Record<TodoKind, { action: string; icon: React.ComponentType<{ className?: string }>; tone: string }> = {
-  affectation: { action: "Valider", icon: Sparkles, tone: "bg-warning-soft text-warning" },
-  candidature: { action: "Examiner", icon: Inbox, tone: "bg-accent-soft text-primary" },
-  rapport: { action: "Examiner", icon: FileText, tone: "bg-primary-soft text-primary" },
-  entretien: { action: "Préparer", icon: CalendarClock, tone: "bg-success-soft text-success-ink" },
-  service: { action: "Mettre à jour", icon: Layers, tone: "bg-muted text-muted-foreground" },
+const TODO_META: Record<
+  TodoKind,
+  { action: string; icon: React.ComponentType<{ className?: string }>; tab: string }
+> = {
+  affectation: { action: "Valider", icon: Sparkles, tab: "Affectations" },
+  candidature: { action: "Examiner", icon: Inbox, tab: "Candidatures" },
+  rapport: { action: "Examiner", icon: FileText, tab: "Rapports" },
+  entretien: { action: "Préparer", icon: CalendarClock, tab: "Entretiens" },
+  service: { action: "Mettre à jour", icon: Layers, tab: "Services" },
 };
 
 function TodoTarget({ todo, className, children }: { todo: Todo; className: string; children: React.ReactNode }) {
@@ -145,11 +199,24 @@ function TodoTarget({ todo, className, children }: { todo: Todo; className: stri
 }
 
 /* ------------------------------------------------------------------ */
+/* Pipeline                                                            */
+/* ------------------------------------------------------------------ */
+
+const PIPELINE: { status: CandidateStatus; color: string }[] = [
+  { status: "en_attente", color: "bg-slate-300" },
+  { status: "examen", color: "bg-accent" },
+  { status: "entretien", color: "bg-primary/70" },
+  { status: "acceptee", color: "bg-success" },
+  { status: "refusee", color: "bg-destructive/70" },
+];
+
+/* ------------------------------------------------------------------ */
 /* Tableau de bord                                                     */
 /* ------------------------------------------------------------------ */
 
 function CompanyDashboard() {
   const { profile, offers, candidates, interns, interviews, services } = useCompanyStore();
+  const [tab, setTab] = useState<TodoKind | "tout">("tout");
 
   const now = Date.now();
   const todayIso = new Date().toISOString().split("T")[0];
@@ -170,9 +237,9 @@ function CompanyDashboard() {
     return candidate ? offerTitle(candidate.offerId) : "";
   };
 
-  // Candidatures reçues par semaine (6 dernières semaines) : une vraie série.
-  const weeklyBars = Array.from({ length: 6 }, (_, index) => {
-    const end = now - (5 - index) * 7 * DAY;
+  // Candidatures reçues par semaine (8 dernières semaines).
+  const weekly = Array.from({ length: 8 }, (_, index) => {
+    const end = now - (7 - index) * 7 * DAY;
     const start = end - 7 * DAY;
     return candidates.filter((c) => {
       const t = new Date(`${c.appliedAt}T12:00:00`).getTime();
@@ -189,18 +256,27 @@ function CompanyDashboard() {
     ).length;
     return { service, filled, left: Math.max(0, service.internsNeeded - filled) };
   });
-  const placesNeeded = serviceCapacity.reduce((sum, entry) => sum + entry.service.internsNeeded, 0);
-  const placesFilled = serviceCapacity.reduce((sum, entry) => sum + Math.min(entry.filled, entry.service.internsNeeded), 0);
+  const placesLeft = serviceCapacity.reduce((sum, entry) => sum + entry.left, 0);
+
+  /* ---- Pipeline ---- */
+  const inPipeline = candidates.filter((c) => c.status !== "retiree");
+  const pipelineCounts = PIPELINE.map((step) => ({
+    ...step,
+    count: inPipeline.filter((c) => c.status === step.status).length,
+  }));
+  const acceptedCount = pipelineCounts.find((s) => s.status === "acceptee")?.count ?? 0;
+  const refusedCount = pipelineCounts.find((s) => s.status === "refusee")?.count ?? 0;
+  const decided = acceptedCount + refusedCount;
+  const acceptanceRate = decided ? Math.round((acceptedCount / decided) * 100) : 0;
 
   /* ---- File À traiter ---- */
   const todos: Todo[] = [];
-
   pendingAssignments.forEach((intern) =>
     todos.push({
       kind: "affectation",
       id: `affectation-${intern.id}`,
       label: `Valider l'affectation de ${intern.name}`,
-      meta: offerTitle(intern.offerId),
+      meta: `${offerTitle(intern.offerId)} · recommandation du système expert`,
       internId: intern.id,
       urgency: 0,
     })
@@ -210,7 +286,7 @@ function CompanyDashboard() {
       kind: "candidature",
       id: `candidature-${candidate.id}`,
       label: `Examiner la candidature de ${candidate.name}`,
-      meta: `${offerTitle(candidate.offerId)} · ${fmtDate(candidate.appliedAt)}`,
+      meta: `${offerTitle(candidate.offerId)} · reçue ${relativeDay(candidate.appliedAt)}`,
       q: candidate.name,
       urgency: 1,
     })
@@ -252,7 +328,33 @@ function CompanyDashboard() {
       });
     }
   });
-  const queue = todos.sort((a, b) => a.urgency - b.urgency).slice(0, 6);
+  todos.sort((a, b) => a.urgency - b.urgency);
+
+  const tabs = (["tout", "affectation", "candidature", "rapport", "entretien", "service"] as const)
+    .map((key) => ({
+      key,
+      label: key === "tout" ? "Tout" : TODO_META[key].tab,
+      count: key === "tout" ? todos.length : todos.filter((t) => t.kind === key).length,
+    }))
+    .filter((entry) => entry.key === "tout" || entry.count > 0);
+  const filtered = tab === "tout" ? todos : todos.filter((t) => t.kind === tab);
+  const visibleTodos = filtered.slice(0, 6);
+  const hiddenCount = filtered.length - visibleTodos.length;
+
+  /* ---- Activité récente (historique des candidatures) ---- */
+  const activity = candidates
+    .flatMap((candidate) =>
+      candidate.history.map((entry) => ({
+        id: `${candidate.id}-${entry.status}-${entry.date}`,
+        name: candidate.name,
+        initials: candidate.initials,
+        status: entry.status,
+        date: entry.date,
+        offer: offerTitle(candidate.offerId),
+      }))
+    )
+    .sort((a, b) => b.date.localeCompare(a.date))
+    .slice(0, 5);
 
   const nextStep = (internId: string): { label: string; tone: Tone } => {
     const intern = interns.find((entry) => entry.id === internId);
@@ -265,80 +367,153 @@ function CompanyDashboard() {
     return { label: "Dossier à jour", tone: "success" };
   };
 
+  /* ---- Indicateurs ---- */
+  const stats: {
+    label: string;
+    value: number;
+    icon: React.ComponentType<{ className?: string }>;
+    foot: string;
+    to: string;
+    trend?: boolean;
+    alert?: boolean;
+    spark?: number[];
+  }[] = [
+    {
+      label: "Offres actives",
+      value: activeOffers.length,
+      icon: Briefcase,
+      foot: `sur ${offers.length} offre${offers.length > 1 ? "s" : ""} créée${offers.length > 1 ? "s" : ""}`,
+      to: "/entreprise/offres",
+    },
+    {
+      label: "Candidatures reçues",
+      value: candidates.length,
+      icon: Send,
+      foot: last30 > 0 ? `+${last30} en 30 jours` : "aucune ce mois-ci",
+      trend: last30 > 0,
+      spark: weekly,
+      to: "/entreprise/candidatures",
+    },
+    {
+      label: "À examiner",
+      value: toExamine.length,
+      icon: UserSearch,
+      foot: toExamine.length ? "en attente de votre décision" : "rien en attente",
+      alert: toExamine.length > 0,
+      to: "/entreprise/candidatures",
+    },
+    {
+      label: "Stagiaires accueillis",
+      value: interns.length,
+      icon: Users,
+      foot: `${confirmedInterns.length} affectation${confirmedInterns.length > 1 ? "s" : ""} confirmée${confirmedInterns.length > 1 ? "s" : ""}`,
+      to: "/entreprise/stagiaires",
+    },
+  ];
+
   return (
     <div className="space-y-6">
-      {/* Indicateurs : une seule ligne compacte */}
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
-        <KpiCard
-          label="Offres actives"
-          value={activeOffers.length}
-          hint={`sur ${offers.length} offre${offers.length > 1 ? "s" : ""} créée${offers.length > 1 ? "s" : ""}`}
-          icon={Briefcase}
-          tone="primary"
-          delay={0}
-        />
-        <KpiCard
-          label="Candidatures reçues"
-          value={candidates.length}
-          hint="toutes offres confondues"
-          icon={Send}
-          tone="accent"
-          chip={last30 > 0 ? { label: `+${last30} en 30 jours`, tone: "success", icon: TrendingUp } : undefined}
-          bars={weeklyBars}
-          delay={60}
-        />
-        <KpiCard
-          label="À examiner"
-          value={toExamine.length}
-          hint={toExamine.length ? "en attente de votre décision" : "aucune en attente"}
-          icon={UserSearch}
-          tone={toExamine.length ? "warning" : "success"}
-          delay={120}
-        />
-        <KpiCard
-          label="Stagiaires accueillis"
-          value={interns.length}
-          hint={`${confirmedInterns.length} affectation${confirmedInterns.length > 1 ? "s" : ""} confirmée${confirmedInterns.length > 1 ? "s" : ""}`}
-          icon={Users}
-          tone="success"
-          delay={180}
-        />
-      </div>
+      {/* ============================ Bandeau d'indicateurs ============================ */}
+      <Reveal className="card-surface grid grid-cols-2 overflow-hidden lg:grid-cols-4">
+        {stats.map((stat, index) => (
+          <Link
+            key={stat.label}
+            to={stat.to}
+            className={cn(
+              "group relative flex flex-col gap-3 p-4 transition-colors duration-200 hover:bg-muted/40 sm:p-5",
+              index % 2 === 1 && "border-l",
+              index >= 2 && "border-t lg:border-t-0",
+              index === 2 && "lg:border-l"
+            )}
+          >
+            <div className="flex items-center gap-2 text-[13px] text-muted-foreground">
+              <stat.icon className="size-4 shrink-0 text-muted-foreground/80" />
+              <span className="truncate">{stat.label}</span>
+              <ArrowUpRight className="ml-auto size-3.5 shrink-0 opacity-0 transition-all duration-200 group-hover:translate-x-0.5 group-hover:opacity-100" />
+            </div>
+            <div className="flex items-end justify-between gap-2">
+              <p className="text-[30px] font-semibold leading-none tracking-tight">
+                <AnimatedNumber value={stat.value} />
+              </p>
+              {stat.spark && <Sparkline values={stat.spark} className="hidden sm:block" />}
+            </div>
+            <p
+              className={cn(
+                "flex items-center gap-1 text-xs",
+                stat.trend ? "font-medium text-success-ink" : stat.alert ? "font-medium text-warning" : "text-muted-foreground"
+              )}
+            >
+              {stat.trend && <TrendingUp className="size-3.5 shrink-0" />}
+              {stat.alert && <Clock className="size-3.5 shrink-0" />}
+              <span className="truncate">{stat.foot}</span>
+            </p>
+          </Link>
+        ))}
+      </Reveal>
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
         {/* ============================ Colonne principale ============================ */}
         <div className="min-w-0 space-y-6">
-          {/* À traiter */}
-          <Reveal as="section" delay={200} className="card-surface">
-            <div className="px-5 pb-3 pt-5">
-              <SectionHeader title="À traiter" count={todos.length} />
+          {/* À traiter, avec onglets filtrants */}
+          <Reveal as="section" delay={80} className="card-surface overflow-hidden">
+            <div className="space-y-4 px-5 pt-5">
+              <SectionHeader title="À traiter" description="Les décisions qui vous attendent, de la plus urgente à la moins urgente." />
+              <div role="tablist" aria-label="Filtrer les actions" className="-mx-1 flex gap-1 overflow-x-auto px-1 pb-px">
+                {tabs.map((entry) => {
+                  const active = tab === entry.key;
+                  return (
+                    <button
+                      key={entry.key}
+                      type="button"
+                      role="tab"
+                      aria-selected={active}
+                      onClick={() => setTab(entry.key)}
+                      className={cn(
+                        "press inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg px-3 text-[13px] font-medium transition-colors duration-200",
+                        active ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                      )}
+                    >
+                      {entry.label}
+                      <span
+                        className={cn(
+                          "rounded px-1 text-[11px] tabular-nums",
+                          active ? "bg-white/15 text-primary-foreground" : "bg-muted text-muted-foreground"
+                        )}
+                      >
+                        {entry.count}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-            {queue.length === 0 ? (
-              <div className="mx-5 mb-5 flex flex-col items-center justify-center rounded-lg border border-dashed p-8 text-center">
+
+            {visibleTodos.length === 0 ? (
+              <div className="m-5 flex flex-col items-center justify-center rounded-lg border border-dashed p-8 text-center">
                 <CheckCircle2 className="size-6 text-success" />
                 <p className="mt-2 text-sm font-medium">Tout est à jour</p>
                 <p className="text-xs text-muted-foreground">Aucune décision ne vous attend pour le moment.</p>
               </div>
             ) : (
-              <ul className="divide-y border-t">
-                {queue.map((todo, index) => {
+              <ul key={tab} className="mt-4 divide-y border-t">
+                {visibleTodos.map((todo, index) => {
                   const meta = TODO_META[todo.kind];
                   return (
-                    <Reveal as="li" key={todo.id} delay={240 + index * 50}>
+                    <Reveal as="li" key={todo.id} delay={index * 40}>
                       <TodoTarget
                         todo={todo}
                         className="group flex items-center gap-3.5 px-5 py-3 transition-colors duration-150 hover:bg-muted/50"
                       >
-                        <span className={cn("grid size-9 shrink-0 place-items-center rounded-lg", meta.tone)}>
-                          <meta.icon className="size-4" />
+                        <span className="grid size-9 shrink-0 place-items-center rounded-lg border bg-card text-muted-foreground transition-colors group-hover:text-foreground">
+                          <meta.icon className="size-[18px]" />
                         </span>
                         <span className="min-w-0 flex-1">
                           <span className="block truncate text-sm font-medium text-foreground">{todo.label}</span>
                           <span className="block truncate text-xs text-muted-foreground">{todo.meta}</span>
                         </span>
-                        <span className="inline-flex shrink-0 items-center gap-1 text-[13px] font-medium text-muted-foreground transition-colors group-hover:text-primary">
+                        <span className="inline-flex h-8 shrink-0 items-center gap-1 rounded-lg border bg-card px-2.5 text-[13px] font-medium text-foreground shadow-sm transition-colors group-hover:border-primary group-hover:bg-primary group-hover:text-primary-foreground">
                           <span className="hidden sm:inline">{meta.action}</span>
-                          <ArrowRight className="size-4 transition-transform duration-200 group-hover:translate-x-0.5" />
+                          <ArrowRight className="size-3.5" />
                         </span>
                       </TodoTarget>
                     </Reveal>
@@ -346,105 +521,124 @@ function CompanyDashboard() {
                 })}
               </ul>
             )}
-            {todos.length > queue.length && (
-              <p className="border-t px-5 py-2.5 text-xs text-muted-foreground">
-                + {todos.length - queue.length} autre{todos.length - queue.length > 1 ? "s" : ""} action
-                {todos.length - queue.length > 1 ? "s" : ""} moins urgente{todos.length - queue.length > 1 ? "s" : ""}
+            {hiddenCount > 0 && (
+              <p className="border-t bg-muted/30 px-5 py-2.5 text-xs text-muted-foreground">
+                + {hiddenCount} autre{hiddenCount > 1 ? "s" : ""} action{hiddenCount > 1 ? "s" : ""} dans cette catégorie
               </p>
             )}
           </Reveal>
 
-          {/* Offres publiées */}
-          <section className="space-y-3">
-            <Reveal delay={260}>
+          {/* Pipeline de recrutement */}
+          <Reveal as="section" delay={140} className="card-surface p-5">
+            <SectionHeader
+              title="Pipeline de recrutement"
+              description={`${inPipeline.length} candidature${inPipeline.length > 1 ? "s" : ""} en cours, toutes offres confondues`}
+              to="/entreprise/candidatures"
+            />
+            <div className="mt-5 flex h-3 gap-1" role="img" aria-label="Répartition des candidatures par statut">
+              {pipelineCounts
+                .filter((step) => step.count > 0)
+                .map((step, index) => (
+                  <span
+                    key={step.status}
+                    className={cn("animate-grow-x h-full rounded-full", step.color)}
+                    style={{ flexGrow: step.count, flexBasis: 0, ["--delay" as string]: `${260 + index * 90}ms` }}
+                    title={`${candidateStatusLabels[step.status].label} : ${step.count}`}
+                  />
+                ))}
+            </div>
+            <dl className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+              {pipelineCounts.map((step) => (
+                <div key={step.status} className="min-w-0">
+                  <dt className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <span className={cn("size-2 shrink-0 rounded-full", step.color)} aria-hidden />
+                    <span className="truncate">{candidateStatusLabels[step.status].label}</span>
+                  </dt>
+                  <dd className="mt-1 text-xl font-semibold tabular-nums">{step.count}</dd>
+                </div>
+              ))}
+              <div className="min-w-0 lg:border-l lg:pl-4">
+                <dt className="truncate text-xs text-muted-foreground">Taux d'acceptation</dt>
+                <dd className="mt-1 text-xl font-semibold tabular-nums text-success-ink">
+                  <AnimatedNumber value={acceptanceRate} suffix=" %" />
+                </dd>
+              </div>
+            </dl>
+          </Reveal>
+
+          {/* Offres publiées : tableau */}
+          <Reveal as="section" delay={200} className="card-surface overflow-hidden">
+            <div className="px-5 pb-4 pt-5">
               <SectionHeader title="Offres publiées" count={activeOffers.length} to="/entreprise/offres" linkLabel="Gérer les offres" />
-            </Reveal>
+            </div>
             {activeOffers.length === 0 ? (
-              <div className="card-surface flex flex-col items-center p-8 text-center">
+              <div className="flex flex-col items-center border-t p-8 text-center">
                 <Briefcase className="size-6 text-muted-foreground" />
                 <p className="mt-2 text-sm font-medium">Aucune offre publiée</p>
                 <p className="text-xs text-muted-foreground">Publiez une offre pour commencer à recevoir des candidatures.</p>
               </div>
             ) : (
-              <div className="grid gap-4 md:grid-cols-2">
-                {activeOffers.slice(0, 4).map((offer, index) => {
+              <ul className="divide-y border-t">
+                <li className="hidden grid-cols-[minmax(0,2.2fr)_minmax(0,0.8fr)_minmax(0,0.8fr)_minmax(0,1.4fr)_minmax(0,0.6fr)] gap-4 bg-muted/40 px-5 py-2.5 text-xs font-medium text-muted-foreground md:grid">
+                  <span>Offre</span>
+                  <span>Candidatures</span>
+                  <span>À examiner</span>
+                  <span>Examinées</span>
+                  <span className="text-right">Clôture</span>
+                </li>
+                {activeOffers.map((offer, index) => {
                   const pipeline = candidates.filter((c) => c.offerId === offer.id && c.status !== "retiree");
                   const waiting = pipeline.filter((c) => c.status === "en_attente" || c.status === "examen").length;
                   const examined = pipeline.length - pipeline.filter((c) => c.status === "en_attente").length;
                   const pct = pipeline.length ? Math.round((examined / pipeline.length) * 100) : 0;
                   const daysLeft = Math.ceil((new Date(`${offer.deadline}T23:59:59`).getTime() - now) / DAY);
+                  const urgent = daysLeft >= 0 && daysLeft <= 7;
                   return (
-                    <Reveal key={offer.id} delay={300 + index * 60} className="min-w-0">
-                      <Link to="/entreprise/offres" className="card-surface hover-lift block p-5">
-                        <div className="flex items-start gap-3">
-                          <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-primary-soft text-xs font-semibold text-primary">
-                            {initialsOf(offer.department)}
+                    <li key={offer.id}>
+                      <Link
+                        to="/entreprise/offres"
+                        className="group grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-3 px-5 py-3.5 transition-colors hover:bg-muted/40 md:grid-cols-[minmax(0,2.2fr)_minmax(0,0.8fr)_minmax(0,0.8fr)_minmax(0,1.4fr)_minmax(0,0.6fr)]"
+                      >
+                        <span className="flex min-w-0 items-center gap-3">
+                          <span className="grid size-9 shrink-0 place-items-center rounded-lg border bg-card text-muted-foreground transition-colors group-hover:text-foreground">
+                            <Briefcase className="size-[18px]" />
                           </span>
-                          <div className="min-w-0 flex-1">
-                            <p className="truncate text-sm font-semibold">{offer.title}</p>
-                            <p className="truncate text-xs text-muted-foreground">
-                              {offer.department} · publiée le {fmtDate(offer.published, false)}
-                            </p>
-                          </div>
-                          <Badge label={offerStatusLabels[offer.status].label} tone={offerStatusLabels[offer.status].tone} />
-                        </div>
-
-                        <dl className="mt-5 grid grid-cols-3 gap-2">
-                          <div>
-                            <dt className="text-xs text-muted-foreground">Candidatures</dt>
-                            <dd className="mt-0.5 text-lg font-semibold tabular-nums">{pipeline.length}</dd>
-                          </div>
-                          <div>
-                            <dt className="text-xs text-muted-foreground">À examiner</dt>
-                            <dd className={cn("mt-0.5 text-lg font-semibold tabular-nums", waiting > 0 && "text-warning")}>
-                              {waiting}
-                            </dd>
-                          </div>
-                          <div>
-                            <dt className="text-xs text-muted-foreground">Clôture</dt>
-                            <dd
-                              className={cn(
-                                "mt-0.5 text-lg font-semibold tabular-nums",
-                                daysLeft >= 0 && daysLeft <= 7 && "text-destructive-ink"
-                              )}
-                            >
-                              {daysLeft < 0 ? "Échue" : `J-${daysLeft}`}
-                            </dd>
-                          </div>
-                        </dl>
-
-                        <div className="mt-4">
-                          <div className="mb-1.5 flex items-center justify-between text-xs">
-                            <span className="text-muted-foreground">Candidatures examinées</span>
-                            <span className="font-medium tabular-nums">
-                              <AnimatedNumber value={pct} suffix=" %" />
-                            </span>
-                          </div>
-                          <div
-                            className="h-1.5 overflow-hidden rounded-full bg-muted"
-                            role="progressbar"
-                            aria-valuenow={pct}
-                            aria-valuemin={0}
-                            aria-valuemax={100}
-                            aria-label="Candidatures examinées"
-                          >
-                            <div
-                              className="animate-grow-x h-full rounded-full bg-primary"
-                              style={{ width: `${pct}%`, ["--delay" as string]: `${420 + index * 80}ms` }}
+                          <span className="min-w-0">
+                            <span className="block truncate text-sm font-medium group-hover:text-primary">{offer.title}</span>
+                            <span className="block truncate text-xs text-muted-foreground">{offer.department}</span>
+                          </span>
+                        </span>
+                        {/* Téléphone : clôture à droite du titre */}
+                        <span className={cn("text-xs tabular-nums md:hidden", urgent ? "font-medium text-destructive-ink" : "text-muted-foreground")}>
+                          {daysLeft < 0 ? "Échue" : `J-${daysLeft}`}
+                        </span>
+                        <span className="hidden text-sm tabular-nums md:block">{pipeline.length}</span>
+                        <span className={cn("hidden text-sm tabular-nums md:block", waiting > 0 && "font-medium text-warning")}>
+                          {waiting}
+                        </span>
+                        <span className="col-span-2 flex items-center gap-2.5 md:col-span-1">
+                          <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
+                            <span
+                              className="animate-grow-x block h-full rounded-full bg-primary"
+                              style={{ width: `${pct}%`, ["--delay" as string]: `${320 + index * 80}ms` }}
                             />
-                          </div>
-                        </div>
+                          </span>
+                          <span className="w-10 text-right text-xs font-medium tabular-nums">{pct} %</span>
+                        </span>
+                        <span className={cn("hidden text-right text-sm tabular-nums md:block", urgent ? "font-medium text-destructive-ink" : "text-muted-foreground")}>
+                          {daysLeft < 0 ? "Échue" : `J-${daysLeft}`}
+                        </span>
                       </Link>
-                    </Reveal>
+                    </li>
                   );
                 })}
-              </div>
+              </ul>
             )}
-          </section>
+          </Reveal>
 
           {/* Dossiers stagiaires */}
-          <Reveal as="section" delay={340} className="card-surface overflow-hidden">
-            <div className="px-5 pb-3 pt-5">
+          <Reveal as="section" delay={260} className="card-surface overflow-hidden">
+            <div className="px-5 pb-4 pt-5">
               <SectionHeader title="Dossiers stagiaires" count={interns.length} to="/entreprise/stagiaires" />
             </div>
             {interns.length === 0 ? (
@@ -486,17 +680,12 @@ function CompanyDashboard() {
                     })}
                   </tbody>
                 </table>
-
                 <ul className="divide-y border-t md:hidden">
                   {interns.slice(0, 5).map((intern) => {
                     const step = nextStep(intern.id);
                     return (
                       <li key={intern.id}>
-                        <Link
-                          to="/entreprise/stagiaires/$internId"
-                          params={{ internId: intern.id }}
-                          className="flex items-center gap-3 px-5 py-3"
-                        >
+                        <Link to="/entreprise/stagiaires/$internId" params={{ internId: intern.id }} className="flex items-center gap-3 px-5 py-3">
                           <AvatarInitials initials={intern.initials} className="size-8 text-xs" />
                           <div className="min-w-0 flex-1">
                             <p className="truncate text-sm font-medium">{intern.name}</p>
@@ -515,112 +704,124 @@ function CompanyDashboard() {
 
         {/* ============================ Colonne latérale ============================ */}
         <aside className="space-y-6">
-          {/* Carte entreprise : logo, identité, chiffres clés */}
-          <Reveal delay={160} className="card-surface overflow-hidden">
-            <div className="relative h-20 bg-gradient-to-br from-primary via-primary to-[hsl(205_55%_38%)]">
-              <div className="absolute -right-6 -top-10 size-32 rounded-full border-[14px] border-accent/20" aria-hidden />
-              <div className="absolute right-20 top-6 size-10 rounded-full bg-accent/15" aria-hidden />
-            </div>
-            <div className="px-5 pb-5">
-              <CompanyLogoUploader className="-mt-10 size-20 rounded-2xl shadow-md ring-4 ring-card" />
-              <div className="mt-3 flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="truncate text-lg font-semibold tracking-tight">{profile.name}</p>
-                  <p className="flex items-center gap-1 truncate text-xs text-muted-foreground">
-                    {profile.sector}
-                    <span aria-hidden>·</span>
-                    <MapPin className="size-3 shrink-0" /> {profile.city}
-                  </p>
-                </div>
-                <Link
-                  to="/entreprise/profil"
-                  className="shrink-0 rounded-lg border px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:border-accent/60 hover:text-primary"
-                >
-                  Voir le profil
-                </Link>
-              </div>
-              {!profile.logo && (
-                <p className="mt-2 text-xs text-muted-foreground">
-                  Ajoutez votre logo : il apparaîtra sur vos offres et attestations.
-                </p>
-              )}
-              <dl className="mt-4 grid grid-cols-3 divide-x rounded-lg border text-center">
-                <div className="py-2.5">
-                  <dt className="text-[11px] text-muted-foreground">Offres</dt>
-                  <dd className="text-base font-semibold tabular-nums">{activeOffers.length}</dd>
-                </div>
-                <div className="py-2.5">
-                  <dt className="text-[11px] text-muted-foreground">Stagiaires</dt>
-                  <dd className="text-base font-semibold tabular-nums">{interns.length}</dd>
-                </div>
-                <div className="py-2.5">
-                  <dt className="text-[11px] text-muted-foreground">Services</dt>
-                  <dd className="text-base font-semibold tabular-nums">{services.length}</dd>
-                </div>
-              </dl>
-            </div>
-          </Reveal>
-
-          {/* Capacité des services */}
-          <Reveal delay={280} className="card-surface p-5">
-            <SectionHeader title="Capacité des services" to="/entreprise/services" linkLabel="Gérer" />
-            <div className="mt-4 flex items-end justify-between">
-              <p className="text-[28px] font-semibold leading-none tracking-tight tabular-nums">
-                <AnimatedNumber value={placesFilled} />
-                <span className="text-base font-medium text-muted-foreground">/{placesNeeded}</span>
+          {/* Carte entreprise — version d'origine, conservée telle quelle (logo ajoutable) */}
+          <Reveal delay={120} className="card-surface overflow-hidden">
+            <div className="relative bg-gradient-to-b from-accent-soft/80 via-accent-soft/30 to-card px-5 pb-5 pt-6 text-center">
+              <div className="absolute -right-8 -top-8 size-28 rounded-full border-[10px] border-accent/15" aria-hidden />
+              <CompanyLogoUploader radius="rounded-full" className="relative mx-auto size-20 rounded-full shadow-md ring-4 ring-card" />
+              <p className="relative mt-3 text-lg font-semibold tracking-tight">{profile.name}</p>
+              <p className="relative text-sm text-muted-foreground">{profile.sector}</p>
+              <p className="relative mt-1 inline-flex items-center gap-1 text-xs text-muted-foreground">
+                <MapPin className="size-3" /> {profile.city}
               </p>
-              <p className="text-xs text-muted-foreground">places pourvues</p>
+              <div className="relative mt-5">
+                <p className="text-4xl font-semibold tracking-tight">
+                  <AnimatedNumber value={placesLeft} />
+                </p>
+                <p className="text-sm text-muted-foreground">place{placesLeft > 1 ? "s" : ""} de stage à pourvoir</p>
+              </div>
             </div>
-            <ul className="mt-4 space-y-3.5">
-              {serviceCapacity.map(({ service, filled, left }, index) => {
-                const pct = service.internsNeeded ? Math.min(100, Math.round((filled / service.internsNeeded) * 100)) : 0;
+
+            <div className="space-y-2 px-4 pb-4">
+              {serviceCapacity.slice(0, 4).map(({ service, filled, left }) => {
+                const pct = service.internsNeeded ? Math.round((filled / service.internsNeeded) * 100) : 0;
                 return (
-                  <li key={service.id}>
-                    <div className="mb-1.5 flex items-center justify-between gap-3 text-[13px]">
-                      <span className="truncate font-medium">{service.name}</span>
-                      <span className={cn("shrink-0 text-xs tabular-nums", left > 0 ? "text-warning" : "text-success-ink")}>
-                        {left > 0 ? `${left} libre${left > 1 ? "s" : ""}` : "Complet"}
-                      </span>
+                  <Link
+                    key={service.id}
+                    to="/entreprise/services"
+                    className="flex items-center gap-3 rounded-xl border bg-card p-3 transition-colors hover:border-accent/50 hover:bg-muted/40"
+                  >
+                    <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-primary-soft text-[11px] font-semibold text-primary">
+                      {initialsOf(service.name)}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold">{service.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        Places pourvues : {filled}/{service.internsNeeded}
+                      </p>
                     </div>
-                    <div className="h-1.5 overflow-hidden rounded-full bg-muted">
-                      <div
-                        className={cn("animate-grow-x h-full rounded-full", left > 0 ? "bg-accent" : "bg-success")}
-                        style={{ width: `${Math.max(pct, 2)}%`, ["--delay" as string]: `${400 + index * 80}ms` }}
-                      />
-                    </div>
-                  </li>
+                    <span
+                      className={cn(
+                        "rounded-md px-1.5 py-0.5 text-[11px] font-semibold tabular-nums",
+                        left > 0 ? "bg-warning-soft text-warning" : "bg-success-soft text-success-ink"
+                      )}
+                    >
+                      {left > 0 ? `${left} libre${left > 1 ? "s" : ""}` : `${pct}%`}
+                    </span>
+                  </Link>
                 );
               })}
-            </ul>
+            </div>
           </Reveal>
 
-          {/* Prochains entretiens */}
-          <Reveal delay={340} className="card-surface p-5">
+          {/* Prochains entretiens : agenda */}
+          <Reveal delay={180} className="card-surface p-5">
             <SectionHeader title="Prochains entretiens" to="/entreprise/entretiens" />
             {upcomingInterviews.length === 0 ? (
               <p className="mt-4 text-sm text-muted-foreground">Aucun entretien programmé.</p>
             ) : (
-              <ul className="mt-4 space-y-3">
-                {upcomingInterviews.slice(0, 3).map((interview) => {
+              <ul className="mt-4 space-y-2">
+                {upcomingInterviews.slice(0, 3).map((interview, index) => {
                   const date = new Date(`${interview.date}T00:00:00`);
+                  const first = index === 0;
                   return (
-                    <li key={interview.id} className="flex items-center gap-3">
-                      <span className="flex w-11 shrink-0 flex-col items-center rounded-lg border py-1.5 leading-none">
-                        <span className="text-[10px] font-medium uppercase text-muted-foreground">
+                    <li
+                      key={interview.id}
+                      className={cn("flex items-center gap-3 rounded-xl p-2.5", first ? "bg-primary-soft/70" : "hover:bg-muted/50")}
+                    >
+                      <span
+                        className={cn(
+                          "flex w-11 shrink-0 flex-col items-center rounded-lg py-1.5 leading-none",
+                          first ? "bg-primary text-primary-foreground" : "border bg-card"
+                        )}
+                      >
+                        <span className={cn("text-[10px] font-medium uppercase", first ? "text-accent" : "text-muted-foreground")}>
                           {date.toLocaleDateString("fr-FR", { month: "short" }).replace(".", "")}
                         </span>
                         <span className="mt-0.5 text-base font-semibold tabular-nums">{date.getDate()}</span>
                       </span>
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-medium">{candidateName(interview.candidateId)}</p>
-                        <p className="truncate text-xs text-muted-foreground">
-                          {interview.time} · {candidateOffer(interview.candidateId)}
-                        </p>
+                        <p className="truncate text-xs text-muted-foreground">{candidateOffer(interview.candidateId)}</p>
                       </div>
+                      <span className="shrink-0 rounded-md bg-card px-1.5 py-0.5 text-xs font-medium tabular-nums ring-1 ring-border">
+                        {interview.time}
+                      </span>
                     </li>
                   );
                 })}
               </ul>
+            )}
+          </Reveal>
+
+          {/* Activité récente : fil chronologique */}
+          <Reveal delay={240} className="card-surface p-5">
+            <SectionHeader title="Activité récente" />
+            {activity.length === 0 ? (
+              <p className="mt-4 text-sm text-muted-foreground">Aucune activité pour le moment.</p>
+            ) : (
+              <ol className="relative mt-4 space-y-4 before:absolute before:bottom-3 before:left-[15px] before:top-3 before:w-px before:bg-border">
+                {activity.map((item) => (
+                  <li key={item.id} className="relative flex gap-3">
+                    <span className="relative z-10 grid size-8 shrink-0 place-items-center rounded-full bg-card text-[10px] font-semibold text-primary ring-1 ring-border">
+                      {item.initials}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[13px] leading-snug">
+                        <span className="font-medium">{item.name}</span>
+                        <Badge
+                          label={candidateStatusLabels[item.status].label}
+                          tone={candidateStatusLabels[item.status].tone}
+                          className="px-1.5 py-0 text-[10px]"
+                        />
+                      </p>
+                      <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                        {item.offer} · {relativeDay(item.date)}
+                      </p>
+                    </div>
+                  </li>
+                ))}
+              </ol>
             )}
           </Reveal>
         </aside>
