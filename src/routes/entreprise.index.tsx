@@ -573,8 +573,18 @@ function CompanyDashboard() {
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
         {/* ============================ Colonne principale ============================ */}
         <div className="min-w-0 space-y-6">
+          {/* Pipeline de recrutement */}
+          <Reveal as="section" delay={80} className="card-surface p-5">
+            <SectionHeader
+              title="Pipeline de recrutement"
+              description={`${inPipeline.length} candidature${inPipeline.length > 1 ? "s" : ""} en cours, toutes offres confondues`}
+              to="/entreprise/candidatures"
+            />
+            <PipelineChart steps={pipelineCounts} total={inPipeline.length} acceptanceRate={acceptanceRate} />
+          </Reveal>
+
           {/* À traiter, avec onglets filtrants */}
-          <Reveal as="section" delay={80} className="card-surface overflow-hidden">
+          <Reveal as="section" delay={140} className="card-surface overflow-hidden">
             <div className="space-y-4 px-5 pt-5">
               <SectionHeader title="À traiter" description="Les décisions qui vous attendent, de la plus urgente à la moins urgente." />
               <div role="tablist" aria-label="Filtrer les actions" className="flex flex-wrap gap-1.5">
@@ -645,16 +655,6 @@ function CompanyDashboard() {
                 + {hiddenCount} autre{hiddenCount > 1 ? "s" : ""} action{hiddenCount > 1 ? "s" : ""} dans cette catégorie
               </p>
             )}
-          </Reveal>
-
-          {/* Pipeline de recrutement */}
-          <Reveal as="section" delay={140} className="card-surface p-5">
-            <SectionHeader
-              title="Pipeline de recrutement"
-              description={`${inPipeline.length} candidature${inPipeline.length > 1 ? "s" : ""} en cours, toutes offres confondues`}
-              to="/entreprise/candidatures"
-            />
-            <PipelineChart steps={pipelineCounts} total={inPipeline.length} acceptanceRate={acceptanceRate} />
           </Reveal>
 
           {/* Offres publiées : tableau */}
