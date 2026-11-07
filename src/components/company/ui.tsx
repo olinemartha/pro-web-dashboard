@@ -12,7 +12,7 @@ export type Tone = "muted" | "primary" | "accent" | "success" | "warning" | "des
 const TONE_CLASSES: Record<Tone, string> = {
   muted: "border-border bg-muted text-muted-foreground",
   primary: "border-primary/30 bg-primary-soft text-primary",
-  accent: "border-accent/40 bg-accent-soft text-accent-foreground",
+  accent: "border-accent/30 bg-accent-soft text-primary",
   success: "border-success/30 bg-success-soft text-success-ink",
   warning: "border-warning/30 bg-warning-soft text-warning",
   destructive: "border-destructive/30 bg-destructive-soft text-destructive-ink",

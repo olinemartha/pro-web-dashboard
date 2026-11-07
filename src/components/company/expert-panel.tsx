@@ -46,7 +46,7 @@ function ProposalCard({ proposal }: { proposal: ExpertProposal }) {
           <span
             className={cn(
               "grid size-7 shrink-0 place-items-center rounded-full text-xs font-semibold leading-none tabular-nums",
-              recommended ? "bg-accent text-primary" : "bg-primary-soft text-primary"
+              recommended ? "bg-accent text-white" : "bg-primary-soft text-primary"
             )}
           >
             {proposal.rank}

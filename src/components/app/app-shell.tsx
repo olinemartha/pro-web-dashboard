@@ -64,8 +64,8 @@ function SidebarNav({ pathname, onNavigate }: { pathname: string; onNavigate?: (
                   : "text-white/70 hover:bg-white/5 hover:text-white"
               )}
             >
-              {active && <span className="absolute left-0 top-1 bottom-1 w-0.5 rounded-full bg-accent" aria-hidden />}
-              <item.icon className={cn("size-4 shrink-0", active && "text-accent")} />
+              {active && <span className="absolute left-0 top-1 bottom-1 w-0.5 rounded-full bg-white" aria-hidden />}
+              <item.icon className={cn("size-4 shrink-0", active && "text-white")} />
               {item.label}
             </Link>
           );
@@ -95,7 +95,7 @@ function SidebarNav({ pathname, onNavigate }: { pathname: string; onNavigate?: (
             <item.icon
               className={cn(
                 "size-4 shrink-0",
-                pathname.startsWith(item.href) && "text-accent"
+                pathname.startsWith(item.href) && "text-white"
               )}
             />
             {item.label}
@@ -117,7 +117,7 @@ function SidebarContent({ pathname, onNavigate }: { pathname: string; onNavigate
   return (
     <>
       <div className="flex items-center gap-3 px-1">
-        <span className="grid size-9 place-items-center rounded-lg bg-accent text-lg font-bold text-primary">S</span>
+        <span className="grid size-9 place-items-center rounded-lg bg-white text-lg font-bold text-primary">S</span>
         <span className="text-lg font-bold tracking-tight">StageManager</span>
       </div>
       <SidebarNav pathname={pathname} onNavigate={onNavigate} />
@@ -167,7 +167,7 @@ function TopBar({ pathname }: { pathname: string }) {
         </Link>
 
         <div className="flex items-center gap-3">
-          <span className="grid size-9 shrink-0 place-items-center rounded-full bg-accent-soft text-sm font-semibold text-[#142D4E]">
+          <span className="grid size-9 shrink-0 place-items-center rounded-full bg-accent-soft text-sm font-semibold text-primary">
             {initials || "U"}
           </span>
           <span className="hidden text-sm font-medium text-foreground sm:block">{fullName}</span>
@@ -218,7 +218,7 @@ function TopBarMobile({ pathname }: { pathname: string }) {
           <aside className="absolute left-0 top-0 flex h-full w-72 flex-col gap-8 bg-primary p-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <span className="grid size-9 place-items-center rounded-lg bg-accent text-lg font-bold text-primary">S</span>
+                <span className="grid size-9 place-items-center rounded-lg bg-white text-lg font-bold text-primary">S</span>
                 <span className="text-lg font-bold tracking-tight text-white">StageManager</span>
               </div>
               <button aria-label="Fermer le menu" onClick={() => setOpen(false)} className="grid size-10 place-items-center rounded-md text-white/70 hover:bg-white/10">

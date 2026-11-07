@@ -2,10 +2,10 @@
 name: StageManager
 description: Plateforme professionnelle de gestion des stages — espaces étudiant, entreprise et administrateur.
 colors:
-  navy-institutional: "#142D4E"
-  navy-soft: "#E7EEF9"
-  sky-indicator: "#75B8E7"
-  sky-soft: "#DCEDF9"
+  royal-blue: "#1E3A8A"
+  glacier-blue: "#E8F0FE"
+  vivid-blue: "#2F6FED"
+  vivid-soft: "#E8F0FE"
   paper-white: "#FFFFFF"
   warm-ink: "#2C2421"
   slate-muted: "#F1F5F9"
@@ -63,7 +63,7 @@ spacing:
   xxl: "32px"
 components:
   button-primary:
-    backgroundColor: "{colors.navy-institutional}"
+    backgroundColor: "{colors.royal-blue}"
     textColor: "{colors.paper-white}"
     rounded: "{rounded.md}"
     padding: "0 16px"
@@ -113,18 +113,18 @@ components:
 
 **Creative North Star: « Le Guichet de confiance »**
 
-StageManager est un service administratif moderne : un guichet calme, lisible et fiable où l'étudiant, l'entreprise et l'administrateur savent immédiatement où ils se trouvent et quelle est la prochaine action. Le cadre est institutionnel — bleu marine, blanc, typographie Inter — mais jamais froid ni bureaucratique. La confiance vient de la précision : hiérarchie nette, statuts explicites, formulaires guidés, aucune décoration qui détourne de la tâche.
+StageManager est un service administratif moderne : un guichet calme, lisible et fiable où l'étudiant, l'entreprise et l'administrateur savent immédiatement où ils se trouvent et quelle est la prochaine action. Le cadre est institutionnel — bleu roi, blanc, typographie Inter — mais jamais froid ni bureaucratique. La confiance vient de la précision : hiérarchie nette, statuts explicites, formulaires guidés, aucune décoration qui détourne de la tâche.
 
-La composition repose sur un cadre navy fixe (navigation latérale) et une surface de travail blanche posée sur un canevas gris très clair. Les actions principales sont marine, les accents bleu ciel signalent la sélection et l'activité, et les couleurs fonctionnelles (vert, ambre, rouge) restent réservées aux statuts. Les cartes sont légèrement surélevées : bordure fine et ombre discrète suffisent à séparer les plans sans transformer l'interface en tableau de bord décoratif.
+La composition repose sur une navigation latérale blanche et une surface de travail posée sur un canevas gris très clair, légèrement bleuté. Les actions principales sont en bleu roi, le bleu vif signale les liens, le focus et les données des graphiques, et le bleu glacier marque la sélection. Les couleurs fonctionnelles (vert, ambre, rouge) restent réservées aux statuts. Les icônes sont neutres et monochromes.
 
 Le système est sobre par doctrine. Il privilégie la lisibilité, les libellés français explicites et la constance entre les trois espaces. La couleur ne porte jamais seule une information ; chaque badge associe une teinte et un texte. Les animations restent courtes et fonctionnelles, et respectent `prefers-reduced-motion`.
 
 **Key Characteristics:**
-- Cadre bleu marine, surface blanche, canevas gris froid très clair.
+- Accents bleu roi, surface blanche, canevas gris froid très clair.
 - Inter uniquement, avec une échelle compacte de 12 à 30 px.
 - Coins légèrement arrondis (6–8 px), pilules complètes réservées aux badges et avatars.
 - Bordures 1 px systématiques, ombres rares et douces.
-- Bleu ciel en accent de sélection, jamais en texte courant.
+- Bleu vif en accent (liens, focus, graphiques), jamais en grands aplats.
 - Statuts toujours exprimés par un badge texte + couleur.
 - Densité professionnelle : 20–24 px de padding dans les cartes, sections espacées de 24 px.
 
@@ -133,12 +133,11 @@ Le système est sobre par doctrine. Il privilégie la lisibilité, les libellés
 La palette est institutionnelle et à faible distraction : deux bleus de marque, un blanc dominant, des gris froids pour la structure et quatre couleurs fonctionnelles strictement réservées au statut.
 
 ### Primary
-- **Bleu marine institutionnel** (#142D4E) : fond de la navigation latérale, boutons principaux, titres forts, élément actif, focus clavier. C'est la couleur d'autorité et d'action.
-- **Marine adouci** (#E7EEF9) : fond des tuiles d'icônes, badges primaires et zones d'information calmes.
+- **Bleu roi** (#1E3A8A) : identité (logo), boutons principaux, titres forts, élément actif du menu. C'est la couleur d'autorité et d'action.
+- **Bleu glacier** (#E8F0FE) : fond de l'élément actif, badges primaires et zones d'information calmes.
 
 ### Secondary
-- **Bleu ciel indicateur** (#75B8E7) : liseré vertical de l'élément de navigation actif, carré du logo, cercles décoratifs des en-têtes de tableau de bord, accents de survol. Il signale l'activité et la sélection.
-- **Bleu ciel adouci** (#DCEDF9) : fond des puces de compétences, des badges d'accent et des zones d'aide.
+- **Bleu vif** (#2F6FED) : liens, focus clavier, séries des graphiques, indicateurs d'activité. **Bleu glacier** (#E8F0FE) : fond de l'élément actif du menu, badges et zones mises en avant.
 
 ### Tertiary
 - **Vert validation** (#27865A) sur fond **vert très clair** (#E7F8F0) : accepter, valider, réussir, attestation validée.
@@ -153,8 +152,8 @@ La palette est institutionnelle et à faible distraction : deux bleus de marque,
 - **Ligne discrète** (#DAE0E7) : toutes les bordures de cartes, champs, tableaux et séparateurs.
 
 ### Named Rules
-**The Navy Frame Rule.** Le marine encadre et commande ; il ne remplit jamais une grande zone de contenu. Navigation, action principale et focus uniquement.
-**The Sky Accent Rule.** Le bleu ciel occupe moins de 10 % de l'écran. Il marque la sélection et l'activité ; il n'est jamais utilisé pour du texte courant sur fond blanc.
+**The Royal Frame Rule.** Le bleu roi encadre et commande ; il ne remplit jamais une grande zone de contenu. Navigation, action principale et focus uniquement.
+**The Vivid Accent Rule.** Le bleu vif occupe moins de 10 % de l'écran. Il marque les liens, le focus et les données ; il n'est jamais utilisé en grand aplat de fond.
 **The Status Is Never Colour Alone Rule.** Un statut est toujours un badge avec un libellé français explicite. La teinte renforce le texte, elle ne le remplace pas.
 
 ## Typography
@@ -213,13 +212,13 @@ L'indicateur actif de la navigation est un liseré vertical de 2 px, arrondi, pl
 
 ### Buttons
 - **Shape:** rayon 6 px, hauteur 40 px (32 px pour la taille compacte), padding horizontal 16 px.
-- **Primary:** fond marine `#142D4E`, texte blanc, graisse 500, transition de couleur 150 ms. Utilisé pour l'action principale d'un écran, une seule fois par zone.
-- **Hover / Focus:** fond éclairci à `#2C4260` au survol ; anneau de focus marine de 2 px avec décalage de 2 px. Jamais d'ombre portée sur le bouton.
+- **Primary:** fond bleu roi `#1E3A8A`, texte blanc, graisse 500, transition de couleur 150 ms. Utilisé pour l'action principale d'un écran, une seule fois par zone.
+- **Hover / Focus:** fond assombri au survol ; anneau de focus bleu vif avec décalage de 2 px. Jamais d'ombre portée sur le bouton.
 - **Secondary / Ghost / Destructive:** contour blanc + bordure `#DAE0E7` pour les actions secondaires ; fantôme transparent avec fond gris clair au survol ; destructif rouge sur fond rouge très clair, sans remplissage plein.
 
 ### Chips
-- **Style:** pilule complète, fond `#DCEDF9`, texte marine, 12 px, graisse 500. Utilisées pour les compétences et les filtres.
-- **State:** un filtre actif passe en fond marine et texte blanc ; un badge de statut utilise la couleur fonctionnelle correspondante avec bordure de même teinte à 30 % d'opacité.
+- **Style:** pilule complète, fond `#E8F0FE`, texte bleu roi, 12 px, graisse 500. Utilisées pour les compétences et les filtres.
+- **State:** un filtre actif passe en fond bleu roi et texte blanc ; un badge de statut utilise la couleur fonctionnelle correspondante avec bordure de même teinte à 30 % d'opacité.
 
 ### Cards / Containers
 - **Corner Style:** 8 px.
@@ -230,16 +229,16 @@ L'indicateur actif de la navigation est un liseré vertical de 2 px, arrondi, pl
 
 ### Inputs / Fields
 - **Style:** fond blanc, bordure 1 px `#DAE0E7`, rayon 6 px, hauteur 40 px, padding horizontal 12 px, texte 14 px.
-- **Focus:** bordure bleu ciel + anneau de 2 px à 20 % d'opacité ; le focus reste visible au clavier.
+- **Focus:** bordure bleu vif + anneau de 4 px à 15 % d'opacité ; le focus reste visible au clavier.
 - **Error / Disabled:** message rouge de 12 px sous le champ, bordure rouge ; état désactivé à 50 % d'opacité avec curseur interdit. Le libellé est toujours au-dessus, l'astérisque rouge signale un champ obligatoire.
 
 ### Navigation
-- **Style:** barre latérale marine pleine hauteur, logo carré bleu ciel, nom en blanc 18 px.
-- **Items:** texte blanc à 70 % d'opacité, 14 px, graisse 500, rayon 6 px, padding 8 × 12 px. Au survol : fond blanc à 5 %. Actif : fond blanc à 10 %, texte blanc et liseré bleu ciel de 2 px à gauche.
-- **Mobile:** tiroir marine de 288 px avec overlay noir à 40 %, fermeture par bouton X ou clic extérieur.
+- **Style:** barre latérale blanche pleine hauteur (repliable à 72 px), logo bleu roi, liens groupés par métier.
+- **Items:** texte gris, 13,5 px, icône monochrome, rayon 8 px. Au survol : fond gris très clair. Actif : pastille bleu glacier qui glisse, texte bleu roi et liseré bleu roi de 3 px à gauche.
+- **Mobile:** tiroir blanc de 300 px avec voile flouté, fermeture par bouton X ou clic extérieur.
 
 ### KPI Cards
-Carte blanche, libellé 12–14 px gris, icône discrète dans une tuile marine adoucie, valeur 24–30 px en graisse 600, précision 12 px grise. Quatre cartes maximum par ligne à partir de 1280 px.
+Carte blanche, libellé 12–14 px gris, icône monochrome dans une tuile bordée neutre, valeur 24–30 px en graisse 600, précision 12 px grise. Quatre cartes maximum par ligne à partir de 1280 px.
 
 ### Status Badges
 Pilule complète, bordure teintée, fond très clair, texte 12 px en graisse 600. Toujours lisible sans couleur : « Publiée », « En attente », « Acceptée », « Refusée », « Programmé », « Réalisé », « Annulé ».
@@ -250,7 +249,7 @@ Panneau blanc de 12 px de rayon, ombre élevée, largeur maximale 576 px (ou 768
 ## Do's and Don'ts
 
 ### Do:
-- **Do** utiliser le marine `#142D4E` pour l'action principale et le cadre de navigation, et réserver le bleu ciel aux accents de sélection.
+- **Do** utiliser le bleu roi `#1E3A8A` pour l'action principale, le bleu vif `#2F6FED` pour les liens et le focus, et le bleu glacier `#E8F0FE` pour la sélection.
 - **Do** accompagner chaque statut d'un libellé français explicite dans un badge.
 - **Do** conserver les cartes blanches sur canevas `#F1F5F9` avec une bordure 1 px et une ombre `shadow-sm`.
 - **Do** utiliser Inter à 14 px pour le corps de texte et 12 px pour les libellés, avec des libellés de champs au-dessus.
@@ -259,7 +258,7 @@ Panneau blanc de 12 px de rayon, ombre élevée, largeur maximale 576 px (ou 768
 - **Do** garder la navigation latérale visible dès 768 px et la remplacer par un tiroir en dessous.
 
 ### Don't:
-- **Don't** utiliser le bleu ciel pour du texte courant ou de grands aplats de fond.
+- **Don't** utiliser le bleu vif en grands aplats de fond, ni des icônes sur fonds colorés.
 - **Don't** ajouter de dégradés, de néons, d'ombres colorées ou d'effets décoratifs absents du Design Brief.
 - **Don't** dépasser 12 px de rayon, sauf pour les pilules, avatars et barres de progression.
 - **Don't** coder un statut uniquement par la couleur.

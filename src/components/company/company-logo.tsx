@@ -82,7 +82,7 @@ export function CompanyLogoUploader({
       </button>
       <span
         aria-hidden
-        className="pointer-events-none absolute -bottom-1 -right-1 grid size-7 place-items-center rounded-full border-2 border-card bg-accent text-primary shadow-sm transition-transform duration-200 group-hover:scale-110"
+        className="pointer-events-none absolute -bottom-1 -right-1 grid size-7 place-items-center rounded-full border-2 border-card bg-accent text-white shadow-sm transition-transform duration-200 group-hover:scale-110"
       >
         {loading ? <Loader2 className="size-3.5 animate-spin" /> : <Camera className="size-3.5" />}
       </span>

@@ -22,7 +22,7 @@ export function StatusBadge({ status, size = "default" }: StatusBadgeProps) {
         color === "success" && "border-success/30 bg-success-soft text-success-ink",
         color === "destructive" && "border-destructive/30 bg-destructive-soft text-destructive-ink",
         color === "primary" && "border-primary/30 bg-primary-soft text-primary",
-        color === "accent" && "border-accent/30 bg-accent-soft text-accent-foreground",
+        color === "accent" && "border-accent/30 bg-accent-soft text-primary",
         color === "muted" && "border-muted/30 bg-muted text-muted-foreground",
         size === "sm" && "px-2 py-0.5 text-[10px]"
       )}

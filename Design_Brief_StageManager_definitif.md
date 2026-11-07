@@ -37,13 +37,16 @@ La priorité est donnée à la clarté, à la simplicité et à la fiabilité pl
 
 ### 3.1 Palette de couleurs
 
-La palette officielle repose sur trois couleurs principales :
+La palette officielle repose sur trois bleus et le blanc (version 1.1, 7 novembre 2026) :
 
 | Couleur | Code hexadécimal | Utilisation |
 |---|---|---|
-| Bleu marine | `#142D4E` | Couleur principale, navigation, titres importants et boutons principaux |
+| Bleu roi | `#1E3A8A` | Couleur principale : identité, navigation active, titres importants et boutons principaux |
+| Bleu vif | `#2F6FED` | Accent : liens, focus clavier, éléments interactifs et graphiques |
+| Bleu glacier | `#E8F0FE` | Fonds doux : élément actif du menu, badges, zones mises en avant |
 | Blanc | `#FFFFFF` | Arrière-plans, surfaces et espaces de respiration |
-| Bleu ciel | `#75B8E7` | Accents, éléments secondaires, liens et indicateurs visuels |
+
+Cette palette remplace la version initiale (bleu marine `#142D4E` et bleu ciel `#75B8E7`). Elle conserve l'univers bleu, associé à la confiance et au sérieux, tout en offrant un meilleur contraste pour les liens et les actions.
 
 Couleurs fonctionnelles complémentaires recommandées :
 

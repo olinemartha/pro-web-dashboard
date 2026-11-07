@@ -206,11 +206,11 @@ function TodoTarget({ todo, className, children }: { todo: Todo; className: stri
  * (acceptée) ; le refus reste en gris neutre. Pas d'arc-en-ciel.
  */
 const PIPELINE: { status: CandidateStatus; color: string }[] = [
-  { status: "en_attente", color: "hsl(214 25% 84%)" },
-  { status: "examen", color: "hsl(205 70% 68%)" },
-  { status: "entretien", color: "hsl(210 50% 45%)" },
-  { status: "acceptee", color: "hsl(214 59% 19%)" },
-  { status: "refusee", color: "hsl(215 14% 62%)" },
+  { status: "en_attente", color: "hsl(220 25% 85%)" },
+  { status: "examen", color: "hsl(218 90% 78%)" },
+  { status: "entretien", color: "hsl(220 84% 56%)" },
+  { status: "acceptee", color: "hsl(224 64% 33%)" },
+  { status: "refusee", color: "hsl(220 12% 64%)" },
 ];
 
 type PipelineStep = { status: CandidateStatus; color: string; count: number };
@@ -866,7 +866,7 @@ function CompanyDashboard() {
                           first ? "bg-primary text-primary-foreground" : "border bg-card"
                         )}
                       >
-                        <span className={cn("text-[10px] font-medium uppercase", first ? "text-accent" : "text-muted-foreground")}>
+                        <span className={cn("text-[10px] font-medium uppercase", first ? "text-white/70" : "text-muted-foreground")}>
                           {date.toLocaleDateString("fr-FR", { month: "short" }).replace(".", "")}
                         </span>
                         <span className="mt-0.5 text-base font-semibold tabular-nums">{date.getDate()}</span>

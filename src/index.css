@@ -4,25 +4,25 @@
 
 @layer base {
   :root {
-    /* Design Brief StageManager — palette officielle */
+    /* Palette StageManager v2 — bleu roi, bleu vif, bleu glacier */
     --background: 0 0% 100%;           /* #FFFFFF */
-    --foreground: 20 15% 15%;          /* presque noir, texte principal */
+    --foreground: 224 30% 14%;         /* encre bleu nuit, texte principal */
     --card: 0 0% 100%;
-    --card-foreground: 20 15% 15%;
+    --card-foreground: 224 30% 14%;
     --popover: 0 0% 100%;
-    --popover-foreground: 20 15% 15%;
-    --primary: 214 59% 19%;            /* #142D4E Bleu marine */
+    --popover-foreground: 224 30% 14%;
+    --primary: 224 64% 33%;            /* #1E3A8A Bleu roi : navigation, titres, boutons */
     --primary-foreground: 0 0% 100%;
-    --primary-hover: 214 37% 27%;      /* #2C4260 marine éclairci au survol */
-    --primary-soft: 214 59% 94%;       /* teinte claire du bleu marine */
-    --canvas: 213 33% 96%;             /* canevas de travail, légèrement bleuté */
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 222 47% 11%;
-    --muted: 210 40% 96%;
-    --muted-foreground: 215 17% 42%;
-    --accent: 205 70% 68%;             /* #75B8E7 Bleu ciel */
-    --accent-foreground: 214 59% 19%;
-    --accent-soft: 205 70% 92%;        /* teinte claire du bleu ciel */
+    --primary-hover: 224 60% 27%;      /* bleu roi assombri au survol */
+    --primary-soft: 218 92% 95%;       /* #E8F0FE Bleu glacier : fonds actifs, badges */
+    --canvas: 220 33% 97%;             /* canevas de travail, légèrement bleuté */
+    --secondary: 220 30% 96%;
+    --secondary-foreground: 224 30% 14%;
+    --muted: 220 30% 96%;
+    --muted-foreground: 220 13% 44%;
+    --accent: 220 84% 56%;             /* #2F6FED Bleu vif : liens, focus, graphiques */
+    --accent-foreground: 0 0% 100%;    /* texte sur le bleu vif */
+    --accent-soft: 218 92% 95%;        /* #E8F0FE Bleu glacier */
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
     --destructive-soft: 0 72% 95%;
@@ -34,9 +34,9 @@
     --warning: 26 90% 37%;             /* #B45309 Ambre vigilance */
     --warning-foreground: 0 0% 100%;
     --warning-soft: 48 100% 96%;       /* #FFFBEB */
-    --border: 214 20% 88%;
-    --input: 214 20% 88%;
-    --ring: 214 59% 19%;
+    --border: 220 22% 89%;
+    --input: 220 22% 89%;
+    --ring: 220 84% 56%;
     --radius: 0.5rem;
     --font-sans: "Inter", sans-serif;
   }
@@ -100,7 +100,7 @@
 @layer components {
   .card-surface {
     @apply rounded-xl border border-border/80 bg-card text-card-foreground;
-    box-shadow: 0 1px 2px hsl(214 40% 20% / 0.04);
+    box-shadow: 0 1px 2px hsl(224 40% 20% / 0.04);
   }
 }
 
@@ -225,7 +225,7 @@
   .hover-lift:hover {
     transform: translateY(-2px);
     border-color: hsl(var(--accent) / 0.45);
-    box-shadow: 0 10px 24px -12px hsl(214 59% 19% / 0.18);
+    box-shadow: 0 10px 24px -12px hsl(224 64% 33% / 0.2);
   }
 
   /* Pression : un léger enfoncement au clic. */
