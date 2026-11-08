@@ -326,12 +326,8 @@ function PipelineChart({
               key={step.status}
               onMouseEnter={() => setHover(step.status)}
               onMouseLeave={() => setHover(null)}
-              onFocus={() => setHover(step.status)}
-              onBlur={() => setHover(null)}
-              tabIndex={0}
-              aria-label={`${candidateStatusLabels[step.status].label} : ${step.count} candidature${step.count > 1 ? "s" : ""}, ${total ? Math.round((step.count / total) * 100) : 0} %`}
               className={cn(
-                "grid cursor-default outline-none focus-visible:ring-2 focus-visible:ring-accent grid-cols-[minmax(0,130px)_minmax(0,1fr)_auto] items-center gap-3 rounded-lg px-2 py-1 transition-all duration-200",
+                "grid cursor-default grid-cols-[minmax(0,130px)_minmax(0,1fr)_auto] items-center gap-3 rounded-lg px-2 py-1 transition-all duration-200",
                 hover === step.status && "bg-muted/60",
                 dim && "opacity-50"
               )}
@@ -379,7 +375,8 @@ function CompanyDashboard() {
 
   const now = Date.now();
   const todayIso = new Date().toISOString().split("T")[0];
-  const horizonIso = new Date(now + 14 * DAY).toISOString().split("T")[0];
+  // Seuls les entretiens des 3 prochains jours entrent dans la file ; l'agenda couvre les suivants.
+  const horizonIso = new Date(now + 3 * DAY).toISOString().split("T")[0];
 
   const activeOffers = offers.filter((offer) => offer.status === "publiee");
   const toExamine = candidates.filter((c) => c.status === "en_attente" || c.status === "examen");
@@ -457,6 +454,8 @@ function CompanyDashboard() {
     });
   });
   toExamine.forEach((candidate) => {
+    // Un entretien est déjà programmé : la candidature est suivie dans l'agenda, pas en double ici.
+    if (upcomingInterviews.some((interview) => interview.candidateId === candidate.id)) return;
     const waited = daysBetween(candidate.appliedAt, todayIso);
     todos.push({
       kind: "candidature",
@@ -629,20 +628,20 @@ function CompanyDashboard() {
       </div>
 
       <div className="grid grid-cols-[minmax(0,1fr)] gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
-        {/* Ligne 1 : vue d'ensemble et actions | entreprise et agenda */}
-        <div className="min-w-0 space-y-6">
+        {/* Ligne 1 : les deux colonnes finissent au même niveau (la dernière carte de chaque colonne s'étire) */}
+        <div className="flex min-w-0 flex-col gap-6">
           {/* Pipeline de recrutement */}
           <Reveal as="section" delay={80} className="card-surface p-5">
             <SectionHeader
               title="Pipeline de recrutement"
-              description={`${inPipeline.length} candidature${inPipeline.length > 1 ? "s" : ""} en cours, toutes offres confondues`}
+              description={`${inPipeline.length} candidature${inPipeline.length > 1 ? "s" : ""} au total, toutes offres confondues`}
               to="/entreprise/candidatures"
             />
             <PipelineChart steps={pipelineCounts} total={inPipeline.length} acceptanceRate={acceptanceRate} />
           </Reveal>
 
           {/* À traiter : triée par urgence réelle */}
-          <Reveal as="section" delay={140} className="card-surface overflow-hidden" aria-labelledby="todo-title">
+          <Reveal as="section" delay={140} className="card-surface flex flex-col overflow-hidden xl:flex-1" aria-labelledby="todo-title">
             <div className="space-y-4 px-5 pt-5">
               <div className="flex flex-wrap items-end justify-between gap-3">
                 <div className="min-w-0">
@@ -697,16 +696,16 @@ function CompanyDashboard() {
                 <p className="text-xs text-muted-foreground">Aucune décision ne vous attend pour le moment.</p>
               </div>
             ) : (
-              <ul key={tab} className="mt-4 divide-y border-t">
+              <ul key={tab} id="todo-list" className="mt-4 flex flex-1 flex-col divide-y border-t">
                 {visibleTodos.map((todo, index) => {
                   const meta = TODO_META[todo.kind];
                   const rec = todo.recommendation;
                   return (
-                    <Reveal as="li" key={todo.id} delay={index < 5 ? index * 40 : 0}>
+                    <Reveal as="li" key={todo.id} delay={index < 5 ? index * 40 : 0} className="flex xl:flex-1">
                       <TodoTarget
                         todo={todo}
                         className={cn(
-                          "group flex items-center gap-3.5 px-5 py-3 transition-colors duration-150 hover:bg-muted/50",
+                          "group flex w-full items-center gap-3.5 px-5 py-3 transition-colors duration-150 hover:bg-muted/50",
                           rec && "bg-primary-soft/40 hover:bg-primary-soft/70"
                         )}
                       >
@@ -714,7 +713,7 @@ function CompanyDashboard() {
                           <meta.icon className={cn("size-[18px]", rec && "text-primary")} />
                         </span>
                         <span className="min-w-0 flex-1">
-                          <span className="block truncate text-sm font-medium text-foreground">{todo.label}</span>
+                          <span className="line-clamp-2 text-sm font-medium text-foreground sm:line-clamp-1">{todo.label}</span>
                           <span className="flex flex-wrap items-center gap-x-1.5 text-xs text-muted-foreground">
                             <span className="truncate">{todo.meta}</span>
                             <span aria-hidden>·</span>
@@ -729,7 +728,7 @@ function CompanyDashboard() {
                             </span>
                           )}
                         </span>
-                        <span className="inline-flex h-8 shrink-0 items-center gap-1 rounded-lg border bg-card px-2.5 text-[13px] font-medium text-foreground shadow-sm transition-colors group-hover:border-primary group-hover:bg-primary group-hover:text-primary-foreground">
+                        <span aria-hidden="true" className="inline-flex h-8 shrink-0 items-center gap-1 rounded-lg border bg-card px-2.5 text-[13px] font-medium text-foreground shadow-sm transition-colors group-hover:border-primary group-hover:bg-primary group-hover:text-primary-foreground">
                           <span className="hidden sm:inline">{rec ? "Voir l'explication" : meta.action}</span>
                           <ArrowRight className="size-3.5" />
                         </span>
@@ -744,18 +743,19 @@ function CompanyDashboard() {
                 type="button"
                 onClick={() => setExpanded((value) => !value)}
                 aria-expanded={expanded}
+                aria-controls="todo-list"
                 className="group flex w-full items-center justify-center gap-1.5 border-t px-5 py-2.5 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
               >
                 {expanded
                   ? "Réduire la liste"
-                  : `Afficher ${hiddenCount} autre${hiddenCount > 1 ? "s" : ""} décision${hiddenCount > 1 ? "s" : ""}`}
+                  : `Afficher ${hiddenCount} autre${hiddenCount > 1 ? "s" : ""} action${hiddenCount > 1 ? "s" : ""}`}
                 <ChevronDown className={cn("size-4 transition-transform duration-300", expanded && "rotate-180")} />
               </button>
             )}
           </Reveal>
 
         </div>
-        <aside className="space-y-6">
+        <aside className="flex flex-col gap-6">
           {/* Carte entreprise — version d'origine, conservée telle quelle (logo ajoutable) */}
           <Reveal delay={120} className="card-surface overflow-hidden">
             <div className="relative bg-gradient-to-b from-accent-soft/80 via-accent-soft/30 to-card px-5 pb-5 pt-6 text-center">
@@ -807,7 +807,7 @@ function CompanyDashboard() {
           </Reveal>
 
           {/* Prochains entretiens : agenda */}
-          <Reveal delay={180} className="card-surface p-5">
+          <Reveal delay={180} className="card-surface p-5 xl:flex-1">
             <SectionHeader title="Prochains entretiens" to="/entreprise/entretiens" />
             {upcomingInterviews.length === 0 ? (
               <p className="mt-4 text-sm text-muted-foreground">Aucun entretien programmé.</p>

@@ -1,238 +1,656 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-06T00:00:00.000Z",
+  "generatedAt": "2026-11-08T17:38:23.560Z",
   "title": "Design System: StageManager",
   "extensions": {
     "colorMeta": {
-      "navy-institutional": {
+      "royal-blue": {
         "role": "primary",
-        "displayName": "Bleu marine institutionnel",
-        "canonical": "#142D4E",
-        "tonalRamp": ["#10233D", "#1B3D69", "#275796", "#3271C3", "#5D91D5", "#8DB2E2", "#BED3EE", "#EBF1FA"]
+        "displayName": "Bleu roi",
+        "canonical": "#1E3A8A",
+        "tonalRamp": [
+          "#151E37",
+          "#172D69",
+          "#203F92",
+          "#2950BC",
+          "#587BDA",
+          "#96ACE8",
+          "#CFD7ED",
+          "#EDF0F8"
+        ]
       },
-      "navy-soft": {
+      "royal-blue-hover": {
         "role": "primary",
-        "displayName": "Marine adouci",
-        "canonical": "#E7EEF9",
-        "tonalRamp": ["#10233D", "#1B3D69", "#275796", "#3271C3", "#5D91D5", "#8DB2E2", "#BED3EE", "#EBF1FA"]
+        "displayName": "Bleu roi assombri (survol)",
+        "canonical": "#18306F",
+        "tonalRamp": [
+          "#151E37",
+          "#172D69",
+          "#203F92",
+          "#2950BC",
+          "#587BDA",
+          "#96ACE8",
+          "#CFD7ED",
+          "#EDF0F8"
+        ]
       },
-      "sky-indicator": {
+      "vivid-blue": {
         "role": "secondary",
-        "displayName": "Bleu ciel indicateur",
-        "canonical": "#75B8E7",
-        "tonalRamp": ["#0B2B41", "#144A71", "#1C69A0", "#2589D0", "#52A5E0", "#86C0EA", "#BADBF3", "#E9F4FB"]
+        "displayName": "Bleu vif",
+        "canonical": "#2F6FED",
+        "tonalRamp": [
+          "#101F3D",
+          "#0A2E75",
+          "#0E40A4",
+          "#1253D3",
+          "#437CEF",
+          "#8AADF5",
+          "#CAD7F1",
+          "#EBF0FA"
+        ]
       },
-      "sky-soft": {
-        "role": "secondary",
-        "displayName": "Bleu ciel adouci",
-        "canonical": "#DCEDF9",
-        "tonalRamp": ["#0B2B41", "#144A71", "#1C69A0", "#2589D0", "#52A5E0", "#86C0EA", "#BADBF3", "#E9F4FB"]
+      "glacier-blue": {
+        "role": "primary",
+        "displayName": "Bleu glacier",
+        "canonical": "#E8F0FE",
+        "tonalRamp": [
+          "#142139",
+          "#13346C",
+          "#1B4998",
+          "#225DC3",
+          "#5286E0",
+          "#93B3EC",
+          "#CEDAEE",
+          "#ECF1F8"
+        ]
       },
       "paper-white": {
         "role": "neutral",
         "displayName": "Blanc papier",
         "canonical": "#FFFFFF",
-        "tonalRamp": ["#0F0F0F", "#3D3D3D", "#6B6B6B", "#999999", "#C7C7C7", "#E3E3E3", "#F5F5F5", "#FFFFFF"]
+        "tonalRamp": [
+          "#242529",
+          "#393E46",
+          "#505662",
+          "#676F7E",
+          "#8F96A3",
+          "#B9BDC6",
+          "#DCDDE0",
+          "#F1F2F3"
+        ]
       },
-      "warm-ink": {
+      "canvas": {
         "role": "neutral",
-        "displayName": "Encre chaude",
-        "canonical": "#2C2421",
-        "tonalRamp": ["#2C2421", "#4C3F38", "#6D5A50", "#8D7468", "#A8948A", "#C2B4AD", "#DCD4D0", "#F4F2F0"]
+        "displayName": "Canevas",
+        "canonical": "#F5F7FA",
+        "tonalRamp": [
+          "#21252B",
+          "#343C4B",
+          "#495469",
+          "#5E6C87",
+          "#8793AB",
+          "#B4BBCB",
+          "#DADCE2",
+          "#F1F2F4"
+        ]
       },
-      "slate-muted": {
+      "ink": {
         "role": "neutral",
-        "displayName": "Gris ardoise très clair",
-        "canonical": "#F1F5F9",
-        "tonalRamp": ["#172636", "#28425D", "#395E84", "#497AAB", "#7099C2", "#9BB8D4", "#C6D6E7", "#EDF2F7"]
+        "displayName": "Encre bleu nuit",
+        "canonical": "#191F2E",
+        "tonalRamp": [
+          "#1E232E",
+          "#2D3753",
+          "#3E4D74",
+          "#506395",
+          "#7A8BB8",
+          "#ACB6D2",
+          "#D7DBE5",
+          "#F0F1F5"
+        ]
       },
-      "slate-text-muted": {
+      "text-muted": {
         "role": "neutral",
         "displayName": "Gris texte secondaire",
-        "canonical": "#65758B",
-        "tonalRamp": ["#23262A", "#38414D", "#4F5C6D", "#67778E", "#8996A9", "#ACB6C3", "#D0D5DD", "#F1F2F3"]
+        "canonical": "#616B7F",
+        "tonalRamp": [
+          "#21252B",
+          "#343C4B",
+          "#495469",
+          "#5E6C87",
+          "#8793AB",
+          "#B4BBCB",
+          "#DADCE2",
+          "#F1F2F4"
+        ]
       },
       "line-border": {
         "role": "neutral",
         "displayName": "Ligne discrète",
-        "canonical": "#DAE0E7",
-        "tonalRamp": ["#1F252E", "#354150", "#4B5C71", "#627793", "#8596AD", "#A9B6C6", "#CED5DE", "#F0F2F5"]
+        "canonical": "#DDE1E9",
+        "tonalRamp": [
+          "#21252B",
+          "#343C4B",
+          "#495469",
+          "#5E6C87",
+          "#8793AB",
+          "#B4BBCB",
+          "#DADCE2",
+          "#F1F2F4"
+        ]
+      },
+      "muted-surface": {
+        "role": "neutral",
+        "displayName": "Surface atténuée",
+        "canonical": "#F1F4F8",
+        "tonalRamp": [
+          "#21252B",
+          "#343C4B",
+          "#495469",
+          "#5E6C87",
+          "#8793AB",
+          "#B4BBCB",
+          "#DADCE2",
+          "#F1F2F4"
+        ]
       },
       "success-green": {
         "role": "tertiary",
         "displayName": "Vert validation",
         "canonical": "#27865A",
-        "tonalRamp": ["#113B28", "#1E6745", "#2A9262", "#37BE7F", "#61D19D", "#90DFBA", "#C0EDD8", "#EBF9F3"]
+        "tonalRamp": [
+          "#173527",
+          "#1D6342",
+          "#288A5D",
+          "#34B277",
+          "#61D19D",
+          "#9CE2C2",
+          "#D1EBDF",
+          "#EDF7F3"
+        ]
       },
       "success-soft": {
         "role": "tertiary",
         "displayName": "Vert très clair",
         "canonical": "#E7F8F0",
-        "tonalRamp": ["#113B28", "#1E6745", "#2A9262", "#37BE7F", "#61D19D", "#90DFBA", "#C0EDD8", "#EBF9F3"]
+        "tonalRamp": [
+          "#173527",
+          "#1D6342",
+          "#288A5D",
+          "#34B277",
+          "#61D19D",
+          "#9CE2C2",
+          "#D1EBDF",
+          "#EDF7F3"
+        ]
       },
       "warning-amber": {
         "role": "tertiary",
         "displayName": "Ambre vigilance",
         "canonical": "#B45309",
-        "tonalRamp": ["#492904", "#7E4607", "#B36409", "#E9820C", "#F59F3D", "#F8BC77", "#FBD9B1", "#FEF3E7"]
+        "tonalRamp": [
+          "#3E260E",
+          "#794006",
+          "#AA5909",
+          "#DA730B",
+          "#F5993D",
+          "#F9BF86",
+          "#F3DEC9",
+          "#FAF2EA"
+        ]
       },
       "warning-soft": {
         "role": "tertiary",
         "displayName": "Ambre très clair",
         "canonical": "#FFFBEB",
-        "tonalRamp": ["#492904", "#7E4607", "#B36409", "#E9820C", "#F59F3D", "#F8BC77", "#FBD9B1", "#FEF3E7"]
+        "tonalRamp": [
+          "#3E260E",
+          "#794006",
+          "#AA5909",
+          "#DA730B",
+          "#F5993D",
+          "#F9BF86",
+          "#F3DEC9",
+          "#FAF2EA"
+        ]
       },
       "destructive-red": {
         "role": "tertiary",
         "displayName": "Rouge destructif",
         "canonical": "#DC2828",
-        "tonalRamp": ["#420B0B", "#721313", "#A21A1A", "#D32222", "#E25050", "#EB8484", "#F4B9B9", "#FBE9E9"]
+        "tonalRamp": [
+          "#391313",
+          "#6E1212",
+          "#9A1919",
+          "#C52020",
+          "#E25050",
+          "#ED9191",
+          "#EECDCD",
+          "#F9ECEC"
+        ]
       },
       "destructive-soft": {
         "role": "tertiary",
         "displayName": "Rouge très clair",
         "canonical": "#FBE9E9",
-        "tonalRamp": ["#420B0B", "#721313", "#A21A1A", "#D32222", "#E25050", "#EB8484", "#F4B9B9", "#FBE9E9"]
+        "tonalRamp": [
+          "#391313",
+          "#6E1212",
+          "#9A1919",
+          "#C52020",
+          "#E25050",
+          "#ED9191",
+          "#EECDCD",
+          "#F9ECEC"
+        ]
+      },
+      "pipeline-waiting": {
+        "role": "data",
+        "displayName": "Pipeline : En attente",
+        "canonical": "hsl(220 25% 85%)",
+        "tonalRamp": [
+          "#1F242D",
+          "#303A50",
+          "#435270",
+          "#56698F",
+          "#8091B3",
+          "#AFBACF",
+          "#D8DCE4",
+          "#F0F1F5"
+        ]
+      },
+      "pipeline-review": {
+        "role": "data",
+        "displayName": "Pipeline : En cours d'examen",
+        "canonical": "hsl(218 90% 78%)",
+        "tonalRamp": [
+          "#0E203E",
+          "#063079",
+          "#0944AA",
+          "#0B57DA",
+          "#3D81F5",
+          "#86B0F9",
+          "#C9D8F3",
+          "#EAF0FA"
+        ]
+      },
+      "pipeline-interview": {
+        "role": "data",
+        "displayName": "Pipeline : En entretien",
+        "canonical": "#2F6FED",
+        "tonalRamp": [
+          "#101F3D",
+          "#0A2E75",
+          "#0E40A4",
+          "#1253D3",
+          "#437CEF",
+          "#8AADF5",
+          "#CAD7F1",
+          "#EBF0FA"
+        ]
+      },
+      "pipeline-accepted": {
+        "role": "data",
+        "displayName": "Pipeline : Acceptée",
+        "canonical": "#1E3A8A",
+        "tonalRamp": [
+          "#151E37",
+          "#172D69",
+          "#203F92",
+          "#2950BC",
+          "#587BDA",
+          "#96ACE8",
+          "#CFD7ED",
+          "#EDF0F8"
+        ]
+      },
+      "pipeline-refused": {
+        "role": "data",
+        "displayName": "Pipeline : Refusée",
+        "canonical": "hsl(220 12% 64%)",
+        "tonalRamp": [
+          "#232529",
+          "#383D47",
+          "#4F5664",
+          "#656E81",
+          "#8D95A5",
+          "#B8BDC7",
+          "#DBDDE1",
+          "#F1F2F3"
+        ]
       }
     },
     "typographyMeta": {
-      "display": { "displayName": "Display", "purpose": "Valeurs des indicateurs KPI uniquement." },
-      "headline": { "displayName": "Headline", "purpose": "Titre d'accueil du tableau de bord." },
-      "title": { "displayName": "Title", "purpose": "Barre supérieure, modales, sections fortes." },
-      "body": { "displayName": "Body", "purpose": "Texte courant, descriptions, formulaires." },
-      "label": { "displayName": "Label", "purpose": "Libellés de champs, boutons compacts, métadonnées." }
+      "kpi": {
+        "displayName": "KPI",
+        "purpose": "Valeur des quatre indicateurs du tableau de bord (600, 30 px, interligne 1, tabular-nums)."
+      },
+      "page-title": {
+        "displayName": "Page title",
+        "purpose": "Salutation et titre de page dans la barre supérieure, précédés de la date en 11 px."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Titres de fenêtres."
+      },
+      "section": {
+        "displayName": "Section",
+        "purpose": "Titres des cartes (« Pipeline de recrutement », « Offres publiées »)."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Texte courant, lignes de liste, formulaires ; 65–75 caractères par ligne."
+      },
+      "ui": {
+        "displayName": "UI",
+        "purpose": "Libellés de navigation, boutons compacts, onglets, légendes de graphiques."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Libellés de champs, métadonnées, descriptions de section, en-têtes de tableaux."
+      },
+      "micro": {
+        "displayName": "Micro",
+        "purpose": "Compteurs, badges compacts, mois des pastilles de date, intitulés de groupes du menu. Plancher absolu du texte porteur de sens."
+      }
     },
     "shadows": [
-      { "name": "card-rest", "value": "0 1px 2px 0 rgb(0 0 0 / 0.05)", "purpose": "Cartes et panneaux au repos, toujours avec une bordure 1 px." },
-      { "name": "modal", "value": "0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)", "purpose": "Dialogues et tiroirs mobiles." },
-      { "name": "toast", "value": "0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)", "purpose": "Notifications Sonner." }
+      {
+        "name": "card-rest",
+        "value": "0 1px 2px hsl(224 40% 20% / 0.04)",
+        "purpose": "Carte au repos (.card-surface), toujours avec la bordure 1 px #DDE1E9."
+      },
+      {
+        "name": "card-hover-lift",
+        "value": "0 10px 24px -12px hsl(224 64% 33% / 0.2)",
+        "purpose": "Carte cliquable au survol (.hover-lift) : soulèvement de 2 px et bordure bleu vif à 45 %."
+      },
+      {
+        "name": "button-primary",
+        "value": "0 6px 16px -6px hsl(224 64% 33% / 0.55)",
+        "purpose": "Légère ombre teintée sous le bouton principal."
+      },
+      {
+        "name": "button-primary-hover",
+        "value": "0 10px 22px -8px hsl(224 64% 33% / 0.6)",
+        "purpose": "Ombre du bouton principal au survol."
+      },
+      {
+        "name": "floating",
+        "value": "0 16px 40px -12px rgba(15, 23, 42, 0.22)",
+        "purpose": "Menus, résultats de recherche, panneau de notifications ; fond à 90–95 % avec flou d'arrière-plan."
+      },
+      {
+        "name": "modal",
+        "value": "0 24px 64px -16px rgba(15, 23, 42, 0.35)",
+        "purpose": "Fenêtre modale, au-dessus d'un voile slate-900/25 flouté de 6 px."
+      },
+      {
+        "name": "search-focus-ring",
+        "value": "0 0 0 3px hsl(220 84% 56% / 0.12)",
+        "purpose": "Halo de la recherche au focus, avec bordure bleu vif à 60 %."
+      },
+      {
+        "name": "focus-outline",
+        "value": "outline: 2px solid #2F6FED; outline-offset: 2px",
+        "purpose": "Anneau de focus clavier sur tout élément interactif."
+      }
     ],
     "motion": [
-      { "name": "ease-standard", "value": "cubic-bezier(0.4, 0, 0.2, 1)", "purpose": "Transition par défaut des couleurs et états." },
-      { "name": "duration-fast", "value": "150ms", "purpose": "Survol, focus, changement de couleur." },
-      { "name": "duration-base", "value": "200ms", "purpose": "Ouverture de menus et modales." },
-      { "name": "reduced-motion", "value": "0.01ms", "purpose": "Respect de prefers-reduced-motion." }
+      {
+        "name": "ease-soft",
+        "value": "cubic-bezier(0.22, 1, 0.36, 1)",
+        "purpose": "Courbe unique « ease-out quint » (--ease-soft) pour toutes les transitions et entrées."
+      },
+      {
+        "name": "press",
+        "value": "transform 140ms var(--ease-soft); :active scale(0.97)",
+        "purpose": "Pression au clic sur boutons et liens."
+      },
+      {
+        "name": "hover-lift",
+        "value": "transform, box-shadow, border-color 220ms var(--ease-soft); translateY(-2px)",
+        "purpose": "Soulèvement des cartes cliquables (KPI, offres)."
+      },
+      {
+        "name": "fade-in",
+        "value": "240ms ease-out",
+        "purpose": "Voiles et éléments secondaires."
+      },
+      {
+        "name": "scale-in",
+        "value": "320ms var(--ease-soft); translateY(8px) scale(0.98) → none",
+        "purpose": "Fenêtres, menus et panneaux flottants."
+      },
+      {
+        "name": "page-enter",
+        "value": "fade-up 380ms var(--ease-soft); translateY(10px) → none",
+        "purpose": "Entrée de page."
+      },
+      {
+        "name": "fade-up-stagger",
+        "value": "fade-up 520ms var(--ease-soft), délai 40–60 ms entre éléments",
+        "purpose": "Cascade courte des cartes et lignes à l'entrée."
+      },
+      {
+        "name": "slide-in",
+        "value": "360–380ms var(--ease-soft); translateX(±100%) → none",
+        "purpose": "Tiroirs latéraux (navigation mobile)."
+      },
+      {
+        "name": "grow-data",
+        "value": "grow-x 900ms / grow-y 700ms / donut-draw 900ms / spark-draw 1100ms var(--ease-soft)",
+        "purpose": "Barres qui grandissent, anneau et courbe qui se dessinent."
+      },
+      {
+        "name": "nav-indicator",
+        "value": "top, height 300ms var(--ease-soft)",
+        "purpose": "Pastille bleu glacier qui glisse d'un lien à l'autre."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "@media (prefers-reduced-motion: reduce) { animation: none; transition: none; transform: none }",
+        "purpose": "Tout s'immobilise."
+      }
     ],
     "breakpoints": [
-      { "name": "sm", "value": "640px" },
-      { "name": "md", "value": "768px" },
-      { "name": "lg", "value": "1024px" },
-      { "name": "xl", "value": "1280px" }
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "md",
+        "value": "768px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      },
+      {
+        "name": "xl",
+        "value": "1280px"
+      }
     ]
   },
   "components": [
     {
-      "name": "Primary Button",
+      "name": "Bouton principal",
       "kind": "button",
       "refersTo": "button-primary",
-      "description": "Action principale d'un écran : une seule par zone.",
-      "html": "<button class=\"ds-btn-primary\">Publier une offre</button>",
-      "css": ".ds-btn-primary { display:inline-flex; align-items:center; justify-content:center; height:40px; padding:0 16px; border:1px solid transparent; border-radius:6px; background:#142D4E; color:#FFFFFF; font-family:Inter,sans-serif; font-size:14px; font-weight:500; line-height:1; cursor:pointer; transition:background-color 150ms cubic-bezier(0.4,0,0.2,1); } .ds-btn-primary:hover { background:#2C4260; } .ds-btn-primary:focus-visible { outline:2px solid #142D4E; outline-offset:2px; } .ds-btn-primary:active { transform:translateY(1px); }"
+      "description": "Action principale unique par zone (« Publier une offre ») : bleu roi, texte blanc, rayon 8 px, ombre teintée ; le « + » pivote au survol.",
+      "html": "<button type=\"button\" class=\"ds-btn-primary\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M5 12h14\"/><path d=\"M12 5v14\"/></svg><span>Publier une offre</span></button>",
+      "css": ".ds-btn-primary { font-family: Inter, sans-serif; display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 16px 0 12px; border: none; border-radius: 8px; background: #1E3A8A; color: #FFFFFF; font-size: 14px; font-weight: 500; cursor: pointer; box-shadow: 0 6px 16px -6px hsl(224 64% 33% / 0.55); transition: background-color 200ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 200ms cubic-bezier(0.22, 1, 0.36, 1), transform 140ms cubic-bezier(0.22, 1, 0.36, 1); } .ds-btn-primary svg { transition: transform 300ms cubic-bezier(0.22, 1, 0.36, 1); } .ds-btn-primary:hover { background: #18306F; box-shadow: 0 10px 22px -8px hsl(224 64% 33% / 0.6); } .ds-btn-primary:hover svg { transform: rotate(90deg); } .ds-btn-primary:active { transform: scale(0.97); } .ds-btn-primary:focus-visible { outline: 2px solid #2F6FED; outline-offset: 2px; } @media (prefers-reduced-motion: reduce) { .ds-btn-primary, .ds-btn-primary svg { transition: none; transform: none; } }"
     },
     {
-      "name": "Outline Button",
+      "name": "Lien de section",
       "kind": "button",
-      "refersTo": "button-outline",
-      "description": "Action secondaire discrète, sur contour blanc.",
-      "html": "<button class=\"ds-btn-outline\">Enregistrer les modifications</button>",
-      "css": ".ds-btn-outline { display:inline-flex; align-items:center; justify-content:center; height:40px; padding:0 16px; border:1px solid #DAE0E7; border-radius:6px; background:#FFFFFF; color:#2C2421; font-family:Inter,sans-serif; font-size:14px; font-weight:500; line-height:1; cursor:pointer; transition:background-color 150ms cubic-bezier(0.4,0,0.2,1), border-color 150ms; } .ds-btn-outline:hover { background:#F1F5F9; border-color:#C6D0DC; } .ds-btn-outline:focus-visible { outline:2px solid #142D4E; outline-offset:2px; }"
+      "refersTo": "section-link-hover",
+      "description": "Bouton compact à contour (« Tout voir », « Gérer les offres ») qui passe en encre bleu nuit au survol ; la flèche avance.",
+      "html": "<button type=\"button\" class=\"ds-section-link\" aria-label=\"Tout voir — Pipeline de recrutement\"><span>Tout voir</span><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M5 12h14\"/><path d=\"m12 5 7 7-7 7\"/></svg></button>",
+      "css": ".ds-section-link { font-family: Inter, sans-serif; display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border: 1px solid #DDE1E9; border-radius: 8px; background: #FFFFFF; color: #191F2E; font-size: 13px; font-weight: 500; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.05); transition: all 200ms cubic-bezier(0.22, 1, 0.36, 1); } .ds-section-link svg { transition: transform 200ms cubic-bezier(0.22, 1, 0.36, 1); } .ds-section-link:hover { border-color: #191F2E; background: #191F2E; color: #FFFFFF; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); } .ds-section-link:hover svg { transform: translateX(2px); } .ds-section-link:active { transform: scale(0.97); } .ds-section-link:focus-visible { outline: 2px solid #2F6FED; outline-offset: 2px; }"
     },
     {
-      "name": "Ghost Button",
-      "kind": "button",
-      "refersTo": "button-ghost",
-      "description": "Action tertiaire ou compacte dans les listes.",
-      "html": "<button class=\"ds-btn-ghost\">Modifier</button>",
-      "css": ".ds-btn-ghost { display:inline-flex; align-items:center; justify-content:center; height:32px; padding:0 12px; border:1px solid transparent; border-radius:6px; background:transparent; color:#2C2421; font-family:Inter,sans-serif; font-size:12px; font-weight:500; line-height:1; cursor:pointer; transition:background-color 150ms cubic-bezier(0.4,0,0.2,1); } .ds-btn-ghost:hover { background:#F1F5F9; } .ds-btn-ghost:focus-visible { outline:2px solid #142D4E; outline-offset:2px; }"
-    },
-    {
-      "name": "Text Field",
+      "name": "Champ de saisie",
       "kind": "input",
       "refersTo": "input",
-      "description": "Champ texte avec libellé au-dessus et indication facultative.",
-      "html": "<div class=\"ds-field\"><label class=\"ds-label\" for=\"ds-email\">E-mail professionnel <span class=\"ds-required\">*</span></label><input id=\"ds-email\" class=\"ds-input\" type=\"email\" placeholder=\"contact@finca.cd\" /><p class=\"ds-hint\">Utilisé pour les notifications de recrutement.</p></div>",
-      "css": ".ds-field { display:flex; flex-direction:column; gap:6px; max-width:360px; } .ds-label { font-family:Inter,sans-serif; font-size:12px; font-weight:500; color:#2C2421; } .ds-required { color:#DC2828; } .ds-input { height:40px; padding:0 12px; border:1px solid #DAE0E7; border-radius:6px; background:#FFFFFF; color:#2C2421; font-family:Inter,sans-serif; font-size:14px; outline:none; transition:border-color 150ms, box-shadow 150ms; } .ds-input::placeholder { color:#65758B; } .ds-input:focus { border-color:#75B8E7; box-shadow:0 0 0 3px rgba(117,184,231,0.25); } .ds-hint { margin:0; font-family:Inter,sans-serif; font-size:12px; color:#65758B; }"
+      "description": "Champ de formulaire : blanc, bordure 1 px, rayon 6 px, 40 px ; bordure bleu vif et halo léger au focus. 16 px sur téléphone, 14 px dès 640 px.",
+      "html": "<label class=\"ds-field\"><span class=\"ds-field-label\">Intitulé de l'offre</span><input class=\"ds-input\" type=\"text\" placeholder=\"Ex. Stage analyste crédit\" /></label>",
+      "css": ".ds-field { font-family: Inter, sans-serif; display: flex; flex-direction: column; gap: 6px; width: 320px; } .ds-field-label { font-size: 12px; font-weight: 500; line-height: 16px; color: #191F2E; } .ds-input { font-family: Inter, sans-serif; height: 40px; width: 100%; padding: 0 12px; border: 1px solid #DDE1E9; border-radius: 6px; background: #FFFFFF; color: #191F2E; font-size: 16px; outline: none; transition: border-color 150ms, box-shadow 150ms; } .ds-input::placeholder { color: #616B7F; } .ds-input:focus-visible { border-color: #2F6FED; box-shadow: 0 0 0 2px hsl(220 84% 56% / 0.2); } .ds-input:disabled { opacity: 0.5; cursor: not-allowed; } @media (min-width: 640px) { .ds-input { font-size: 14px; } }"
     },
     {
-      "name": "Section Card",
-      "kind": "card",
-      "refersTo": "card",
-      "description": "Conteneur blanc bordé pour une section de contenu.",
-      "html": "<section class=\"ds-card\"><h2 class=\"ds-card-title\">Candidatures récentes</h2><p class=\"ds-card-body\">Grâce Mukendi — Analyste Crédit · 22 oct. 2026</p></section>",
-      "css": ".ds-card { padding:24px; border:1px solid #DAE0E7; border-radius:8px; background:#FFFFFF; box-shadow:0 1px 2px 0 rgb(0 0 0 / 0.05); font-family:Inter,sans-serif; } .ds-card-title { margin:0 0 16px; font-size:12px; font-weight:600; letter-spacing:0.05em; text-transform:uppercase; color:#65758B; } .ds-card-body { margin:0; font-size:14px; line-height:1.5; color:#2C2421; }"
+      "name": "Recherche",
+      "kind": "input",
+      "refersTo": "search",
+      "description": "Pilule de 40 px marquée « Rechercher » dans la barre supérieure ; s'élargit doucement au focus (224 → 320 px), loupe en bleu vif.",
+      "html": "<div class=\"ds-search\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"11\" cy=\"11\" r=\"8\"/><path d=\"m21 21-4.3-4.3\"/></svg><input type=\"search\" placeholder=\"Rechercher\" aria-label=\"Rechercher\" /></div>",
+      "css": ".ds-search { font-family: Inter, sans-serif; position: relative; display: flex; align-items: center; height: 40px; width: 224px; border: 1px solid hsl(220 22% 89% / 0.8); border-radius: 9999px; background: rgba(255,255,255,0.7); transition: all 300ms cubic-bezier(0.22, 1, 0.36, 1); } .ds-search:hover { background: #FFFFFF; } .ds-search svg { position: absolute; left: 14px; color: #616B7F; pointer-events: none; transition: color 200ms; } .ds-search input { font-family: Inter, sans-serif; height: 100%; width: 100%; padding: 0 36px 0 40px; border: none; border-radius: 9999px; background: transparent; color: #191F2E; font-size: 14px; outline: none; } .ds-search input::placeholder { color: #616B7F; } .ds-search:focus-within { width: 320px; border-color: hsl(220 84% 56% / 0.6); background: #FFFFFF; box-shadow: 0 0 0 3px hsl(220 84% 56% / 0.12); } .ds-search:focus-within svg { color: #2F6FED; } @media (prefers-reduced-motion: reduce) { .ds-search { transition: none; } }"
     },
     {
-      "name": "KPI Card",
-      "kind": "card",
-      "description": "Indicateur synthétique : libellé, valeur, précision et icône discrète.",
-      "html": "<div class=\"ds-kpi\"><div class=\"ds-kpi-head\"><span class=\"ds-kpi-label\">Offres actives</span><span class=\"ds-kpi-icon\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#142D4E\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"2\" y=\"7\" width=\"20\" height=\"14\" rx=\"2\"/><path d=\"M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16\"/></svg></span></div><p class=\"ds-kpi-value\">3</p><p class=\"ds-kpi-hint\">5 offres au total</p></div>",
-      "css": ".ds-kpi { width:220px; padding:20px; border:1px solid #DAE0E7; border-radius:8px; background:#FFFFFF; box-shadow:0 1px 2px 0 rgb(0 0 0 / 0.05); font-family:Inter,sans-serif; } .ds-kpi-head { display:flex; align-items:center; justify-content:space-between; gap:12px; } .ds-kpi-label { font-size:13px; font-weight:500; color:#65758B; } .ds-kpi-icon { display:grid; place-items:center; width:32px; height:32px; border-radius:6px; background:#E7EEF9; } .ds-kpi-value { margin:12px 0 0; font-size:30px; font-weight:600; line-height:1.15; letter-spacing:-0.025em; color:#2C2421; } .ds-kpi-hint { margin:4px 0 0; font-size:12px; color:#65758B; }"
-    },
-    {
-      "name": "Status Badges",
-      "kind": "chip",
-      "refersTo": "badge-success",
-      "description": "Statuts toujours lisibles par le texte, la couleur ne fait que renforcer.",
-      "html": "<div class=\"ds-badges\"><span class=\"ds-badge ds-badge-success\">Acceptée</span><span class=\"ds-badge ds-badge-primary\">Programmé</span><span class=\"ds-badge ds-badge-warning\">À confirmer</span><span class=\"ds-badge ds-badge-danger\">Refusée</span></div>",
-      "css": ".ds-badges { display:flex; flex-wrap:wrap; gap:8px; font-family:Inter,sans-serif; } .ds-badge { display:inline-flex; align-items:center; border:1px solid; border-radius:9999px; padding:2px 10px; font-size:12px; font-weight:600; line-height:1.4; white-space:nowrap; } .ds-badge-success { background:#E7F8F0; color:#27865A; border-color:rgba(39,134,90,0.3); } .ds-badge-primary { background:#E7EEF9; color:#142D4E; border-color:rgba(20,45,78,0.25); } .ds-badge-warning { background:#FFFBEB; color:#B45309; border-color:rgba(180,83,9,0.3); } .ds-badge-danger { background:#FBE9E9; color:#DC2828; border-color:rgba(220,40,40,0.3); }"
-    },
-    {
-      "name": "Sidebar Navigation Item",
+      "name": "Navigation latérale",
       "kind": "nav",
       "refersTo": "nav-item-active",
-      "description": "Navigation marine avec indicateur actif bleu ciel.",
-      "html": "<nav class=\"ds-nav\"><a class=\"ds-nav-item ds-nav-item-active\" href=\"#\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"3\" y=\"3\" width=\"18\" height=\"18\" rx=\"2\"/><path d=\"M3 9h18M9 21V9\"/></svg>Tableau de bord</a><a class=\"ds-nav-item\" href=\"#\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"2\" y=\"7\" width=\"20\" height=\"14\" rx=\"2\"/><path d=\"M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16\"/></svg>Mes offres</a></nav>",
-      "css": ".ds-nav { display:flex; flex-direction:column; gap:4px; width:232px; padding:16px; border-radius:8px; background:#142D4E; font-family:Inter,sans-serif; } .ds-nav-item { position:relative; display:flex; align-items:center; gap:12px; padding:8px 12px; border-radius:6px; color:rgba(255,255,255,0.7); font-size:14px; font-weight:500; text-decoration:none; transition:background-color 150ms, color 150ms; } .ds-nav-item:hover { background:rgba(255,255,255,0.05); color:#FFFFFF; } .ds-nav-item-active { background:rgba(255,255,255,0.1); color:#FFFFFF; } .ds-nav-item-active::before { content:\"\"; position:absolute; left:0; top:4px; bottom:4px; width:2px; border-radius:9999px; background:#75B8E7; } .ds-nav-item:focus-visible { outline:2px solid #75B8E7; outline-offset:2px; }"
+      "description": "Liens de la barre latérale : 36 px, rayon 8 px, icône Lucide nue 18 px ; actif sur pastille bleu glacier en bleu roi, liseré de 3 px au bord gauche, compteur plein.",
+      "html": "<nav class=\"ds-nav\" aria-label=\"Navigation principale\"><a href=\"#\" class=\"ds-nav-item is-active\" aria-current=\"page\"><span class=\"ds-nav-rail\" aria-hidden=\"true\"></span><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect width=\"7\" height=\"9\" x=\"3\" y=\"3\" rx=\"1\"/><rect width=\"7\" height=\"5\" x=\"14\" y=\"3\" rx=\"1\"/><rect width=\"7\" height=\"9\" x=\"14\" y=\"12\" rx=\"1\"/><rect width=\"7\" height=\"5\" x=\"3\" y=\"16\" rx=\"1\"/></svg><span class=\"ds-nav-label\">Tableau de bord</span></a><a href=\"#\" class=\"ds-nav-item\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2\"/><circle cx=\"9\" cy=\"7\" r=\"4\"/><path d=\"M22 21v-2a4 4 0 0 0-3-3.87\"/><path d=\"M16 3.13a4 4 0 0 1 0 7.75\"/></svg><span class=\"ds-nav-label\">Candidatures</span><span class=\"ds-nav-count\">8</span></a><a href=\"#\" class=\"ds-nav-item\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z\"/><path d=\"M14 2v4a2 2 0 0 0 2 2h4\"/><path d=\"M10 9H8\"/><path d=\"M16 13H8\"/><path d=\"M16 17H8\"/></svg><span class=\"ds-nav-label\">Offres</span></a></nav>",
+      "css": ".ds-nav { font-family: Inter, sans-serif; display: flex; flex-direction: column; gap: 2px; width: 232px; padding: 12px; background: #FFFFFF; } .ds-nav-item { position: relative; display: flex; align-items: center; gap: 12px; height: 36px; padding: 0 10px; border-radius: 8px; color: #616B7F; font-size: 13.5px; text-decoration: none; transition: background-color 200ms, color 200ms; } .ds-nav-item svg { flex-shrink: 0; color: rgba(97,107,127,0.8); } .ds-nav-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .ds-nav-item:hover { background: rgba(241,244,248,0.7); color: #191F2E; } .ds-nav-item:hover svg { color: #191F2E; } .ds-nav-item.is-active { background: #E8F0FE; color: #1E3A8A; font-weight: 500; } .ds-nav-item.is-active svg { color: #1E3A8A; } .ds-nav-rail { position: absolute; left: -12px; top: 8px; bottom: 8px; width: 3px; border-radius: 0 9999px 9999px 0; background: #1E3A8A; } .ds-nav-count { display: grid; place-items: center; height: 20px; min-width: 20px; padding: 0 6px; border-radius: 6px; background: #F1F4F8; color: #616B7F; font-size: 11px; font-weight: 500; font-variant-numeric: tabular-nums; } .ds-nav-item.is-active .ds-nav-count { background: #1E3A8A; color: #FFFFFF; } .ds-nav-item:focus-visible { outline: none; box-shadow: 0 0 0 2px hsl(220 84% 56% / 0.3); }"
     },
     {
-      "name": "Modal Dialog",
+      "name": "Badges de statut",
+      "kind": "chip",
+      "refersTo": "badge-success",
+      "description": "Pilule texte + teinte : fond très clair, bordure à 30 %, texte 12 px. Le libellé porte toujours le statut ; la couleur le renforce.",
+      "html": "<div class=\"ds-badges\"><span class=\"ds-badge ds-badge--success\">Acceptée</span><span class=\"ds-badge ds-badge--warning\">À confirmer</span><span class=\"ds-badge ds-badge--destructive\">Refusée</span><span class=\"ds-badge ds-badge--primary\">En entretien</span><span class=\"ds-badge ds-badge--muted\">Brouillon</span></div>",
+      "css": ".ds-badges { font-family: Inter, sans-serif; display: flex; flex-wrap: wrap; gap: 8px; } .ds-badge { display: inline-flex; align-items: center; padding: 2px 10px; border: 1px solid; border-radius: 9999px; font-size: 12px; font-weight: 600; line-height: 16px; } .ds-badge--success { background: #E7F8F0; color: #1E6845; border-color: rgba(39,134,90,0.3); } .ds-badge--warning { background: #FFFBEB; color: #B45309; border-color: rgba(180,83,9,0.3); } .ds-badge--destructive { background: #FBE9E9; color: #BC1F1F; border-color: rgba(220,40,40,0.3); } .ds-badge--primary { background: #E8F0FE; color: #1E3A8A; border-color: rgba(30,58,138,0.3); } .ds-badge--muted { background: #F1F4F8; color: #616B7F; border-color: #DDE1E9; }"
+    },
+    {
+      "name": "Carte (surface)",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Surface de contenu : blanc sur canevas, rayon 12 px, bordure 1 px, ombre ambiante à 4 %, padding 20 px ; titre Section 15 px avec compteur et lien de section ; lignes séparées par un filet.",
+      "html": "<section class=\"ds-card\"><header class=\"ds-card-head\"><h2 class=\"ds-card-title\">Offres publiées <span class=\"ds-card-count\">6</span></h2><a href=\"#\" class=\"ds-card-link\">Gérer les offres <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M5 12h14\"/><path d=\"m12 5 7 7-7 7\"/></svg></a></header><ul class=\"ds-card-list\"><li><span>Stage analyste crédit</span><span class=\"ds-card-meta\">12 candidatures</span></li><li><span>Stage support informatique</span><span class=\"ds-card-meta\">5 candidatures</span></li></ul></section>",
+      "css": ".ds-card { font-family: Inter, sans-serif; width: 420px; padding: 20px; border: 1px solid hsl(220 22% 89% / 0.8); border-radius: 12px; background: #FFFFFF; color: #191F2E; box-shadow: 0 1px 2px hsl(224 40% 20% / 0.04); } .ds-card-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; } .ds-card-title { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 15px; font-weight: 600; letter-spacing: -0.01em; } .ds-card-count { padding: 2px 6px; border-radius: 6px; background: #F1F4F8; color: #616B7F; font-size: 11px; font-weight: 500; font-variant-numeric: tabular-nums; } .ds-card-link { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border: 1px solid #DDE1E9; border-radius: 8px; color: #191F2E; font-size: 13px; font-weight: 500; text-decoration: none; transition: all 200ms cubic-bezier(0.22, 1, 0.36, 1); } .ds-card-link:hover { background: #191F2E; border-color: #191F2E; color: #FFFFFF; } .ds-card-link:focus-visible { outline: 2px solid #2F6FED; outline-offset: 2px; } .ds-card-list { list-style: none; margin: 16px 0 0; padding: 0; border-top: 1px solid #DDE1E9; } .ds-card-list li { display: flex; justify-content: space-between; gap: 12px; padding: 12px 0; border-bottom: 1px solid #DDE1E9; font-size: 14px; } .ds-card-list li:last-child { border-bottom: none; } .ds-card-meta { color: #616B7F; font-size: 12px; }"
+    },
+    {
+      "name": "Carte KPI",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Indicateur cliquable : icône nue + libellé 13 px, valeur 30 px, précision 12 px sous un filet (tendance verte, alerte ambre, contexte gris). Se soulève de 2 px au survol.",
+      "html": "<a href=\"#\" class=\"ds-kpi\"><span class=\"ds-kpi-head\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2\"/><circle cx=\"9\" cy=\"7\" r=\"4\"/><path d=\"M22 21v-2a4 4 0 0 0-3-3.87\"/><path d=\"M16 3.13a4 4 0 0 1 0 7.75\"/></svg><span>Candidatures reçues</span></span><span class=\"ds-kpi-value\">48</span><span class=\"ds-kpi-foot ds-kpi-foot--up\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><polyline points=\"22 7 13.5 15.5 8.5 10.5 2 17\"/><polyline points=\"16 7 22 7 22 13\"/></svg><span>+12 % ce mois-ci</span></span></a>",
+      "css": ".ds-kpi { font-family: Inter, sans-serif; display: flex; flex-direction: column; gap: 16px; width: 240px; padding: 20px; border: 1px solid hsl(220 22% 89% / 0.8); border-radius: 12px; background: #FFFFFF; color: #191F2E; text-decoration: none; box-shadow: 0 1px 2px hsl(224 40% 20% / 0.04); transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 220ms cubic-bezier(0.22, 1, 0.36, 1), border-color 220ms cubic-bezier(0.22, 1, 0.36, 1); } .ds-kpi-head { display: flex; align-items: center; gap: 10px; color: #616B7F; font-size: 13px; font-weight: 500; line-height: 1.375; } .ds-kpi-head svg { flex-shrink: 0; transition: color 200ms; } .ds-kpi-value { font-size: 30px; font-weight: 600; line-height: 1; letter-spacing: -0.025em; font-variant-numeric: tabular-nums; } .ds-kpi-foot { display: flex; align-items: center; gap: 4px; padding-top: 12px; border-top: 1px solid #DDE1E9; color: #616B7F; font-size: 12px; } .ds-kpi-foot--up { color: #1E6845; font-weight: 500; } .ds-kpi:hover { transform: translateY(-2px); border-color: hsl(220 84% 56% / 0.45); box-shadow: 0 10px 24px -12px hsl(224 64% 33% / 0.2); } .ds-kpi:hover .ds-kpi-head svg { color: #191F2E; } .ds-kpi:focus-visible { outline: 2px solid #2F6FED; outline-offset: 2px; } @media (prefers-reduced-motion: reduce) { .ds-kpi, .ds-kpi:hover { transition: none; transform: none; } }"
+    },
+    {
+      "name": "Ligne « À traiter »",
       "kind": "custom",
-      "description": "Dialogue de confirmation ou de formulaire, légèrement surélevé.",
-      "html": "<div class=\"ds-modal\"><div class=\"ds-modal-head\"><h2 class=\"ds-modal-title\">Publier une offre de stage</h2><button class=\"ds-modal-close\" aria-label=\"Fermer\">×</button></div><div class=\"ds-modal-body\"><p>Les champs marqués d'un astérisque sont obligatoires.</p></div><div class=\"ds-modal-foot\"><button class=\"ds-modal-cancel\">Annuler</button><button class=\"ds-modal-confirm\">Créer l'offre</button></div></div>",
-      "css": ".ds-modal { width:100%; max-width:576px; border:1px solid #DAE0E7; border-radius:12px; background:#FFFFFF; box-shadow:0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1); font-family:Inter,sans-serif; overflow:hidden; } .ds-modal-head { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; padding:16px 20px; border-bottom:1px solid #DAE0E7; } .ds-modal-title { margin:0; font-size:18px; font-weight:600; color:#2C2421; } .ds-modal-close { border:0; background:transparent; color:#65758B; font-size:20px; line-height:1; padding:4px 8px; border-radius:6px; cursor:pointer; } .ds-modal-close:hover { background:#F1F5F9; color:#2C2421; } .ds-modal-body { padding:16px 20px; font-size:14px; line-height:1.5; color:#65758B; } .ds-modal-body p { margin:0; } .ds-modal-foot { display:flex; justify-content:flex-end; gap:8px; padding:12px 20px; border-top:1px solid #DAE0E7; } .ds-modal-cancel, .ds-modal-confirm { height:36px; padding:0 14px; border-radius:6px; font-size:13px; font-weight:500; cursor:pointer; } .ds-modal-cancel { background:#FFFFFF; border:1px solid #DAE0E7; color:#2C2421; } .ds-modal-cancel:hover { background:#F1F5F9; } .ds-modal-confirm { background:#142D4E; border:1px solid transparent; color:#FFFFFF; } .ds-modal-confirm:hover { background:#2C4260; }"
+      "refersTo": "button-outline",
+      "description": "Ligne de la file d'actions : verbe + objet + délai lisible ; le bouton à contour passe en bleu roi plein au survol de toute la ligne. La recommandation du système expert est posée sur bleu glacier.",
+      "html": "<ul class=\"ds-todo\"><li><a href=\"#\" class=\"ds-todo-row\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"10\"/><polyline points=\"12 6 12 12 16 14\"/></svg><span class=\"ds-todo-body\"><span class=\"ds-todo-title\">Examiner la candidature de Grâce M.</span><span class=\"ds-todo-meta\">Stage analyste crédit · en attente depuis 12 jours</span></span><span class=\"ds-todo-action\">Examiner <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M5 12h14\"/><path d=\"m12 5 7 7-7 7\"/></svg></span></a></li><li><a href=\"#\" class=\"ds-todo-row is-rec\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2\"/><circle cx=\"9\" cy=\"7\" r=\"4\"/><path d=\"M22 21v-2a4 4 0 0 0-3-3.87\"/><path d=\"M16 3.13a4 4 0 0 1 0 7.75\"/></svg><span class=\"ds-todo-body\"><span class=\"ds-todo-title\">Valider l'affectation de Joël K.</span><span class=\"ds-todo-meta\">dans 6 jours</span><span class=\"ds-todo-rec\"><strong>Recommandé : Direction IT</strong> · 4/4 critères satisfaits</span></span><span class=\"ds-todo-action\">Voir l'explication <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M5 12h14\"/><path d=\"m12 5 7 7-7 7\"/></svg></span></a></li></ul>",
+      "css": ".ds-todo { font-family: Inter, sans-serif; list-style: none; margin: 0; padding: 0; width: 560px; border: 1px solid #DDE1E9; border-radius: 12px; background: #FFFFFF; overflow: hidden; } .ds-todo li + li { border-top: 1px solid #DDE1E9; } .ds-todo-row { display: flex; align-items: center; gap: 14px; padding: 12px 20px; color: #191F2E; text-decoration: none; transition: background-color 150ms; } .ds-todo-row > svg { flex-shrink: 0; align-self: flex-start; margin-top: 2px; color: #616B7F; transition: color 200ms; } .ds-todo-row:hover { background: rgba(241,244,248,0.5); } .ds-todo-row:hover > svg { color: #191F2E; } .ds-todo-row.is-rec { background: rgba(232,240,254,0.4); } .ds-todo-row.is-rec > svg { color: #1E3A8A; } .ds-todo-row.is-rec:hover { background: rgba(232,240,254,0.7); } .ds-todo-body { flex: 1; min-width: 0; display: flex; flex-direction: column; } .ds-todo-title { font-size: 14px; font-weight: 500; } .ds-todo-meta { font-size: 12px; color: #616B7F; } .ds-todo-rec { margin-top: 6px; font-size: 12px; color: #616B7F; } .ds-todo-rec strong { font-weight: 500; color: #1E3A8A; } .ds-todo-action { display: inline-flex; flex-shrink: 0; align-items: center; gap: 4px; height: 32px; padding: 0 10px; border: 1px solid #DDE1E9; border-radius: 8px; background: #FFFFFF; font-size: 13px; font-weight: 500; box-shadow: 0 1px 2px rgba(0,0,0,0.05); transition: background-color 150ms, border-color 150ms, color 150ms; } .ds-todo-row:hover .ds-todo-action { background: #1E3A8A; border-color: #1E3A8A; color: #FFFFFF; } .ds-todo-row:focus-visible { outline: 2px solid #2F6FED; outline-offset: -2px; }"
+    },
+    {
+      "name": "Cloche de notifications",
+      "kind": "button",
+      "refersTo": "search",
+      "description": "Cloche ronde translucide de 40 px, icône nue 18 px, compteur bleu roi cerclé du canevas.",
+      "html": "<button type=\"button\" class=\"ds-bell\" aria-label=\"Notifications : 3 à consulter\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9\"/><path d=\"M10.3 21a1.94 1.94 0 0 0 3.4 0\"/></svg><span class=\"ds-bell-count\">3</span></button>",
+      "css": ".ds-bell { font-family: Inter, sans-serif; position: relative; display: grid; place-items: center; width: 40px; height: 40px; border: none; border-radius: 9999px; background: rgba(255,255,255,0.6); color: #616B7F; box-shadow: inset 0 0 0 1px hsl(220 22% 89% / 0.7); backdrop-filter: blur(12px); cursor: pointer; transition: all 200ms; } .ds-bell:hover { background: #FFFFFF; color: #191F2E; } .ds-bell:active { transform: scale(0.97); } .ds-bell[aria-expanded=\"true\"] { background: #FFFFFF; color: #191F2E; box-shadow: inset 0 0 0 1px hsl(220 84% 56% / 0.4); } .ds-bell:focus-visible { outline: 2px solid #2F6FED; outline-offset: 2px; } .ds-bell-count { position: absolute; top: -2px; right: -2px; display: grid; place-items: center; height: 18px; min-width: 18px; padding: 0 4px; border-radius: 9999px; background: #1E3A8A; color: #FFFFFF; font-size: 10px; font-weight: 600; line-height: 1; font-variant-numeric: tabular-nums; box-shadow: 0 0 0 2px #F5F7FA; }"
     }
   ],
   "narrative": {
     "northStar": "Le Guichet de confiance",
-    "overview": "StageManager est un service administratif moderne : un guichet calme, lisible et fiable où l'étudiant, l'entreprise et l'administrateur savent immédiatement où ils se trouvent et quelle est la prochaine action. Le cadre est institutionnel — bleu marine, blanc, typographie Inter — mais jamais froid ni bureaucratique. La confiance vient de la précision : hiérarchie nette, statuts explicites, formulaires guidés, aucune décoration qui détourne de la tâche.\n\nLa composition repose sur un cadre navy fixe (navigation latérale) et une surface de travail blanche posée sur un canevas gris très clair. Les actions principales sont marine, les accents bleu ciel signalent la sélection et l'activité, et les couleurs fonctionnelles restent réservées aux statuts. Les cartes sont légèrement surélevées : bordure fine et ombre discrète suffisent à séparer les plans.\n\nLe système est sobre par doctrine. Il privilégie la lisibilité, les libellés français explicites et la constance entre les trois espaces. La couleur ne porte jamais seule une information ; chaque badge associe une teinte et un texte. Les animations restent courtes et fonctionnelles, et respectent prefers-reduced-motion.",
+    "overview": "StageManager est un service administratif moderne : un guichet calme, lisible et fiable où l'étudiant, l'entreprise et l'administrateur savent immédiatement où ils se trouvent et quelle est la prochaine action. Le cadre est institutionnel — bleu roi, blanc, typographie Inter — mais jamais froid ni bureaucratique. La confiance vient de la précision : hiérarchie nette, statuts explicites, formulaires guidés, aucune décoration qui détourne de la tâche.\n\nLa composition repose sur une navigation latérale blanche et une surface de travail posée sur un canevas gris très clair, légèrement bleuté. Les actions principales sont en bleu roi, le bleu vif signale les liens, le focus et les données des graphiques, et le bleu glacier marque la sélection. Les couleurs fonctionnelles (vert, ambre, rouge) restent réservées aux statuts. Les icônes sont neutres, monochromes et posées seules, sans tuile ni cadre.\n\nLe système est sobre par doctrine. Il privilégie la lisibilité, les libellés français explicites et la constance entre les trois espaces. La couleur ne porte jamais seule une information ; chaque badge associe une teinte et un texte. Les animations sont douces, courtes et fonctionnelles, et respectent `prefers-reduced-motion`.",
     "keyCharacteristics": [
-      "Cadre bleu marine, surface blanche, canevas gris froid très clair.",
-      "Inter uniquement, avec une échelle compacte de 12 à 30 px.",
-      "Coins légèrement arrondis (6–8 px), pilules complètes réservées aux badges et avatars.",
+      "Accents bleu roi, surface blanche, canevas gris froid très clair.",
+      "Inter uniquement, avec une échelle compacte de 11 à 30 px (une exception à 36 px, voir Typography).",
+      "Cartes à 12 px de rayon, modales à 16 px, pilules complètes réservées aux badges, avatars, recherche et barres de progression.",
       "Bordures 1 px systématiques, ombres rares et douces.",
-      "Bleu ciel en accent de sélection, jamais en texte courant.",
-      "Statuts toujours exprimés par un badge texte + couleur.",
-      "Densité professionnelle : 20–24 px de padding dans les cartes, sections espacées de 24 px."
+      "Bleu vif en accent (liens, focus, graphiques), jamais en grands aplats.",
+      "Icônes Lucide monochromes, sans fond ni bordure, alignées comme dans la barre latérale.",
+      "Statuts toujours exprimés par un badge texte + couleur."
     ],
     "rules": [
-      { "name": "The Navy Frame Rule", "body": "Le marine encadre et commande ; il ne remplit jamais une grande zone de contenu. Navigation, action principale et focus uniquement.", "section": "colors" },
-      { "name": "The Sky Accent Rule", "body": "Le bleu ciel occupe moins de 10 % de l'écran. Il marque la sélection et l'activité ; il n'est jamais utilisé pour du texte courant sur fond blanc.", "section": "colors" },
-      { "name": "The Status Is Never Colour Alone Rule", "body": "Un statut est toujours un badge avec un libellé français explicite. La teinte renforce le texte, elle ne le remplace pas.", "section": "colors" },
-      { "name": "The One Family Rule", "body": "Inter est la seule famille. La hiérarchie se construit par la taille et la graisse, jamais par une seconde police décorative.", "section": "typography" },
-      { "name": "The Compact Scale Rule", "body": "Aucun texte d'interface ne dépasse 30 px. Les titres de page restent entre 18 et 20 px ; les chiffres KPI sont la seule exception.", "section": "typography" },
-      { "name": "The 768 Rule", "body": "La navigation latérale n'apparaît qu'à partir de 768 px. En dessous, le tiroir et la barre supérieure compacte sont la seule navigation.", "section": "layout" },
-      { "name": "The 24-Pixel Rhythm Rule", "body": "L'espacement vertical entre sections est de 24 px ; à l'intérieur d'une carte, 16 à 24 px. Ne pas improviser des écarts de 30 ou 40 px.", "section": "layout" },
-      { "name": "The One-Step Elevation Rule", "body": "Une carte ne s'élève que d'un cran au-dessus du canevas. Pas d'ombre au survol, pas de superposition de cartes flottantes.", "section": "elevation" },
-      { "name": "The Border Does the Work Rule", "body": "La séparation vient d'abord de la bordure 1 px ; l'ombre confirme, elle ne structure pas.", "section": "elevation" },
-      { "name": "The 8-Pixel Default Rule", "body": "En cas de doute, utiliser 8 px. 12 px est réservé aux modales et au logo ; au-delà, seulement les pilules.", "section": "shapes" }
+      {
+        "name": "The Royal Frame Rule",
+        "body": "Le bleu roi encadre et commande ; il ne remplit jamais une grande zone de contenu. Logo, action principale, élément actif et données « acquises » uniquement.",
+        "section": "colors"
+      },
+      {
+        "name": "The Vivid Accent Rule",
+        "body": "Le bleu vif occupe moins de 10 % de l'écran. Il marque les liens, le focus et les données ; il n'est jamais utilisé en grand aplat de fond.",
+        "section": "colors"
+      },
+      {
+        "name": "The Status Is Never Colour Alone Rule",
+        "body": "Un statut est toujours un badge avec un libellé français explicite. La teinte renforce le texte, elle ne le remplace pas.",
+        "section": "colors"
+      },
+      {
+        "name": "The Bare Icon Rule",
+        "body": "Une icône est un trait monochrome posé seul. Pas de tuile colorée, pas de carré bordé derrière : la couleur vient du contexte (actif, survol), jamais d'un fond décoratif.",
+        "section": "colors"
+      },
+      {
+        "name": "The One Family Rule",
+        "body": "Inter est la seule famille. La hiérarchie se construit par la taille et la graisse, jamais par une seconde police décorative.",
+        "section": "typography"
+      },
+      {
+        "name": "The Compact Scale Rule",
+        "body": "Aucun texte d'interface ne dépasse 30 px, à une exception près : le chiffre « places de stage à pourvoir » de la carte entreprise (36 px), qui en est le point focal. Les titres de page restent entre 18 et 20 px.",
+        "section": "typography"
+      },
+      {
+        "name": "The 11-Pixel Floor Rule",
+        "body": "11 px est le plancher absolu pour un texte lisible ; 10 px n'est toléré que dans un compteur numérique à l'intérieur d'une pastille de 18 px.",
+        "section": "typography"
+      },
+      {
+        "name": "The 1024 Rule",
+        "body": "La navigation latérale n'apparaît qu'à partir de 1024 px. En dessous, le tiroir et la barre compacte sont la seule navigation, et l'action principale reste accessible (bouton « + »).",
+        "section": "layout"
+      },
+      {
+        "name": "The 24-Pixel Rhythm Rule",
+        "body": "L'espacement vertical entre sections est de 24 px ; à l'intérieur d'une carte, 16 à 20 px.",
+        "section": "layout"
+      },
+      {
+        "name": "The No Hole Rule",
+        "body": "Une ligne de grille ne laisse jamais une colonne vide : un bloc seul sur sa ligne s'étend sur toute la largeur.",
+        "section": "layout"
+      },
+      {
+        "name": "The No Scrollbar-in-Card Rule",
+        "body": "Pas de barre de défilement horizontale dans une carte : les filtres et puces passent à la ligne.",
+        "section": "layout"
+      },
+      {
+        "name": "The One-Step Elevation Rule",
+        "body": "Une carte ne s'élève que d'un cran. Seules les cartes cliquables (KPI, offres) se soulèvent de 2 px au survol ; les cartes de contenu restent immobiles.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Border Does the Work Rule",
+        "body": "La séparation vient d'abord de la bordure 1 px ; l'ombre confirme, elle ne structure pas.",
+        "section": "elevation"
+      }
     ],
     "dos": [
-      "Utiliser le marine #142D4E pour l'action principale et le cadre de navigation, et réserver le bleu ciel aux accents de sélection.",
-      "Accompagner chaque statut d'un libellé français explicite dans un badge.",
-      "Conserver les cartes blanches sur canevas #F1F5F9 avec une bordure 1 px et une ombre shadow-sm.",
-      "Utiliser Inter à 14 px pour le corps de texte et 12 px pour les libellés, avec des libellés de champs au-dessus.",
-      "Employer des verbes précis en français : « Publier une offre », « Valider l'affectation », « Enregistrer les modifications ».",
-      "Respecter les rayons 6–8 px et la limite de 30 px pour les chiffres KPI.",
-      "Garder la navigation latérale visible dès 768 px et la remplacer par un tiroir en dessous."
+      "Do utiliser le bleu roi #1E3A8A pour l'action principale, le bleu vif #2F6FED pour les liens, le focus et les données, et le bleu glacier #E8F0FE pour la sélection.",
+      "Do accompagner chaque statut d'un libellé français explicite dans un badge.",
+      "Do poser les icônes seules, monochromes, comme dans la barre latérale.",
+      "Do trier les actions par urgence réelle et dire le délai en clair.",
+      "Do employer des verbes précis en français : « Publier une offre », « Valider l'affectation », « Voir l'explication ».",
+      "Do garder une colonne de grille `minmax(0, 1fr)` et vérifier chaque écran à 375, 1024, 1280 et 1440 px.",
+      "Do laisser l'action principale accessible sur téléphone."
     ],
     "donts": [
-      "Ne pas utiliser le bleu ciel pour du texte courant ou de grands aplats de fond.",
-      "Ne pas ajouter de dégradés, de néons, d'ombres colorées ou d'effets décoratifs absents du Design Brief.",
-      "Ne pas dépasser 12 px de rayon, sauf pour les pilules, avatars et barres de progression.",
-      "Ne pas coder un statut uniquement par la couleur.",
-      "Ne pas empiler plusieurs ombres ou faire flotter les cartes au survol.",
-      "Ne pas utiliser une seconde police ou des tailles de titre supérieures à 30 px.",
-      "Ne pas inventer des icônes illustratives, des logos partenaires ou des visuels non fournis."
+      "Don't mettre une tuile colorée ou un cadre derrière une icône.",
+      "Don't utiliser le bleu vif en grands aplats de fond.",
+      "Don't laisser une colonne vide dans une grille, ni étirer une carte pour égaliser des hauteurs.",
+      "Don't afficher une barre de défilement à l'intérieur d'une carte.",
+      "Don't descendre sous 11 px pour un texte porteur de sens.",
+      "Don't coder un statut uniquement par la couleur.",
+      "Don't ajouter de carte promotionnelle : le système expert se montre dans les décisions elles-mêmes.",
+      "Don't utiliser une seconde police ou des tailles supérieures à 30 px (hors chiffre focal de la carte entreprise)."
     ]
   }
 }

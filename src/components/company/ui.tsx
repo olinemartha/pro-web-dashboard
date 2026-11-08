@@ -229,7 +229,7 @@ export function Modal({
             </span>
           )}
           <div className="min-w-0 flex-1">
-            <h2 className="text-pretty text-[17px] font-semibold leading-snug tracking-tight">{title}</h2>
+            <h2 className="text-pretty text-lg font-semibold leading-snug tracking-tight">{title}</h2>
             {description && <p className="mt-0.5 text-[13px] leading-relaxed text-muted-foreground">{description}</p>}
           </div>
           <CloseButton onClose={onClose} />

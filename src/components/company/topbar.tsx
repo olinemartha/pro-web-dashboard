@@ -291,7 +291,7 @@ export function NotificationBell({ align = "right" }: { align?: "right" | "left"
           params: { internId: i.id },
         });
     });
-    return list.slice(0, 6);
+    return list;
   }, [candidates, offers, interns, interviews]);
 
   const count = notices.length;
@@ -331,7 +331,7 @@ export function NotificationBell({ align = "right" }: { align?: "right" | "left"
             <p className="border-t px-4 py-8 text-center text-sm text-muted-foreground">Vous êtes à jour.</p>
           ) : (
             <ul className="max-h-[360px] overflow-y-auto border-t p-1.5">
-              {notices.map((n) => (
+              {notices.slice(0, 6).map((n) => (
                 <li key={n.id}>
                   <Link
                     to={n.to}

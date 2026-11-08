@@ -59,7 +59,7 @@ export function KpiCard({
         </span>
       </div>
 
-      <p className="mt-2 text-[26px] font-semibold leading-none tracking-tight sm:text-[28px]">
+      <p className="mt-2 text-[30px] font-semibold leading-none tracking-tight">
         {typeof value === "number" ? <AnimatedNumber value={value} /> : value}
       </p>
 

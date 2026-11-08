@@ -246,7 +246,7 @@ function SidebarNav({
             (collapsed ? (
               <div className="mx-2 mb-2 h-px bg-border" aria-hidden />
             ) : (
-              <p className="mb-1.5 px-2.5 text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground/70">
+              <p className="mb-1.5 px-2.5 text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
                 {group.title}
               </p>
             ))}
@@ -430,11 +430,9 @@ function TopBar({ pathname }: { pathname: string }) {
           <Link
             to="/entreprise/offres"
             search={{ nouveau: true }}
-            className="press group inline-flex h-10 items-center gap-2 rounded-xl bg-primary pl-3 pr-4 text-sm font-medium text-primary-foreground shadow-[0_6px_16px_-6px_hsl(var(--primary)/0.55)] transition-all duration-200 hover:bg-primary-hover hover:shadow-[0_10px_22px_-8px_hsl(var(--primary)/0.6)]"
+            className="press group inline-flex h-10 items-center gap-2 rounded-lg bg-primary pl-3.5 pr-4 text-sm font-medium text-primary-foreground shadow-[0_6px_16px_-6px_hsl(var(--primary)/0.55)] transition-all duration-200 hover:bg-primary-hover hover:shadow-[0_10px_22px_-8px_hsl(var(--primary)/0.6)]"
           >
-            <span className="grid size-6 place-items-center rounded-lg bg-white/15 transition-transform duration-300 group-hover:rotate-90">
-              <Plus className="size-4" />
-            </span>
+            <Plus className="size-4 transition-transform duration-300 group-hover:rotate-90" />
             Publier une offre
           </Link>
         )}
