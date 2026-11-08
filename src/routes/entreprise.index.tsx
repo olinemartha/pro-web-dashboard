@@ -45,12 +45,18 @@ function fmtDate(value: string, withYear = true) {
 function relativeDay(value: string) {
   const days = Math.round((Date.now() - new Date(`${value}T12:00:00`).getTime()) / DAY);
   if (days === 0) return "aujourd'hui";
-  if (days === -1) return "demain";
-  if (days < 0) return `dans ${-days} j`;
   if (days === 1) return "hier";
-  if (days < 7) return `il y a ${days} j`;
-  if (days < 30) return `il y a ${Math.round(days / 7)} sem.`;
+  if (days === -1) return "demain";
+  if (days < 0) return `dans ${-days} jours`;
+  if (days < 14) return `il y a ${days} jours`;
+  if (days < 60) return `il y a ${Math.round(days / 7)} semaines`;
   return fmtDate(value, false);
+}
+
+/** Date du jour au format ISO, en heure locale (Kinshasa), et non en UTC. */
+function localIsoDate(date = new Date()) {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 }
 
 function initialsOf(value: string) {
@@ -161,7 +167,7 @@ function Sparkline({ values, className }: { values: number[]; className?: string
         pathLength={1}
         className="spark-draw"
       />
-      {last && <circle cx={last[0]} cy={last[1]} r="2.75" fill="hsl(var(--primary))" stroke="#fff" strokeWidth="1.5" />}
+      {last && <circle cx={last[0]} cy={last[1]} r="2.75" fill="hsl(var(--primary))" stroke="hsl(var(--card))" strokeWidth="1.5" />}
     </svg>
   );
 }
@@ -331,7 +337,7 @@ function PipelineChart({
               {active ? active.count : <AnimatedNumber value={total} />}
             </p>
             <p className="mt-1 max-w-[96px] text-[11px] leading-tight text-muted-foreground">
-              {active ? candidateStatusLabels[active.status].label : "candidatures"}
+              {active ? candidateStatusLabels[active.status].label : total > 1 ? "candidatures" : "candidature"}
             </p>
           </div>
         </div>
@@ -395,9 +401,9 @@ function CompanyDashboard() {
   const [expanded, setExpanded] = useState(false);
 
   const now = Date.now();
-  const todayIso = new Date().toISOString().split("T")[0];
+  const todayIso = localIsoDate();
   // Seuls les entretiens des 3 prochains jours entrent dans la file ; l'agenda couvre les suivants.
-  const horizonIso = new Date(now + 3 * DAY).toISOString().split("T")[0];
+  const horizonIso = localIsoDate(new Date(now + 3 * DAY));
 
   const activeOffers = offers.filter((offer) => offer.status === "publiee");
   const toExamine = candidates.filter((c) => c.status === "en_attente" || c.status === "examen");
@@ -536,7 +542,9 @@ function CompanyDashboard() {
     ...group,
     count: group.key === "tout" ? todos.length : todos.filter((t) => TODO_META[t.kind].group === group.key).length,
   })).filter((entry) => entry.key === "tout" || entry.count > 0);
-  const filtered = tab === "tout" ? todos : todos.filter((t) => TODO_META[t.kind].group === tab);
+  // Si le filtre choisi n'a plus d'élément, on revient à « Tout » plutôt que d'afficher « Tout est à jour » à tort.
+  const currentTab = tabs.some((entry) => entry.key === tab) ? tab : "tout";
+  const filtered = currentTab === "tout" ? todos : todos.filter((t) => TODO_META[t.kind].group === currentTab);
   const COLLAPSED = 5;
   const visibleTodos = expanded ? filtered : filtered.slice(0, COLLAPSED);
   const hiddenCount = filtered.length - Math.min(filtered.length, COLLAPSED);
@@ -673,7 +681,7 @@ function CompanyDashboard() {
               {todos.length > 0 && (
                 <div role="group" aria-label="Filtrer les décisions" className="flex flex-wrap gap-1.5">
                   {tabs.map((entry) => {
-                    const active = tab === entry.key;
+                    const active = currentTab === entry.key;
                     return (
                       <button
                         key={entry.key}
@@ -834,10 +842,14 @@ function CompanyDashboard() {
                   const date = new Date(`${interview.date}T00:00:00`);
                   const first = index === 0;
                   return (
-                    <li
-                      key={interview.id}
-                      className={cn("flex items-center gap-3 rounded-xl p-2.5", first && "bg-primary-soft/70")}
-                    >
+                    <li key={interview.id}>
+                      <Link
+                        to="/entreprise/entretiens"
+                        className={cn(
+                          "group flex items-center gap-3 rounded-xl p-2.5 transition-colors duration-150",
+                          first ? "bg-primary-soft/70 hover:bg-primary-soft" : "hover:bg-muted/60"
+                        )}
+                      >
                       <span
                         className={cn(
                           "flex w-11 shrink-0 flex-col items-center rounded-lg py-1.5 leading-none",
@@ -850,12 +862,13 @@ function CompanyDashboard() {
                         <span className="mt-0.5 text-base font-semibold tabular-nums">{date.getDate()}</span>
                       </span>
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium">{candidateName(interview.candidateId)}</p>
+                        <p className="truncate text-sm font-medium transition-colors group-hover:text-primary">{candidateName(interview.candidateId)}</p>
                         <p className="truncate text-xs text-muted-foreground">{candidateOffer(interview.candidateId)}</p>
                       </div>
                       <span className="shrink-0 rounded-md bg-card px-1.5 py-0.5 text-xs font-medium tabular-nums ring-1 ring-border">
                         {interview.time}
                       </span>
+                      </Link>
                     </li>
                   );
                 })}
@@ -947,13 +960,14 @@ function CompanyDashboard() {
             ) : (
               <ol className="relative mt-4 space-y-4 before:absolute before:bottom-3 before:left-[15px] before:top-3 before:w-px before:bg-border">
                 {activity.map((item) => (
-                  <li key={item.id} className="relative flex gap-3">
+                  <li key={item.id}>
+                    <Link to="/entreprise/candidatures" search={{ q: item.name }} className="group relative flex gap-3 rounded-lg">
                     <span className="relative z-10 grid size-8 shrink-0 place-items-center rounded-full bg-card text-[11px] font-semibold text-primary ring-1 ring-border">
                       {item.initials}
                     </span>
                     <div className="min-w-0 flex-1">
                       <p className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[13px] leading-snug">
-                        <span className="font-medium">{item.name}</span>
+                        <span className="font-medium transition-colors group-hover:text-primary">{item.name}</span>
                         <Badge
                           label={candidateStatusLabels[item.status].label}
                           tone={candidateStatusLabels[item.status].tone}
@@ -964,6 +978,7 @@ function CompanyDashboard() {
                         {relativeDay(item.date)} · {item.offer}
                       </p>
                     </div>
+                    </Link>
                   </li>
                 ))}
               </ol>
@@ -995,9 +1010,9 @@ function CompanyDashboard() {
                     {interns.slice(0, 5).map((intern) => {
                       const step = nextStep(intern.id);
                       return (
-                        <tr key={intern.id} className="group transition-colors hover:bg-muted/40">
+                        <tr key={intern.id} className="group relative transition-colors hover:bg-muted/40">
                           <td className="px-5 py-3">
-                            <Link to="/entreprise/stagiaires/$internId" params={{ internId: intern.id }} className="flex items-center gap-3">
+                            <Link to="/entreprise/stagiaires/$internId" params={{ internId: intern.id }} className="flex items-center gap-3 after:absolute after:inset-0">
                               <AvatarInitials initials={intern.initials} className="size-8 text-xs" />
                               <span className="min-w-0">
                                 <span className="block truncate font-medium group-hover:text-primary">{intern.name}</span>

@@ -237,7 +237,8 @@ export function NotificationBell({ align = "right" }: { align?: "right" | "left"
   const notices = useMemo<Notice[]>(() => {
     const offerTitle = (id: string) => offers.find((o) => o.id === id)?.title ?? "";
     const name = (id: string) => candidates.find((c) => c.id === id)?.name ?? "Candidat";
-    const today = new Date().toISOString().split("T")[0];
+    const d = new Date();
+    const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
     const list: Notice[] = [];
     interns
       .filter((i) => !i.confirmed)
