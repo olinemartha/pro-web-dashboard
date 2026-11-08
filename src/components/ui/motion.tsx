@@ -62,10 +62,17 @@ export function useCountUp(target: number, duration = 900) {
 
 export function AnimatedNumber({ value, suffix = "" }: { value: number; suffix?: string }) {
   const current = useCountUp(value);
+  // Les lecteurs d'écran lisent la valeur finale ; le compteur animé leur est masqué.
   return (
-    <span className="tabular-nums" aria-label={`${value}${suffix}`}>
-      {current}
-      {suffix}
+    <span className="tabular-nums">
+      <span aria-hidden="true">
+        {current}
+        {suffix}
+      </span>
+      <span className="sr-only">
+        {value}
+        {suffix}
+      </span>
     </span>
   );
 }

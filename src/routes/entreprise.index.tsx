@@ -5,6 +5,7 @@ import {
   Briefcase,
   CalendarClock,
   CheckCircle2,
+  ChevronDown,
   Clock,
   FileText,
   Inbox,
@@ -20,6 +21,7 @@ import { AvatarInitials, Badge, type Tone } from "@/components/company/ui";
 import { CompanyLogoUploader } from "@/components/company/company-logo";
 import { AnimatedNumber, Reveal } from "@/components/ui/motion";
 import { useCompanyStore } from "@/lib/company-store";
+import { latestRunFor } from "@/lib/expert-engine";
 import { cn } from "@/lib/utils";
 import { candidateStatusLabels, type CandidateStatus } from "@/lib/company-data";
 
@@ -42,7 +44,9 @@ function fmtDate(value: string, withYear = true) {
 
 function relativeDay(value: string) {
   const days = Math.round((Date.now() - new Date(`${value}T12:00:00`).getTime()) / DAY);
-  if (days <= 0) return "aujourd'hui";
+  if (days === 0) return "aujourd'hui";
+  if (days === -1) return "demain";
+  if (days < 0) return `dans ${-days} j`;
   if (days === 1) return "hier";
   if (days < 7) return `il y a ${days} j`;
   if (days < 30) return `il y a ${Math.round(days / 7)} sem.`;
@@ -96,6 +100,7 @@ function SectionHeader({
       {to && (
         <Link
           to={to}
+          aria-label={`${linkLabel} — ${title}`}
           className="press group inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border bg-card px-3 text-[13px] font-medium text-foreground shadow-sm transition-all duration-200 hover:border-foreground hover:bg-foreground hover:text-background hover:shadow-md"
         >
           {linkLabel}
@@ -151,21 +156,48 @@ type Todo = {
   id: string;
   label: string;
   meta: string;
-  urgency: number;
+  /** Délai lisible : « en attente depuis 12 j », « dans 6 j »… */
+  when: string;
+  /** Urgence réelle : plus le score est élevé, plus l'action remonte. */
+  score: number;
   q?: string;
   internId?: string;
+  /** Recommandation du système expert, pour les affectations. */
+  recommendation?: { service: string; met: number; total: number };
 };
+
+type TodoGroup = "recrutement" | "stagiaires" | "services";
 
 const TODO_META: Record<
   TodoKind,
-  { action: string; icon: React.ComponentType<{ className?: string }>; tab: string }
+  { action: string; icon: React.ComponentType<{ className?: string }>; group: TodoGroup }
 > = {
-  affectation: { action: "Valider", icon: Sparkles, tab: "Affectations" },
-  candidature: { action: "Examiner", icon: Inbox, tab: "Candidatures" },
-  rapport: { action: "Examiner", icon: FileText, tab: "Rapports" },
-  entretien: { action: "Préparer", icon: CalendarClock, tab: "Entretiens" },
-  service: { action: "Mettre à jour", icon: Layers, tab: "Services" },
+  affectation: { action: "Valider", icon: Sparkles, group: "stagiaires" },
+  candidature: { action: "Examiner", icon: Inbox, group: "recrutement" },
+  rapport: { action: "Examiner", icon: FileText, group: "stagiaires" },
+  entretien: { action: "Préparer", icon: CalendarClock, group: "recrutement" },
+  service: { action: "Mettre à jour", icon: Layers, group: "services" },
 };
+
+const TODO_GROUPS: { key: TodoGroup | "tout"; label: string }[] = [
+  { key: "tout", label: "Tout" },
+  { key: "recrutement", label: "Recrutement" },
+  { key: "stagiaires", label: "Stagiaires" },
+  { key: "services", label: "Services" },
+];
+
+/** Jours entiers entre deux dates ISO (positif si `to` est après `from`). */
+function daysBetween(from: string, to: string) {
+  return Math.round(
+    (new Date(`${to}T12:00:00`).getTime() - new Date(`${from}T12:00:00`).getTime()) / DAY
+  );
+}
+
+function waitedLabel(days: number, verb = "en attente depuis") {
+  if (days <= 0) return "aujourd'hui";
+  if (days === 1) return `${verb} 1 jour`;
+  return `${verb} ${days} jours`;
+}
 
 function TodoTarget({ todo, className, children }: { todo: Todo; className: string; children: React.ReactNode }) {
   switch (todo.kind) {
@@ -223,7 +255,7 @@ function PipelineChart({
 }: {
   steps: PipelineStep[];
   total: number;
-  acceptanceRate: number;
+  acceptanceRate: number | null;
 }) {
   const [hover, setHover] = useState<CandidateStatus | null>(null);
   const size = 136;
@@ -261,7 +293,7 @@ function PipelineChart({
               strokeWidth={hover === arc.status ? stroke + 4 : stroke}
               strokeDasharray={`${arc.dash} ${c}`}
               strokeDashoffset={-arc.offset}
-              className="donut-arc cursor-pointer transition-[stroke-width,opacity] duration-200"
+              className="donut-arc transition-[stroke-width,opacity] duration-200"
               style={{
                 opacity: hover && hover !== arc.status ? 0.35 : 1,
                 ["--arc-len" as string]: `${arc.dash}`,
@@ -294,8 +326,12 @@ function PipelineChart({
               key={step.status}
               onMouseEnter={() => setHover(step.status)}
               onMouseLeave={() => setHover(null)}
+              onFocus={() => setHover(step.status)}
+              onBlur={() => setHover(null)}
+              tabIndex={0}
+              aria-label={`${candidateStatusLabels[step.status].label} : ${step.count} candidature${step.count > 1 ? "s" : ""}, ${total ? Math.round((step.count / total) * 100) : 0} %`}
               className={cn(
-                "grid cursor-default grid-cols-[minmax(0,130px)_minmax(0,1fr)_auto] items-center gap-3 rounded-lg px-2 py-1 transition-all duration-200",
+                "grid cursor-default outline-none focus-visible:ring-2 focus-visible:ring-accent grid-cols-[minmax(0,130px)_minmax(0,1fr)_auto] items-center gap-3 rounded-lg px-2 py-1 transition-all duration-200",
                 hover === step.status && "bg-muted/60",
                 dim && "opacity-50"
               )}
@@ -324,7 +360,7 @@ function PipelineChart({
         <div className="mt-2 flex items-center justify-between border-t px-2 pt-2.5">
           <span className="text-[13px] text-muted-foreground">Taux d'acceptation (décisions prises)</span>
           <span className="text-[15px] font-semibold tabular-nums">
-            <AnimatedNumber value={acceptanceRate} suffix=" %" />
+            {acceptanceRate === null ? "—" : <AnimatedNumber value={acceptanceRate} suffix=" %" />}
           </span>
         </div>
       </div>
@@ -337,8 +373,9 @@ function PipelineChart({
 /* ------------------------------------------------------------------ */
 
 function CompanyDashboard() {
-  const { profile, offers, candidates, interns, interviews, services } = useCompanyStore();
-  const [tab, setTab] = useState<TodoKind | "tout">("tout");
+  const { profile, offers, candidates, interns, interviews, services, expertRuns } = useCompanyStore();
+  const [tab, setTab] = useState<TodoGroup | "tout">("tout");
+  const [expanded, setExpanded] = useState(false);
 
   const now = Date.now();
   const todayIso = new Date().toISOString().split("T")[0];
@@ -389,54 +426,75 @@ function CompanyDashboard() {
   const acceptedCount = pipelineCounts.find((s) => s.status === "acceptee")?.count ?? 0;
   const refusedCount = pipelineCounts.find((s) => s.status === "refusee")?.count ?? 0;
   const decided = acceptedCount + refusedCount;
-  const acceptanceRate = decided ? Math.round((acceptedCount / decided) * 100) : 0;
+  const acceptanceRate = decided ? Math.round((acceptedCount / decided) * 100) : null;
 
-  /* ---- File À traiter ---- */
+  /* ---- File À traiter ----
+   * Tri par urgence réelle (délai, ancienneté), le type ne sert qu'à départager :
+   * - entretien : plus il est proche, plus il remonte (demain ≈ 84) ;
+   * - affectation : un stagiaire attend sa décision (85) ;
+   * - candidature : plus elle attend, plus elle remonte (12 jours ≈ 58) ;
+   * - rapport : plus il attend sa relecture, plus il remonte ;
+   * - besoins de service : rappel de fond (20 à 30).
+   */
   const todos: Todo[] = [];
-  pendingAssignments.forEach((intern) =>
+  pendingAssignments.forEach((intern) => {
+    const proposal = latestRunFor(expertRuns, intern.id)?.proposals[0];
     todos.push({
       kind: "affectation",
       id: `affectation-${intern.id}`,
       label: `Valider l'affectation de ${intern.name}`,
-      meta: `${offerTitle(intern.offerId)} · recommandation du système expert`,
+      meta: offerTitle(intern.offerId),
+      when: "décision attendue",
+      score: 85,
       internId: intern.id,
-      urgency: 0,
-    })
-  );
-  toExamine.forEach((candidate) =>
+      recommendation: proposal
+        ? {
+            service: proposal.serviceName,
+            met: proposal.satisfied.filter((criterion) => criterion.satisfied).length,
+            total: proposal.satisfied.length,
+          }
+        : undefined,
+    });
+  });
+  toExamine.forEach((candidate) => {
+    const waited = daysBetween(candidate.appliedAt, todayIso);
     todos.push({
       kind: "candidature",
       id: `candidature-${candidate.id}`,
       label: `Examiner la candidature de ${candidate.name}`,
-      meta: `${offerTitle(candidate.offerId)} · reçue ${relativeDay(candidate.appliedAt)}`,
+      meta: offerTitle(candidate.offerId),
+      when: waitedLabel(waited),
+      score: 40 + Math.min(Math.max(waited, 0), 30) * 1.5,
       q: candidate.name,
-      urgency: 1,
-    })
-  );
+    });
+  });
   interns.forEach((intern) => {
-    const pending = intern.reports.filter((report) => report.status === "soumis");
-    if (pending.length > 0) {
-      todos.push({
-        kind: "rapport",
-        id: `rapport-${intern.id}`,
-        label: `Examiner le rapport de ${intern.name}`,
-        meta: `${pending[0].period} · déposé le ${fmtDate(pending[0].date)}`,
-        internId: intern.id,
-        urgency: 2,
-      });
-    }
+    const pending = intern.reports.find((report) => report.status === "soumis");
+    if (!pending) return;
+    const waited = daysBetween(pending.date, todayIso);
+    todos.push({
+      kind: "rapport",
+      id: `rapport-${intern.id}`,
+      label: `Examiner le rapport de ${intern.name}`,
+      meta: pending.period,
+      when: waitedLabel(waited, "déposé il y a"),
+      score: 50 + Math.min(Math.max(waited, 0), 20) * 2,
+      internId: intern.id,
+    });
   });
   upcomingInterviews
     .filter((interview) => interview.date >= todayIso && interview.date <= horizonIso)
-    .forEach((interview) =>
+    .forEach((interview) => {
+      const inDays = daysBetween(todayIso, interview.date);
       todos.push({
         kind: "entretien",
         id: `entretien-${interview.id}`,
         label: `Préparer l'entretien de ${candidateName(interview.candidateId)}`,
-        meta: `${fmtDate(interview.date)} à ${interview.time} · ${interview.location}`,
-        urgency: 3,
-      })
-    );
+        meta: `${fmtDate(interview.date, false)} à ${interview.time} · ${interview.location}`,
+        when: inDays === 0 ? "aujourd'hui" : inDays === 1 ? "demain" : `dans ${inDays} jours`,
+        score: 90 - inDays * 6,
+      });
+    });
   serviceCapacity.forEach(({ service }) => {
     const staleDays = Math.floor((now - new Date(`${service.updatedAt}T00:00:00`).getTime()) / DAY);
     const incomplete = !service.education.trim() || service.skills.length === 0 || !service.profiles.trim();
@@ -445,23 +503,23 @@ function CompanyDashboard() {
         kind: "service",
         id: `service-${service.id}`,
         label: `Mettre à jour les besoins — ${service.name}`,
-        meta: incomplete ? "Besoins incomplets" : `Dernière mise à jour il y a ${staleDays} jours`,
-        urgency: 4,
+        meta: incomplete ? "Besoins incomplets" : "Besoins à revoir",
+        when: incomplete ? "à compléter" : `mis à jour il y a ${staleDays} jours`,
+        score: incomplete ? 30 : 20,
       });
     }
   });
-  todos.sort((a, b) => a.urgency - b.urgency);
+  const KIND_ORDER: TodoKind[] = ["affectation", "entretien", "candidature", "rapport", "service"];
+  todos.sort((a, b) => b.score - a.score || KIND_ORDER.indexOf(a.kind) - KIND_ORDER.indexOf(b.kind));
 
-  const tabs = (["tout", "affectation", "candidature", "rapport", "entretien", "service"] as const)
-    .map((key) => ({
-      key,
-      label: key === "tout" ? "Tout" : TODO_META[key].tab,
-      count: key === "tout" ? todos.length : todos.filter((t) => t.kind === key).length,
-    }))
-    .filter((entry) => entry.key === "tout" || entry.count > 0);
-  const filtered = tab === "tout" ? todos : todos.filter((t) => t.kind === tab);
-  const visibleTodos = filtered.slice(0, 6);
-  const hiddenCount = filtered.length - visibleTodos.length;
+  const tabs = TODO_GROUPS.map((group) => ({
+    ...group,
+    count: group.key === "tout" ? todos.length : todos.filter((t) => TODO_META[t.kind].group === group.key).length,
+  })).filter((entry) => entry.key === "tout" || entry.count > 0);
+  const filtered = tab === "tout" ? todos : todos.filter((t) => TODO_META[t.kind].group === tab);
+  const COLLAPSED = 5;
+  const visibleTodos = expanded ? filtered : filtered.slice(0, COLLAPSED);
+  const hiddenCount = filtered.length - Math.min(filtered.length, COLLAPSED);
 
   /* ---- Activité récente (historique des candidatures) ---- */
   const activity = candidates
@@ -547,7 +605,7 @@ function CompanyDashboard() {
                 <span className="grid size-5 shrink-0 place-items-center text-muted-foreground transition-colors duration-200 group-hover:text-foreground">
                   <stat.icon className="size-[18px]" />
                 </span>
-                <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-muted-foreground">{stat.label}</span>
+                <span className="min-w-0 flex-1 text-[13px] font-medium leading-snug text-muted-foreground line-clamp-2 sm:line-clamp-1">{stat.label}</span>
               </div>
               <div className="flex items-end justify-between gap-2">
                 <p className="text-[30px] font-semibold leading-none tracking-tight">
@@ -563,14 +621,14 @@ function CompanyDashboard() {
               >
                 {stat.trend && <TrendingUp className="size-3.5 shrink-0" />}
                 {stat.alert && <Clock className="size-3.5 shrink-0" />}
-                <span className="truncate">{stat.foot}</span>
+                <span className="line-clamp-2 sm:line-clamp-1">{stat.foot}</span>
               </p>
             </Link>
           </Reveal>
         ))}
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
         {/* Ligne 1 : vue d'ensemble et actions | entreprise et agenda */}
         <div className="min-w-0 space-y-6">
           {/* Pipeline de recrutement */}
@@ -583,38 +641,55 @@ function CompanyDashboard() {
             <PipelineChart steps={pipelineCounts} total={inPipeline.length} acceptanceRate={acceptanceRate} />
           </Reveal>
 
-          {/* À traiter, avec onglets filtrants */}
-          <Reveal as="section" delay={140} className="card-surface overflow-hidden">
+          {/* À traiter : triée par urgence réelle */}
+          <Reveal as="section" delay={140} className="card-surface overflow-hidden" aria-labelledby="todo-title">
             <div className="space-y-4 px-5 pt-5">
-              <SectionHeader title="À traiter" description="Les décisions qui vous attendent, de la plus urgente à la moins urgente." />
-              <div role="tablist" aria-label="Filtrer les actions" className="flex flex-wrap gap-1.5">
-                {tabs.map((entry) => {
-                  const active = tab === entry.key;
-                  return (
-                    <button
-                      key={entry.key}
-                      type="button"
-                      role="tab"
-                      aria-selected={active}
-                      onClick={() => setTab(entry.key)}
-                      className={cn(
-                        "press inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg px-3 text-[13px] font-medium transition-colors duration-200",
-                        active ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                      )}
-                    >
-                      {entry.label}
-                      <span
+              <div className="flex flex-wrap items-end justify-between gap-3">
+                <div className="min-w-0">
+                  <h2 id="todo-title" className="text-lg font-semibold tracking-tight">
+                    {todos.length === 0
+                      ? "Aucune décision en attente"
+                      : `${todos.length} décision${todos.length > 1 ? "s" : ""} vous attend${todos.length > 1 ? "ent" : ""}`}
+                  </h2>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    Classées de la plus urgente à la moins urgente : délais, ancienneté, entretiens proches.
+                  </p>
+                </div>
+              </div>
+              {todos.length > 0 && (
+                <div role="group" aria-label="Filtrer les décisions" className="flex flex-wrap gap-1.5">
+                  {tabs.map((entry) => {
+                    const active = tab === entry.key;
+                    return (
+                      <button
+                        key={entry.key}
+                        type="button"
+                        aria-pressed={active}
+                        onClick={() => {
+                          setTab(entry.key);
+                          setExpanded(false);
+                        }}
                         className={cn(
-                          "rounded px-1 text-[11px] tabular-nums",
-                          active ? "bg-white/15 text-primary-foreground" : "bg-muted text-muted-foreground"
+                          "press inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg px-3 text-[13px] font-medium transition-colors duration-200",
+                          active
+                            ? "bg-primary text-primary-foreground shadow-sm"
+                            : "text-muted-foreground hover:bg-muted hover:text-foreground"
                         )}
                       >
-                        {entry.count}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
+                        {entry.label}
+                        <span
+                          className={cn(
+                            "rounded px-1 text-xs tabular-nums",
+                            active ? "bg-white/15 text-primary-foreground" : "bg-muted text-muted-foreground"
+                          )}
+                        >
+                          {entry.count}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
             {visibleTodos.length === 0 ? (
@@ -627,21 +702,37 @@ function CompanyDashboard() {
               <ul key={tab} className="mt-4 divide-y border-t">
                 {visibleTodos.map((todo, index) => {
                   const meta = TODO_META[todo.kind];
+                  const rec = todo.recommendation;
                   return (
-                    <Reveal as="li" key={todo.id} delay={index * 40}>
+                    <Reveal as="li" key={todo.id} delay={index < 5 ? index * 40 : 0}>
                       <TodoTarget
                         todo={todo}
-                        className="group flex items-center gap-3.5 px-5 py-3 transition-colors duration-150 hover:bg-muted/50"
+                        className={cn(
+                          "group flex items-center gap-3.5 px-5 py-3 transition-colors duration-150 hover:bg-muted/50",
+                          rec && "bg-primary-soft/40 hover:bg-primary-soft/70"
+                        )}
                       >
-                        <span className="grid size-5 shrink-0 place-items-center text-muted-foreground transition-colors duration-200 group-hover:text-foreground">
-                          <meta.icon className="size-[18px]" />
+                        <span className="grid size-5 shrink-0 place-items-center self-start pt-0.5 text-muted-foreground transition-colors duration-200 group-hover:text-foreground">
+                          <meta.icon className={cn("size-[18px]", rec && "text-primary")} />
                         </span>
                         <span className="min-w-0 flex-1">
                           <span className="block truncate text-sm font-medium text-foreground">{todo.label}</span>
-                          <span className="block truncate text-xs text-muted-foreground">{todo.meta}</span>
+                          <span className="flex flex-wrap items-center gap-x-1.5 text-xs text-muted-foreground">
+                            <span className="truncate">{todo.meta}</span>
+                            <span aria-hidden>·</span>
+                            <span className="whitespace-nowrap">{todo.when}</span>
+                          </span>
+                          {rec && (
+                            <span className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
+                              <span className="font-medium text-primary">Recommandé : {rec.service}</span>
+                              <span className="text-muted-foreground">
+                                {rec.met}/{rec.total} critères satisfaits
+                              </span>
+                            </span>
+                          )}
                         </span>
                         <span className="inline-flex h-8 shrink-0 items-center gap-1 rounded-lg border bg-card px-2.5 text-[13px] font-medium text-foreground shadow-sm transition-colors group-hover:border-primary group-hover:bg-primary group-hover:text-primary-foreground">
-                          <span className="hidden sm:inline">{meta.action}</span>
+                          <span className="hidden sm:inline">{rec ? "Voir l'explication" : meta.action}</span>
                           <ArrowRight className="size-3.5" />
                         </span>
                       </TodoTarget>
@@ -651,9 +742,17 @@ function CompanyDashboard() {
               </ul>
             )}
             {hiddenCount > 0 && (
-              <p className="border-t bg-muted/30 px-5 py-2.5 text-xs text-muted-foreground">
-                + {hiddenCount} autre{hiddenCount > 1 ? "s" : ""} action{hiddenCount > 1 ? "s" : ""} dans cette catégorie
-              </p>
+              <button
+                type="button"
+                onClick={() => setExpanded((value) => !value)}
+                aria-expanded={expanded}
+                className="group flex w-full items-center justify-center gap-1.5 border-t px-5 py-2.5 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
+              >
+                {expanded
+                  ? "Réduire la liste"
+                  : `Afficher ${hiddenCount} autre${hiddenCount > 1 ? "s" : ""} décision${hiddenCount > 1 ? "s" : ""}`}
+                <ChevronDown className={cn("size-4 transition-transform duration-300", expanded && "rotate-180")} />
+              </button>
             )}
           </Reveal>
 
@@ -722,7 +821,7 @@ function CompanyDashboard() {
                   return (
                     <li
                       key={interview.id}
-                      className={cn("flex items-center gap-3 rounded-xl p-2.5", first ? "bg-primary-soft/70" : "hover:bg-muted/50")}
+                      className={cn("flex items-center gap-3 rounded-xl p-2.5", first && "bg-primary-soft/70")}
                     >
                       <span
                         className={cn(
@@ -730,7 +829,7 @@ function CompanyDashboard() {
                           first ? "bg-primary text-primary-foreground" : "border bg-card"
                         )}
                       >
-                        <span className={cn("text-[10px] font-medium uppercase", first ? "text-white/70" : "text-muted-foreground")}>
+                        <span className={cn("text-[11px] font-medium uppercase", first ? "text-white/70" : "text-muted-foreground")}>
                           {date.toLocaleDateString("fr-FR", { month: "short" }).replace(".", "")}
                         </span>
                         <span className="mt-0.5 text-base font-semibold tabular-nums">{date.getDate()}</span>
@@ -766,9 +865,9 @@ function CompanyDashboard() {
               </div>
             ) : (
               <ul className="divide-y border-t">
-                <li className="hidden grid-cols-[minmax(0,2.2fr)_minmax(0,0.8fr)_minmax(0,0.8fr)_minmax(0,1.4fr)_minmax(0,0.6fr)] gap-4 bg-muted/40 px-5 py-2.5 text-xs font-medium text-muted-foreground md:grid">
+                <li className="hidden grid-cols-[minmax(0,2fr)_60px_76px_minmax(0,1.2fr)_52px] gap-4 bg-muted/40 px-5 py-2.5 text-xs font-medium text-muted-foreground md:grid">
                   <span>Offre</span>
-                  <span>Candidatures</span>
+                  <span>Reçues</span>
                   <span>À examiner</span>
                   <span>Examinées</span>
                   <span className="text-right">Clôture</span>
@@ -784,7 +883,7 @@ function CompanyDashboard() {
                     <li key={offer.id}>
                       <Link
                         to="/entreprise/offres"
-                        className="group grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-3 px-5 py-3.5 transition-colors hover:bg-muted/40 md:grid-cols-[minmax(0,2.2fr)_minmax(0,0.8fr)_minmax(0,0.8fr)_minmax(0,1.4fr)_minmax(0,0.6fr)]"
+                        className="group grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-3 px-5 py-3.5 transition-colors hover:bg-muted/40 md:grid-cols-[minmax(0,2fr)_60px_76px_minmax(0,1.2fr)_52px]"
                       >
                         <span className="flex min-w-0 items-center gap-3">
                           <span className="grid size-5 shrink-0 place-items-center text-muted-foreground transition-colors duration-200 group-hover:text-foreground">
@@ -834,7 +933,7 @@ function CompanyDashboard() {
               <ol className="relative mt-4 space-y-4 before:absolute before:bottom-3 before:left-[15px] before:top-3 before:w-px before:bg-border">
                 {activity.map((item) => (
                   <li key={item.id} className="relative flex gap-3">
-                    <span className="relative z-10 grid size-8 shrink-0 place-items-center rounded-full bg-card text-[10px] font-semibold text-primary ring-1 ring-border">
+                    <span className="relative z-10 grid size-8 shrink-0 place-items-center rounded-full bg-card text-[11px] font-semibold text-primary ring-1 ring-border">
                       {item.initials}
                     </span>
                     <div className="min-w-0 flex-1">
@@ -843,7 +942,7 @@ function CompanyDashboard() {
                         <Badge
                           label={candidateStatusLabels[item.status].label}
                           tone={candidateStatusLabels[item.status].tone}
-                          className="px-1.5 py-0 text-[10px]"
+                          className="px-1.5 py-0 text-[11px]"
                         />
                       </p>
                       <p className="mt-0.5 truncate text-xs text-muted-foreground">

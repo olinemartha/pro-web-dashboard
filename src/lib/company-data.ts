@@ -420,7 +420,7 @@ export const demoInterviews: Interview[] = [
 export const demoInterns: Intern[] = [
   {
     id: "s1", candidateId: "c1", name: "Grâce Mukendi", initials: "GM", offerId: "o1", serviceId: "sv1",
-    service: "Direction Crédit", supervisor: "M. Patrick Ilunga", start: "2026-11-16", end: "2027-02-16",
+    service: "Direction Crédit", supervisor: "M. Patrick Ilunga", start: "2026-10-05", end: "2027-01-05",
     missions: "Analyse des dossiers de crédit et visites terrain.",
     objectives: "Maîtriser le processus d'octroi de crédit.",
     confirmed: true,
@@ -430,8 +430,8 @@ export const demoInterns: Intern[] = [
     assignmentDecidedBy: "M. Patrick Ilunga",
     expertRunId: "run-seed-s1",
     reports: [
-      { id: "r1", period: "Semaine 1-2", date: "2026-11-30", status: "valide" },
-      { id: "r2", period: "Semaine 3-4", date: "2026-12-14", status: "soumis" },
+      { id: "r1", period: "Semaine 1-2", date: "2026-10-19", status: "valide" },
+      { id: "r2", period: "Semaine 3-4", date: "2026-11-02", status: "soumis" },
     ],
     evaluation: null, certificate: "non_generee",
   },
@@ -441,7 +441,7 @@ export const demoInterns: Intern[] = [
     missions: "Développement d'outils internes.",
     objectives: "Livrer un module de gestion des demandes.",
     confirmed: false,
-    reports: [{ id: "r3", period: "Novembre", date: "2026-11-30", status: "soumis" }],
+    reports: [],
     evaluation: null, certificate: "non_generee",
   },
   {

@@ -3,32 +3,38 @@ name: StageManager
 description: Plateforme professionnelle de gestion des stages — espaces étudiant, entreprise et administrateur.
 colors:
   royal-blue: "#1E3A8A"
-  glacier-blue: "#E8F0FE"
+  royal-blue-hover: "#18306F"
   vivid-blue: "#2F6FED"
-  vivid-soft: "#E8F0FE"
+  glacier-blue: "#E8F0FE"
   paper-white: "#FFFFFF"
-  warm-ink: "#2C2421"
-  slate-muted: "#F1F5F9"
-  slate-text-muted: "#65758B"
-  line-border: "#DAE0E7"
+  canvas: "#F5F7FA"
+  ink: "#191F2E"
+  text-muted: "#616B7F"
+  line-border: "#DDE1E9"
+  muted-surface: "#F1F4F8"
   success-green: "#27865A"
   success-soft: "#E7F8F0"
   warning-amber: "#B45309"
   warning-soft: "#FFFBEB"
   destructive-red: "#DC2828"
   destructive-soft: "#FBE9E9"
+  pipeline-waiting: "hsl(220 25% 85%)"
+  pipeline-review: "hsl(218 90% 78%)"
+  pipeline-interview: "#2F6FED"
+  pipeline-accepted: "#1E3A8A"
+  pipeline-refused: "hsl(220 12% 64%)"
 typography:
-  display:
+  kpi:
     fontFamily: "Inter, sans-serif"
     fontSize: "30px"
     fontWeight: 600
-    lineHeight: 1.15
+    lineHeight: 1
     letterSpacing: "-0.025em"
-  headline:
+  page-title:
     fontFamily: "Inter, sans-serif"
-    fontSize: "24px"
+    fontSize: "20px"
     fontWeight: 600
-    lineHeight: 1.2
+    lineHeight: 1.25
     letterSpacing: "-0.02em"
   title:
     fontFamily: "Inter, sans-serif"
@@ -36,23 +42,42 @@ typography:
     fontWeight: 600
     lineHeight: 1.3
     letterSpacing: "-0.015em"
+  section:
+    fontFamily: "Inter, sans-serif"
+    fontSize: "15px"
+    fontWeight: 600
+    lineHeight: 1.35
+    letterSpacing: "-0.01em"
   body:
     fontFamily: "Inter, sans-serif"
     fontSize: "14px"
     fontWeight: 400
     lineHeight: 1.5
     letterSpacing: "0em"
+  ui:
+    fontFamily: "Inter, sans-serif"
+    fontSize: "13px"
+    fontWeight: 500
+    lineHeight: 1.4
+    letterSpacing: "0em"
   label:
     fontFamily: "Inter, sans-serif"
     fontSize: "12px"
     fontWeight: 500
     lineHeight: 1.4
+    letterSpacing: "0em"
+  micro:
+    fontFamily: "Inter, sans-serif"
+    fontSize: "11px"
+    fontWeight: 500
+    lineHeight: 1.35
     letterSpacing: "0.02em"
 rounded:
   sm: "4px"
   md: "6px"
   lg: "8px"
   xl: "12px"
+  2xl: "16px"
   full: "9999px"
 spacing:
   xs: "4px"
@@ -65,203 +90,232 @@ components:
   button-primary:
     backgroundColor: "{colors.royal-blue}"
     textColor: "{colors.paper-white}"
-    rounded: "{rounded.md}"
+    rounded: "{rounded.lg}"
     padding: "0 16px"
     height: "40px"
   button-primary-hover:
-    backgroundColor: "#2C4260"
+    backgroundColor: "{colors.royal-blue-hover}"
     textColor: "{colors.paper-white}"
-    rounded: "{rounded.md}"
+    rounded: "{rounded.lg}"
   button-outline:
     backgroundColor: "{colors.paper-white}"
-    textColor: "{colors.warm-ink}"
-    rounded: "{rounded.md}"
-    padding: "0 16px"
-    height: "40px"
-  button-ghost:
-    backgroundColor: "transparent"
-    textColor: "{colors.warm-ink}"
-    rounded: "{rounded.md}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.lg}"
     padding: "0 12px"
-    height: "40px"
+    height: "32px"
+  section-link-hover:
+    backgroundColor: "{colors.ink}"
+    textColor: "{colors.paper-white}"
+    rounded: "{rounded.lg}"
   input:
     backgroundColor: "{colors.paper-white}"
-    textColor: "{colors.warm-ink}"
+    textColor: "{colors.ink}"
     rounded: "{rounded.md}"
     padding: "0 12px"
+    height: "40px"
+  search:
+    backgroundColor: "{colors.paper-white}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.full}"
     height: "40px"
   card:
     backgroundColor: "{colors.paper-white}"
-    textColor: "{colors.warm-ink}"
-    rounded: "{rounded.lg}"
-    padding: "24px"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.xl}"
+    padding: "20px"
   badge-success:
     backgroundColor: "{colors.success-soft}"
     textColor: "{colors.success-green}"
     rounded: "{rounded.full}"
     padding: "2px 10px"
   nav-item-active:
-    backgroundColor: "#FFFFFF1A"
-    textColor: "{colors.paper-white}"
-    rounded: "{rounded.md}"
-    padding: "8px 12px"
+    backgroundColor: "{colors.glacier-blue}"
+    textColor: "{colors.royal-blue}"
+    rounded: "{rounded.lg}"
+    padding: "0 10px"
+    height: "36px"
 ---
 
 # Design System: StageManager
 
 ## Overview
 
-**Creative North Star: « Le Guichet de confiance »**
+**Creative North Star : « Le Guichet de confiance »**
 
 StageManager est un service administratif moderne : un guichet calme, lisible et fiable où l'étudiant, l'entreprise et l'administrateur savent immédiatement où ils se trouvent et quelle est la prochaine action. Le cadre est institutionnel — bleu roi, blanc, typographie Inter — mais jamais froid ni bureaucratique. La confiance vient de la précision : hiérarchie nette, statuts explicites, formulaires guidés, aucune décoration qui détourne de la tâche.
 
-La composition repose sur une navigation latérale blanche et une surface de travail posée sur un canevas gris très clair, légèrement bleuté. Les actions principales sont en bleu roi, le bleu vif signale les liens, le focus et les données des graphiques, et le bleu glacier marque la sélection. Les couleurs fonctionnelles (vert, ambre, rouge) restent réservées aux statuts. Les icônes sont neutres et monochromes.
+La composition repose sur une navigation latérale blanche et une surface de travail posée sur un canevas gris très clair, légèrement bleuté. Les actions principales sont en bleu roi, le bleu vif signale les liens, le focus et les données des graphiques, et le bleu glacier marque la sélection. Les couleurs fonctionnelles (vert, ambre, rouge) restent réservées aux statuts. Les icônes sont neutres, monochromes et posées seules, sans tuile ni cadre.
 
-Le système est sobre par doctrine. Il privilégie la lisibilité, les libellés français explicites et la constance entre les trois espaces. La couleur ne porte jamais seule une information ; chaque badge associe une teinte et un texte. Les animations restent courtes et fonctionnelles, et respectent `prefers-reduced-motion`.
+Le système est sobre par doctrine. Il privilégie la lisibilité, les libellés français explicites et la constance entre les trois espaces. La couleur ne porte jamais seule une information ; chaque badge associe une teinte et un texte. Les animations sont douces, courtes et fonctionnelles, et respectent `prefers-reduced-motion`.
 
 **Key Characteristics:**
 - Accents bleu roi, surface blanche, canevas gris froid très clair.
-- Inter uniquement, avec une échelle compacte de 12 à 30 px.
-- Coins légèrement arrondis (6–8 px), pilules complètes réservées aux badges et avatars.
+- Inter uniquement, avec une échelle compacte de 11 à 30 px (une exception à 36 px, voir Typography).
+- Cartes à 12 px de rayon, modales à 16 px, pilules complètes réservées aux badges, avatars, recherche et barres de progression.
 - Bordures 1 px systématiques, ombres rares et douces.
 - Bleu vif en accent (liens, focus, graphiques), jamais en grands aplats.
+- Icônes Lucide monochromes, sans fond ni bordure, alignées comme dans la barre latérale.
 - Statuts toujours exprimés par un badge texte + couleur.
-- Densité professionnelle : 20–24 px de padding dans les cartes, sections espacées de 24 px.
 
 ## Colors
 
-La palette est institutionnelle et à faible distraction : deux bleus de marque, un blanc dominant, des gris froids pour la structure et quatre couleurs fonctionnelles strictement réservées au statut.
+La palette est institutionnelle et à faible distraction : trois bleus de marque, un blanc dominant, des gris froids pour la structure et des couleurs fonctionnelles strictement réservées au statut.
 
 ### Primary
-- **Bleu roi** (#1E3A8A) : identité (logo), boutons principaux, titres forts, élément actif du menu. C'est la couleur d'autorité et d'action.
-- **Bleu glacier** (#E8F0FE) : fond de l'élément actif, badges primaires et zones d'information calmes.
+- **Bleu roi** (#1E3A8A) : identité (logo), boutons principaux, titres forts, élément actif du menu, série « Acceptée » du pipeline. C'est la couleur d'autorité et d'action. Au survol, il s'assombrit (#18306F).
+- **Bleu glacier** (#E8F0FE) : pastille de l'élément actif du menu, badges primaires, fond de la carte entreprise, ligne mise en avant dans « À traiter » (recommandation du système expert).
 
 ### Secondary
-- **Bleu vif** (#2F6FED) : liens, focus clavier, séries des graphiques, indicateurs d'activité. **Bleu glacier** (#E8F0FE) : fond de l'élément actif du menu, badges et zones mises en avant.
+- **Bleu vif** (#2F6FED) : liens, anneau de focus clavier, courbe des candidatures, série « En entretien » du pipeline, indicateurs d'activité. Le texte posé sur le bleu vif est blanc.
+
+### Pipeline (gamme de données)
+Une seule famille de bleus, du plus clair au plus foncé, le refus restant en gris neutre plutôt qu'en rouge : En attente `hsl(220 25% 85%)` · En cours d'examen `hsl(218 90% 78%)` · En entretien #2F6FED · Acceptée #1E3A8A · Refusée `hsl(220 12% 64%)`. Les chiffres sont toujours écrits en texte à côté du graphique : la teinte claire d'« En attente » n'a pas à porter l'information seule.
 
 ### Tertiary
-- **Vert validation** (#27865A) sur fond **vert très clair** (#E7F8F0) : accepter, valider, réussir, attestation validée.
-- **Ambre vigilance** (#B45309) sur fond **ambre très clair** (#FFFBEB) : mode démonstration, affectation à confirmer, avertissements non bloquants.
-- **Rouge destructif** (#DC2828) sur fond **rouge très clair** (#FBE9E9) : refus, suppression, erreur, action irréversible.
+- **Vert validation** (#27865A) sur fond **vert très clair** (#E7F8F0) : accepter, valider, réussir, attestation validée, tendance positive.
+- **Ambre vigilance** (#B45309) sur fond **ambre très clair** (#FFFBEB) : action à traiter, affectation à confirmer, places libres, avertissements non bloquants.
+- **Rouge destructif** (#DC2828) sur fond **rouge très clair** (#FBE9E9) : refus, suppression, erreur, échéance à moins de 7 jours.
 
 ### Neutral
-- **Blanc papier** (#FFFFFF) : cartes, barres supérieures, champs, surfaces de travail.
-- **Encre chaude** (#2C2421) : texte principal. Un noir légèrement chaud, plus humain que le noir pur.
-- **Gris ardoise très clair** (#F1F5F9) : fond de page, séparateurs de tableaux, états désactivés.
-- **Gris texte secondaire** (#65758B) : descriptions, métadonnées, libellés secondaires.
-- **Ligne discrète** (#DAE0E7) : toutes les bordures de cartes, champs, tableaux et séparateurs.
+- **Blanc papier** (#FFFFFF) : cartes, barre latérale, champs, fenêtres.
+- **Canevas** (#F5F7FA) : fond de la zone de travail, derrière les cartes.
+- **Encre bleu nuit** (#191F2E) : texte principal ; aussi le fond « inversé » au survol des liens de section.
+- **Gris texte secondaire** (#616B7F) : descriptions, métadonnées, libellés secondaires, icônes au repos.
+- **Surface atténuée** (#F1F4F8) : en-têtes de tableaux, pistes de barres, survol des lignes.
+- **Ligne discrète** (#DDE1E9) : bordures de cartes, champs, tableaux et séparateurs.
 
 ### Named Rules
-**The Royal Frame Rule.** Le bleu roi encadre et commande ; il ne remplit jamais une grande zone de contenu. Navigation, action principale et focus uniquement.
+**The Royal Frame Rule.** Le bleu roi encadre et commande ; il ne remplit jamais une grande zone de contenu. Logo, action principale, élément actif et données « acquises » uniquement.
 **The Vivid Accent Rule.** Le bleu vif occupe moins de 10 % de l'écran. Il marque les liens, le focus et les données ; il n'est jamais utilisé en grand aplat de fond.
 **The Status Is Never Colour Alone Rule.** Un statut est toujours un badge avec un libellé français explicite. La teinte renforce le texte, elle ne le remplace pas.
+**The Bare Icon Rule.** Une icône est un trait monochrome posé seul. Pas de tuile colorée, pas de carré bordé derrière : la couleur vient du contexte (actif, survol), jamais d'un fond décoratif.
 
 ## Typography
 
-**Display Font:** Inter (avec `sans-serif`)
-**Body Font:** Inter (avec `sans-serif`)
+**Display Font :** Inter (avec `sans-serif`)
+**Body Font :** Inter (avec `sans-serif`)
 
-**Character:** Une seule famille, plusieurs graisses. Inter donne un rendu net, contemporain et administratif ; les graisses 500 et 600 structurent la hiérarchie sans recourir à des tailles excessives.
+**Character :** Une seule famille, plusieurs graisses. Inter donne un rendu net, contemporain et administratif ; les graisses 500 et 600 structurent la hiérarchie sans recourir à des tailles excessives. Les chiffres sont toujours tabulaires (`tabular-nums`).
 
 ### Hierarchy
-- **Display** (600, 30 px, interligne 1,15) : valeur des indicateurs clés, uniquement dans les cartes KPI.
-- **Headline** (600, 24 px, interligne 1,2) : titre d'accueil du tableau de bord (« Bonjour, Grâce »), titres de page exceptionnels.
-- **Title** (600, 18 px, interligne 1,3) : titre de barre supérieure, titres de modales, titres de section forts.
-- **Body** (400, 14 px, interligne 1,5) : texte courant, descriptions, formulaires. Les paragraphes restent courts ; viser 65–75 caractères par ligne.
-- **Label** (500, 12 px, interligne 1,4) : libellés de champs, boutons compacts, métadonnées. Les en-têtes de section utilisent 12 px, 600, en majuscules avec `letter-spacing` modéré.
+- **KPI** (600, 30 px, interligne 1) : valeur des quatre indicateurs du tableau de bord.
+- **Page title** (600, 20 px) : salutation et titre de page dans la barre supérieure (« Bonjour, FINCA RDC »), précédés de la date en 11 px.
+- **Title** (600, 18 px) : titre de la file « À traiter » (« 11 décisions vous attendent »), titres de fenêtres.
+- **Section** (600, 15 px) : titres des cartes (« Pipeline de recrutement », « Offres publiées »).
+- **Body** (400, 14 px, interligne 1,5) : texte courant, lignes de liste, formulaires. Viser 65–75 caractères par ligne.
+- **UI** (500, 13 px) : libellés de navigation, boutons compacts, onglets, légendes de graphiques.
+- **Label** (500, 12 px) : libellés de champs, métadonnées, descriptions de section, en-têtes de tableaux.
+- **Micro** (500, 11 px) : compteurs, badges compacts, mois des pastilles de date, intitulés de groupes du menu (en capitales). **Aucun texte porteur de sens sous 11 px.**
 
 ### Named Rules
 **The One Family Rule.** Inter est la seule famille. La hiérarchie se construit par la taille et la graisse, jamais par une seconde police décorative.
-**The Compact Scale Rule.** Aucun texte d'interface ne dépasse 30 px. Les titres de page restent entre 18 et 20 px ; les chiffres KPI sont la seule exception.
+**The Compact Scale Rule.** Aucun texte d'interface ne dépasse 30 px, à une exception près : le chiffre « places de stage à pourvoir » de la carte entreprise (36 px), qui en est le point focal. Les titres de page restent entre 18 et 20 px.
+**The 11-Pixel Floor Rule.** 11 px est le plancher absolu pour un texte lisible ; 10 px n'est toléré que dans un compteur numérique à l'intérieur d'une pastille de 18 px.
 
 ## Layout
 
-Le modèle est un shell d'application à deux colonnes : navigation latérale fixe de 256 px (`w-64`) et zone principale fluide. La barre latérale est visible à partir de 768 px (`md`) ; en dessous, elle devient un tiroir superposé de 288 px ouvert par un bouton menu. La barre supérieure mesure 64 px sur ordinateur et 56 px sur mobile. Un bandeau d'information pleine largeur (mode démonstration) s'insère entre la barre supérieure et le contenu.
+Le modèle est un shell d'application à deux colonnes : navigation latérale de 256 px, repliable à 72 px (choix mémorisé), et zone principale fluide plafonnée à 1 360 px. La barre latérale apparaît à partir de **1024 px** (`lg`) ; en dessous, elle devient un tiroir de 300 px ouvert par le bouton menu. La barre supérieure mesure 72 px sur ordinateur (date + salutation, recherche, cloche, « Publier une offre ») et 56 px sur mobile (menu, titre, bouton « + » de publication, cloche).
 
-Le contenu utilise un canevas gris très clair (`muted/40`) avec un padding de 16 px sur mobile, 24 px sur tablette et 32 px sur grand écran. Les sections sont espacées de 24 px (`space-y-6`). Les grilles d'indicateurs passent de 2 colonnes sur mobile à 4 colonnes à partir de 1280 px. Les formulaires s'organisent en une colonne sur mobile et deux colonnes dès 640 px. Les cartes conservent 20 à 24 px de padding interne.
+Le contenu a un padding de 16 px sur mobile, 24 px sur tablette et 32 px à partir de 1280 px. Les sections sont espacées de 24 px (`space-y-6`). Les grilles ont toujours une colonne explicite `minmax(0, 1fr)` pour qu'aucun contenu ne déborde sur téléphone.
 
-Points de rupture : 640 px (`sm`), 768 px (`md`, seuil de la navigation latérale), 1024 px (`lg`), 1280 px (`xl`). Aucun contenu essentiel ne doit provoquer de défilement horizontal sur téléphone.
+**Tableau de bord entreprise :** une ligne de 4 KPI séparés (2 colonnes sur mobile, 4 dès 1024 px), puis une grille `minmax(0,1fr) | 340px` à partir de 1280 px, en trois lignes :
+1. Pipeline puis « À traiter » à gauche ; carte entreprise puis « Prochains entretiens » à droite.
+2. « Offres publiées » et « Activité récente », alignées en haut, chacune à sa hauteur naturelle (jamais étirées).
+3. « Dossiers stagiaires » sur toute la largeur.
+
+Points de rupture : 640 px (`sm`), 768 px (`md`, tableaux en colonnes), 1024 px (`lg`, barre latérale et KPI sur une ligne), 1280 px (`xl`, colonne de droite).
 
 ### Named Rules
-**The 768 Rule.** La navigation latérale n'apparaît qu'à partir de 768 px. En dessous, le tiroir et la barre supérieure compacte sont la seule navigation.
-**The 24-Pixel Rhythm Rule.** L'espacement vertical entre sections est de 24 px ; à l'intérieur d'une carte, 16 à 24 px. Ne pas improviser des écarts de 30 ou 40 px.
+**The 1024 Rule.** La navigation latérale n'apparaît qu'à partir de 1024 px. En dessous, le tiroir et la barre compacte sont la seule navigation, et l'action principale reste accessible (bouton « + »).
+**The 24-Pixel Rhythm Rule.** L'espacement vertical entre sections est de 24 px ; à l'intérieur d'une carte, 16 à 20 px.
+**The No Hole Rule.** Une ligne de grille ne laisse jamais une colonne vide : un bloc seul sur sa ligne s'étend sur toute la largeur.
+**The No Scrollbar-in-Card Rule.** Pas de barre de défilement horizontale dans une carte : les filtres et puces passent à la ligne.
 
 ## Elevation & Depth
 
-Système hybride : les surfaces sont légèrement surélevées par une bordure de 1 px et une ombre ambiante très douce, jamais par un empilement d'ombres. Le canevas gris clair crée le premier plan ; les cartes blanches forment le second ; les modales et notifications passent au-dessus avec une ombre plus marquée. L'élévation sert la séparation, pas la décoration.
+Les surfaces sont légèrement surélevées par une bordure de 1 px et une ombre ambiante très douce (`0 1px 2px` à 4 %). Le canevas forme le premier plan ; les cartes blanches le second ; les menus, panneaux et fenêtres passent au-dessus avec une ombre plus marquée et un léger verre dépoli.
 
 ### Shadow Vocabulary
-- **Carte au repos** (`box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05)`): cartes, panneaux, tableaux. Toujours accompagnée d'une bordure `#DAE0E7`.
-- **Modale** (`box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)`): dialogues, tiroirs mobiles.
-- **Notification** (`box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)`): toasts Sonner.
+- **Carte au repos** : `0 1px 2px hsl(224 40% 20% / 0.04)` + bordure #DDE1E9.
+- **Carte cliquable au survol** : soulèvement de 2 px, bordure teintée de bleu vif, ombre `0 10px 24px -12px` en bleu roi à 20 %.
+- **Menu, recherche, notifications** : `0 16px 40px -12px rgba(15, 23, 42, 0.22)`, fond à 90–95 % d'opacité avec flou d'arrière-plan.
+- **Fenêtre (modale)** : `0 24px 64px -16px rgba(15, 23, 42, 0.35)`.
 
 ### Named Rules
-**The One-Step Elevation Rule.** Une carte ne s'élève que d'un cran au-dessus du canevas. Pas d'ombre au survol, pas de superposition de cartes flottantes.
+**The One-Step Elevation Rule.** Une carte ne s'élève que d'un cran. Seules les cartes cliquables (KPI, offres) se soulèvent de 2 px au survol ; les cartes de contenu restent immobiles.
 **The Border Does the Work Rule.** La séparation vient d'abord de la bordure 1 px ; l'ombre confirme, elle ne structure pas.
 
 ## Shapes
 
-Formes calmes et légèrement arrondies. Le rayon par défaut des surfaces est de 8 px (`lg`) ; les boutons, champs et éléments de navigation utilisent 6 px (`md`) ; les petits éléments 4 px (`sm`). Les pilules complètes (`9999px`) sont réservées aux badges de statut, aux avatars et aux barres de progression. Les modales et le carré du logo utilisent 12 px (`xl`). Les bordures sont toujours de 1 px. Aucun angle vif, aucune forme exagérément arrondie.
+Formes calmes et arrondies avec mesure. Cartes : 12 px (`xl`). Boutons, éléments de navigation, onglets et lignes de liste : 8 px (`lg`). Champs : 6 px (`md`). Fenêtres, menus et panneaux flottants : 16 px (`2xl`). Les pilules complètes sont réservées aux badges de statut, avatars, champ de recherche, cloche et barres de progression.
 
-L'indicateur actif de la navigation est un liseré vertical de 2 px, arrondi, placé à gauche de l'élément sélectionné. Les icônes sont des traits Lucide de 16 à 20 px, jamais illustratives.
+L'indicateur actif de la navigation est une pastille bleu glacier qui glisse d'un lien à l'autre, avec un liseré bleu roi de 3 px au bord gauche de la barre. Les icônes sont des traits Lucide de 16 à 18 px, jamais illustratives.
 
-### Named Rules
-**The 8-Pixel Default Rule.** En cas de doute, utiliser 8 px. 12 px est réservé aux modales et au logo ; au-delà, seulement les pilules.
+## Motion
+
+Courbe unique « ease-out quint » (`cubic-bezier(0.22, 1, 0.36, 1)`), durées de 140 à 900 ms.
+- **Entrée de page** : fondu + glissement de 10 px, en cascade courte (40 à 60 ms entre éléments).
+- **Données** : compteurs qui montent jusqu'à leur valeur, barres qui grandissent, anneau et courbe qui se dessinent. Les lecteurs d'écran lisent directement la valeur finale.
+- **Interactions** : pression à 97 % au clic, soulèvement des cartes cliquables, rotation du « + » du bouton « Publier », pastille de navigation qui glisse.
+- **Fenêtres** : voile flouté qui apparaît en fondu, fenêtre qui monte légèrement en s'agrandissant ; tiroirs qui glissent depuis le bord.
+
+Tout s'immobilise sous `prefers-reduced-motion`.
 
 ## Components
 
 ### Buttons
-- **Shape:** rayon 6 px, hauteur 40 px (32 px pour la taille compacte), padding horizontal 16 px.
-- **Primary:** fond bleu roi `#1E3A8A`, texte blanc, graisse 500, transition de couleur 150 ms. Utilisé pour l'action principale d'un écran, une seule fois par zone.
-- **Hover / Focus:** fond assombri au survol ; anneau de focus bleu vif avec décalage de 2 px. Jamais d'ombre portée sur le bouton.
-- **Secondary / Ghost / Destructive:** contour blanc + bordure `#DAE0E7` pour les actions secondaires ; fantôme transparent avec fond gris clair au survol ; destructif rouge sur fond rouge très clair, sans remplissage plein.
+- **Primary** : fond bleu roi, texte blanc, rayon 8 px, hauteur 40 px (36 px dans les barres), légère ombre teintée. Une seule action principale par zone.
+- **Ligne d'action** (« Examiner », « Valider ») : contour blanc, bordure 1 px ; au survol de la ligne entière, le bouton passe en bleu roi plein.
+- **Lien de section** (« Tout voir », « Gérer les offres ») : bouton compact à contour ; au survol, fond encre bleu nuit et texte blanc. Son nom accessible précise la section (« Tout voir — Pipeline de recrutement »).
+- **Focus** : anneau bleu vif de 2 px avec décalage de 2 px sur tout élément interactif.
 
-### Chips
-- **Style:** pilule complète, fond `#E8F0FE`, texte bleu roi, 12 px, graisse 500. Utilisées pour les compétences et les filtres.
-- **State:** un filtre actif passe en fond bleu roi et texte blanc ; un badge de statut utilise la couleur fonctionnelle correspondante avec bordure de même teinte à 30 % d'opacité.
+### Chips & filtres
+- **Filtres de la file « À traiter »** : 4 au maximum (Tout, Recrutement, Stagiaires, Services), boutons à bascule (`aria-pressed`) avec compteur ; actif en bleu roi plein.
+- **Badges de statut** : pilule, fond très clair de la teinte, bordure à 30 %, texte 12 px (11 px dans les listes compactes).
 
 ### Cards / Containers
-- **Corner Style:** 8 px.
-- **Background:** blanc pur sur canevas `#F1F5F9`.
-- **Shadow Strategy:** ombre carte au repos uniquement ; voir Elevation & Depth.
-- **Border:** 1 px `#DAE0E7`, systématique.
-- **Internal Padding:** 20 à 24 px ; 16 px pour les cartes compactes de liste.
-
-### Inputs / Fields
-- **Style:** fond blanc, bordure 1 px `#DAE0E7`, rayon 6 px, hauteur 40 px, padding horizontal 12 px, texte 14 px.
-- **Focus:** bordure bleu vif + anneau de 4 px à 15 % d'opacité ; le focus reste visible au clavier.
-- **Error / Disabled:** message rouge de 12 px sous le champ, bordure rouge ; état désactivé à 50 % d'opacité avec curseur interdit. Le libellé est toujours au-dessus, l'astérisque rouge signale un champ obligatoire.
-
-### Navigation
-- **Style:** barre latérale blanche pleine hauteur (repliable à 72 px), logo bleu roi, liens groupés par métier.
-- **Items:** texte gris, 13,5 px, icône monochrome, rayon 8 px. Au survol : fond gris très clair. Actif : pastille bleu glacier qui glisse, texte bleu roi et liseré bleu roi de 3 px à gauche.
-- **Mobile:** tiroir blanc de 300 px avec voile flouté, fermeture par bouton X ou clic extérieur.
+- **Corner Style** : 12 px. **Background** : blanc sur canevas #F5F7FA. **Border** : 1 px #DDE1E9. **Padding** : 20 px.
+- Les listes dans une carte utilisent des lignes séparées par un filet, pas des cartes imbriquées.
 
 ### KPI Cards
-Carte blanche, libellé 12–14 px gris, icône monochrome dans une tuile bordée neutre, valeur 24–30 px en graisse 600, précision 12 px grise. Quatre cartes maximum par ligne à partir de 1280 px.
+Quatre cartes séparées et espacées. En haut : icône monochrome nue + libellé 13 px (deux lignes autorisées sur téléphone). Au centre : valeur 30 px, avec une courbe pour les candidatures. En bas, séparée par un filet : une précision de 12 px (tendance verte, alerte ambre ou contexte gris).
 
-### Status Badges
-Pilule complète, bordure teintée, fond très clair, texte 12 px en graisse 600. Toujours lisible sans couleur : « Publiée », « En attente », « Acceptée », « Refusée », « Programmé », « Réalisé », « Annulé ».
+### File « À traiter »
+Titre qui annonce le nombre de décisions. Lignes triées par urgence réelle (proximité de l'entretien, ancienneté de la candidature ou du rapport), chacune avec un verbe d'action, l'objet, et un délai lisible (« en attente depuis 12 jours », « dans 6 jours »). La ligne d'affectation affiche la recommandation du système expert (« Recommandé : Direction IT · 4/4 critères satisfaits ») sur fond bleu glacier, et mène à l'explication ; elle ne décide jamais à la place de l'entreprise. Au-delà de 5 lignes, un bouton déplie la liste sur place.
+
+### Inputs / Fields
+- Fond blanc, bordure 1 px, rayon 6 px, hauteur 40 px, texte 14 px (16 px sur téléphone pour éviter le zoom iOS).
+- **Focus** : bordure bleu vif + anneau de 3–4 px à 12–15 %.
+- **Recherche** : pilule de 40 px marquée « Rechercher », qui s'élargit doucement au focus ; les résultats n'apparaissent qu'à la saisie.
+
+### Navigation
+- Barre latérale blanche, liens groupés par métier (Recrutement, Suivi des stages, Entreprise), compteurs d'actions en attente, lien visible « Espace étudiant » au-dessus de la carte de compte (lien de démonstration).
+- Mode replié : icônes seules avec info-bulle au survol et au focus.
+- Mobile : tiroir blanc avec voile flouté, fermeture par X, clic extérieur ou Échap.
+
+### Notifications
+Cloche ronde translucide avec compteur bleu roi ; panneau en verre dépoli listant les événements à traiter, chaque ligne menant à l'objet concerné.
 
 ### Modals
-Panneau blanc de 12 px de rayon, ombre élevée, largeur maximale 576 px (ou 768 px pour les formulaires longs), en-tête avec titre et bouton de fermeture, pied d'actions aligné à droite. Sur mobile, la modale s'ancre en bas avec des coins supérieurs arrondis.
+Rendues au niveau de la page entière (portail) : voile `slate-900/25` flouté de 6 px sur tout l'écran, barre latérale comprise. Panneau blanc de 16 px de rayon, largeur 512 px (720 px pour les formulaires longs), centré à l'écran ; sur mobile, ancré en bas avec une poignée. En-tête avec icône nue, titre et fermeture ; pied d'actions sur fond atténué. Échap ferme, la page derrière ne défile plus. Les formulaires longs sont découpés en sections titrées.
 
 ## Do's and Don'ts
 
 ### Do:
-- **Do** utiliser le bleu roi `#1E3A8A` pour l'action principale, le bleu vif `#2F6FED` pour les liens et le focus, et le bleu glacier `#E8F0FE` pour la sélection.
+- **Do** utiliser le bleu roi #1E3A8A pour l'action principale, le bleu vif #2F6FED pour les liens, le focus et les données, et le bleu glacier #E8F0FE pour la sélection.
 - **Do** accompagner chaque statut d'un libellé français explicite dans un badge.
-- **Do** conserver les cartes blanches sur canevas `#F1F5F9` avec une bordure 1 px et une ombre `shadow-sm`.
-- **Do** utiliser Inter à 14 px pour le corps de texte et 12 px pour les libellés, avec des libellés de champs au-dessus.
-- **Do** employer des verbes précis en français : « Publier une offre », « Valider l'affectation », « Enregistrer les modifications ».
-- **Do** respecter les rayons 6–8 px et la limite de 30 px pour les chiffres KPI.
-- **Do** garder la navigation latérale visible dès 768 px et la remplacer par un tiroir en dessous.
+- **Do** poser les icônes seules, monochromes, comme dans la barre latérale.
+- **Do** trier les actions par urgence réelle et dire le délai en clair.
+- **Do** employer des verbes précis en français : « Publier une offre », « Valider l'affectation », « Voir l'explication ».
+- **Do** garder une colonne de grille `minmax(0, 1fr)` et vérifier chaque écran à 375, 1024, 1280 et 1440 px.
+- **Do** laisser l'action principale accessible sur téléphone.
 
 ### Don't:
-- **Don't** utiliser le bleu vif en grands aplats de fond, ni des icônes sur fonds colorés.
-- **Don't** ajouter de dégradés, de néons, d'ombres colorées ou d'effets décoratifs absents du Design Brief.
-- **Don't** dépasser 12 px de rayon, sauf pour les pilules, avatars et barres de progression.
+- **Don't** mettre une tuile colorée ou un cadre derrière une icône.
+- **Don't** utiliser le bleu vif en grands aplats de fond.
+- **Don't** laisser une colonne vide dans une grille, ni étirer une carte pour égaliser des hauteurs.
+- **Don't** afficher une barre de défilement à l'intérieur d'une carte.
+- **Don't** descendre sous 11 px pour un texte porteur de sens.
 - **Don't** coder un statut uniquement par la couleur.
-- **Don't** empiler plusieurs ombres ou faire flotter les cartes au survol.
-- **Don't** utiliser une seconde police ou des tailles de titre supérieures à 30 px.
-- **Don't** inventer des icônes illustratives, des logos partenaires ou des visuels non fournis.
+- **Don't** ajouter de carte promotionnelle : le système expert se montre dans les décisions elles-mêmes.
+- **Don't** utiliser une seconde police ou des tailles supérieures à 30 px (hors chiffre focal de la carte entreprise).

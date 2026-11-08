@@ -145,6 +145,8 @@ export function SearchCommand({ compact = false }: { compact?: boolean }) {
           aria-label="Rechercher"
           aria-expanded={open}
           aria-controls="search-results"
+          aria-activedescendant={open && results[cursor] ? `search-option-${results[cursor].id}` : undefined}
+          aria-autocomplete="list"
           role="combobox"
           className="h-full w-full rounded-full bg-transparent pl-10 pr-9 text-sm outline-none placeholder:text-muted-foreground"
         />
@@ -177,6 +179,7 @@ export function SearchCommand({ compact = false }: { compact?: boolean }) {
               return (
                 <button
                   key={item.id}
+                  id={`search-option-${item.id}`}
                   type="button"
                   role="option"
                   aria-selected={active}

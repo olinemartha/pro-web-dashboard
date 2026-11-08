@@ -471,7 +471,19 @@ function MobileBar({ pathname }: { pathname: string }) {
         <h1 className="min-w-0 flex-1 truncate text-center text-sm font-semibold tracking-tight">
           {pageTitle(pathname)}
         </h1>
-        <NotificationBell />
+        <div className="flex shrink-0 items-center gap-1.5">
+          {!pathname.startsWith("/entreprise/offres") && (
+            <Link
+              to="/entreprise/offres"
+              search={{ nouveau: true }}
+              aria-label="Publier une offre"
+              className="press grid size-10 place-items-center rounded-full bg-primary text-primary-foreground shadow-sm transition-colors hover:bg-primary-hover"
+            >
+              <Plus className="size-[18px]" />
+            </Link>
+          )}
+          <NotificationBell />
+        </div>
       </header>
 
       {open && (
