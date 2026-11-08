@@ -200,7 +200,7 @@ Une seule famille de bleus, du plus clair au plus foncé, le refus restant en gr
 ### Hierarchy
 - **KPI** (600, 30 px, interligne 1) : valeur des quatre indicateurs du tableau de bord.
 - **Page title** (600, 20 px) : salutation et titre de page dans la barre supérieure (« Bonjour, FINCA RDC »), précédés de la date en 11 px.
-- **Title** (600, 18 px) : titre de la file « À traiter » (« 11 décisions vous attendent »), titres de fenêtres.
+- **Title** (600, 18 px) : titres de fenêtres.
 - **Section** (600, 15 px) : titres des cartes (« Pipeline de recrutement », « Offres publiées »).
 - **Body** (400, 14 px, interligne 1,5) : texte courant, lignes de liste, formulaires. Viser 65–75 caractères par ligne.
 - **UI** (500, 13 px) : libellés de navigation, boutons compacts, onglets, légendes de graphiques.
@@ -281,7 +281,7 @@ Tout s'immobilise sous `prefers-reduced-motion`.
 Quatre cartes séparées et espacées. En haut : icône monochrome nue + libellé 13 px (deux lignes autorisées sur téléphone). Au centre : valeur 30 px, avec une courbe pour les candidatures. En bas, séparée par un filet : une précision de 12 px (tendance verte, alerte ambre ou contexte gris).
 
 ### File « À traiter »
-Titre qui annonce le nombre de décisions. Lignes triées par urgence réelle (proximité de l'entretien, ancienneté de la candidature ou du rapport), chacune avec un verbe d'action, l'objet, et un délai lisible (« en attente depuis 12 jours », « dans 6 jours »). La ligne d'affectation affiche la recommandation du système expert (« Recommandé : Direction IT · 4/4 critères satisfaits ») sur fond bleu glacier, et mène à l'explication ; elle ne décide jamais à la place de l'entreprise. Au-delà de 5 lignes, un bouton déplie la liste sur place.
+Titre « À traiter » avec un compteur, sans phrase d'explication. Lignes triées par urgence réelle (proximité de l'entretien, ancienneté de la candidature ou du rapport), chacune avec un verbe d'action, l'objet, et un délai lisible (« en attente depuis 12 jours », « dans 6 jours »). La ligne d'affectation affiche la recommandation du système expert (« Recommandé : Direction IT · 4/4 critères satisfaits ») sur fond bleu glacier, et mène à l'explication ; elle ne décide jamais à la place de l'entreprise. Au-delà de 5 lignes, un bouton déplie la liste sur place.
 
 ### Inputs / Fields
 - Fond blanc, bordure 1 px, rayon 6 px, hauteur 40 px, texte 14 px (16 px sur téléphone pour éviter le zoom iOS).

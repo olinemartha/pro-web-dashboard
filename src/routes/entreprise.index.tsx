@@ -646,14 +646,12 @@ function CompanyDashboard() {
             <div className="space-y-4 px-5 pt-5">
               <div className="flex flex-wrap items-end justify-between gap-3">
                 <div className="min-w-0">
-                  <h2 id="todo-title" className="text-lg font-semibold tracking-tight">
-                    {todos.length === 0
-                      ? "Aucune décision en attente"
-                      : `${todos.length} décision${todos.length > 1 ? "s" : ""} vous attend${todos.length > 1 ? "ent" : ""}`}
+                  <h2 id="todo-title" className="flex items-center gap-2 text-[15px] font-semibold tracking-tight">
+                    À traiter
+                    <span className="rounded-md bg-muted px-1.5 py-0.5 text-[11px] font-medium tabular-nums text-muted-foreground">
+                      {todos.length}
+                    </span>
                   </h2>
-                  <p className="mt-0.5 text-xs text-muted-foreground">
-                    Classées de la plus urgente à la moins urgente : délais, ancienneté, entretiens proches.
-                  </p>
                 </div>
               </div>
               {todos.length > 0 && (
