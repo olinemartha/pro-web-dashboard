@@ -219,15 +219,15 @@ Le modèle est un shell d'application à deux colonnes : navigation latérale de
 Le contenu a un padding de 16 px sur mobile, 24 px sur tablette et 32 px à partir de 1280 px. Les sections sont espacées de 24 px (`space-y-6`). Les grilles ont toujours une colonne explicite `minmax(0, 1fr)` pour qu'aucun contenu ne déborde sur téléphone.
 
 **Tableau de bord entreprise :** une ligne de 4 KPI séparés (2 colonnes sur mobile, 4 dès 1024 px), puis une grille `minmax(0,1fr) | 340px` à partir de 1280 px, en trois lignes :
-1. Pipeline puis « À traiter » à gauche ; carte entreprise puis « Prochains entretiens » à droite.
+1. Pipeline puis « À traiter » à gauche ; carte entreprise puis « Prochains entretiens » à droite. Les deux colonnes finissent au même niveau : la dernière carte de chaque colonne s'étire ; dans « À traiter », les lignes se partagent l'espace à partir de 4 lignes (en dessous, elles gardent leur hauteur naturelle, icône centrée sur le texte).
 2. « Offres publiées » et « Activité récente », alignées en haut, chacune à sa hauteur naturelle (jamais étirées).
 3. « Dossiers stagiaires » sur toute la largeur.
 
-Points de rupture : 640 px (`sm`), 768 px (`md`, tableaux en colonnes), 1024 px (`lg`, barre latérale et KPI sur une ligne), 1280 px (`xl`, colonne de droite).
+Points de rupture : 640 px (`sm`), 768 px (`md`, tableaux en colonnes à largeurs fixes, `table-fixed`), 1024 px (`lg`, barre latérale, KPI sur une ligne, carte entreprise et entretiens côte à côte en 2 × 340 px), 1280 px (`xl`, colonne de droite de 340 px).
 
 ### Named Rules
 **The 1024 Rule.** La navigation latérale n'apparaît qu'à partir de 1024 px. En dessous, le tiroir et la barre compacte sont la seule navigation, et l'action principale reste accessible (bouton « + »).
-**The 24-Pixel Rhythm Rule.** L'espacement vertical entre sections est de 24 px ; à l'intérieur d'une carte, 16 à 20 px.
+**The 24-Pixel Rhythm Rule.** Une seule gouttière de 24 px, horizontale et verticale, y compris entre les cartes KPI (dès 1024 px) ; à l'intérieur d'une carte, 20 px de marge et 16 px entre l'en-tête et le contenu.
 **The No Hole Rule.** Une ligne de grille ne laisse jamais une colonne vide : un bloc seul sur sa ligne s'étend sur toute la largeur.
 **The No Scrollbar-in-Card Rule.** Pas de barre de défilement horizontale dans une carte : les filtres et puces passent à la ligne.
 

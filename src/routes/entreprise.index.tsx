@@ -71,6 +71,27 @@ function initialsOf(value: string) {
 /* Éléments partagés                                                   */
 /* ------------------------------------------------------------------ */
 
+/** État vide unique pour toutes les cartes : icône nue, titre, phrase courte. */
+function EmptyNote({
+  icon: Icon,
+  title,
+  desc,
+  className,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  title: string;
+  desc?: string;
+  className?: string;
+}) {
+  return (
+    <div className={cn("flex flex-col items-center justify-center px-5 py-8 text-center", className)}>
+      <Icon className="size-6 text-muted-foreground" />
+      <p className="mt-2 text-sm font-medium">{title}</p>
+      {desc && <p className="mt-0.5 text-xs text-muted-foreground">{desc}</p>}
+    </div>
+  );
+}
+
 function SectionHeader({
   title,
   description,
@@ -327,7 +348,7 @@ function PipelineChart({
               onMouseEnter={() => setHover(step.status)}
               onMouseLeave={() => setHover(null)}
               className={cn(
-                "grid cursor-default grid-cols-[minmax(0,130px)_minmax(0,1fr)_auto] items-center gap-3 rounded-lg px-2 py-1 transition-all duration-200",
+                "grid cursor-default grid-cols-[minmax(0,150px)_minmax(0,1fr)_auto] items-center gap-3 rounded-lg px-2 py-1 transition-all duration-200",
                 hover === step.status && "bg-muted/60",
                 dim && "opacity-50"
               )}
@@ -346,7 +367,7 @@ function PipelineChart({
                   }}
                 />
               </span>
-              <span className="w-16 text-right text-[13px] tabular-nums">
+              <span className="min-w-16 whitespace-nowrap text-right text-[13px] tabular-nums">
                 <span className="font-semibold">{step.count}</span>
                 <span className="ml-1 text-xs text-muted-foreground">{pct} %</span>
               </span>
@@ -593,7 +614,7 @@ function CompanyDashboard() {
   return (
     <div className="space-y-6">
       {/* ============================ Bandeau d'indicateurs ============================ */}
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 lg:gap-6">
         {stats.map((stat, index) => (
           <Reveal key={stat.label} delay={index * 60} className="min-w-0">
             <Link
@@ -604,7 +625,7 @@ function CompanyDashboard() {
                 <span className="grid size-5 shrink-0 place-items-center text-muted-foreground transition-colors duration-200 group-hover:text-foreground">
                   <stat.icon className="size-[18px]" />
                 </span>
-                <span className="min-w-0 flex-1 text-[13px] font-medium leading-snug text-muted-foreground line-clamp-2 sm:line-clamp-1">{stat.label}</span>
+                <span className="min-w-0 flex-1 text-[13px] font-medium leading-snug text-muted-foreground line-clamp-2 xl:line-clamp-1">{stat.label}</span>
               </div>
               <div className="flex items-end justify-between gap-2">
                 <p className="text-[30px] font-semibold leading-none tracking-tight">
@@ -620,7 +641,7 @@ function CompanyDashboard() {
               >
                 {stat.trend && <TrendingUp className="size-3.5 shrink-0" />}
                 {stat.alert && <Clock className="size-3.5 shrink-0" />}
-                <span className="line-clamp-2 sm:line-clamp-1">{stat.foot}</span>
+                <span className="line-clamp-2 xl:line-clamp-1">{stat.foot}</span>
               </p>
             </Link>
           </Reveal>
@@ -643,16 +664,12 @@ function CompanyDashboard() {
           {/* À traiter : triée par urgence réelle */}
           <Reveal as="section" delay={140} className="card-surface flex flex-col overflow-hidden xl:flex-1" aria-labelledby="todo-title">
             <div className="space-y-4 px-5 pt-5">
-              <div className="flex flex-wrap items-end justify-between gap-3">
-                <div className="min-w-0">
                   <h2 id="todo-title" className="flex items-center gap-2 text-[15px] font-semibold tracking-tight">
                     À traiter
                     <span className="rounded-md bg-muted px-1.5 py-0.5 text-[11px] font-medium tabular-nums text-muted-foreground">
                       {todos.length}
                     </span>
                   </h2>
-                </div>
-              </div>
               {todos.length > 0 && (
                 <div role="group" aria-label="Filtrer les décisions" className="flex flex-wrap gap-1.5">
                   {tabs.map((entry) => {
@@ -690,7 +707,7 @@ function CompanyDashboard() {
             </div>
 
             {visibleTodos.length === 0 ? (
-              <div className="m-5 flex flex-col items-center justify-center rounded-lg border border-dashed p-8 text-center">
+              <div className="m-5 flex flex-col items-center justify-center rounded-lg border border-dashed p-8 text-center xl:flex-1">
                 <CheckCircle2 className="size-6 text-success" />
                 <p className="mt-2 text-sm font-medium">Tout est à jour</p>
                 <p className="text-xs text-muted-foreground">Aucune décision ne vous attend pour le moment.</p>
@@ -701,7 +718,7 @@ function CompanyDashboard() {
                   const meta = TODO_META[todo.kind];
                   const rec = todo.recommendation;
                   return (
-                    <Reveal as="li" key={todo.id} delay={index < 5 ? index * 40 : 0} className="flex xl:flex-1">
+                    <Reveal as="li" key={todo.id} delay={index < 5 ? index * 40 : 0} className={cn("flex", visibleTodos.length >= 4 && "xl:flex-1")}>
                       <TodoTarget
                         todo={todo}
                         className={cn(
@@ -709,7 +726,7 @@ function CompanyDashboard() {
                           rec && "bg-primary-soft/40 hover:bg-primary-soft/70"
                         )}
                       >
-                        <span className="grid size-5 shrink-0 place-items-center self-start pt-0.5 text-muted-foreground transition-colors duration-200 group-hover:text-foreground">
+                        <span className="grid size-5 shrink-0 place-items-center text-muted-foreground transition-colors duration-200 group-hover:text-foreground">
                           <meta.icon className={cn("size-[18px]", rec && "text-primary")} />
                         </span>
                         <span className="min-w-0 flex-1">
@@ -755,7 +772,7 @@ function CompanyDashboard() {
           </Reveal>
 
         </div>
-        <aside className="flex flex-col gap-6">
+        <aside className="grid gap-6 lg:grid-cols-2 xl:flex xl:flex-col">
           {/* Carte entreprise — version d'origine, conservée telle quelle (logo ajoutable) */}
           <Reveal delay={120} className="card-surface overflow-hidden">
             <div className="relative bg-gradient-to-b from-accent-soft/80 via-accent-soft/30 to-card px-5 pb-5 pt-6 text-center">
@@ -810,7 +827,7 @@ function CompanyDashboard() {
           <Reveal delay={180} className="card-surface p-5 xl:flex-1">
             <SectionHeader title="Prochains entretiens" to="/entreprise/entretiens" />
             {upcomingInterviews.length === 0 ? (
-              <p className="mt-4 text-sm text-muted-foreground">Aucun entretien programmé.</p>
+              <EmptyNote icon={CalendarClock} title="Aucun entretien programmé" desc="Les prochains entretiens apparaîtront ici." className="mt-4 rounded-lg border border-dashed" />
             ) : (
               <ul className="mt-4 space-y-2">
                 {upcomingInterviews.slice(0, 3).map((interview, index) => {
@@ -926,7 +943,7 @@ function CompanyDashboard() {
           <Reveal delay={240} className="card-surface p-5">
             <SectionHeader title="Activité récente" to="/entreprise/candidatures" />
             {activity.length === 0 ? (
-              <p className="mt-4 text-sm text-muted-foreground">Aucune activité pour le moment.</p>
+              <EmptyNote icon={Inbox} title="Aucune activité pour le moment" desc="Les nouvelles candidatures apparaîtront ici." className="mt-4 rounded-lg border border-dashed" />
             ) : (
               <ol className="relative mt-4 space-y-4 before:absolute before:bottom-3 before:left-[15px] before:top-3 before:w-px before:bg-border">
                 {activity.map((item) => (
@@ -944,7 +961,7 @@ function CompanyDashboard() {
                         />
                       </p>
                       <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                        {item.offer} · {relativeDay(item.date)}
+                        {relativeDay(item.date)} · {item.offer}
                       </p>
                     </div>
                   </li>
@@ -962,15 +979,15 @@ function CompanyDashboard() {
               <SectionHeader title="Dossiers stagiaires" count={interns.length} to="/entreprise/stagiaires" />
             </div>
             {interns.length === 0 ? (
-              <p className="border-t px-5 py-6 text-sm text-muted-foreground">Aucun dossier stagiaire pour le moment.</p>
+              <EmptyNote icon={Users} title="Aucun dossier stagiaire" desc="Les stagiaires recrutés apparaîtront ici." className="border-t" />
             ) : (
               <>
-                <table className="hidden w-full text-sm md:table">
+                <table className="hidden w-full table-fixed text-sm md:table">
                   <thead>
                     <tr className="border-y bg-muted/40 text-left text-xs text-muted-foreground">
-                      <th className="px-5 py-2.5 font-medium">Stagiaire</th>
-                      <th className="px-3 py-2.5 font-medium">Service</th>
-                      <th className="px-3 py-2.5 font-medium">Période</th>
+                      <th className="w-[40%] px-5 py-2.5 font-medium">Stagiaire</th>
+                      <th className="w-[22%] px-3 py-2.5 font-medium">Service</th>
+                      <th className="w-[18%] px-3 py-2.5 font-medium">Période</th>
                       <th className="px-5 py-2.5 font-medium">Prochaine étape</th>
                     </tr>
                   </thead>
@@ -988,7 +1005,7 @@ function CompanyDashboard() {
                               </span>
                             </Link>
                           </td>
-                          <td className="px-3 py-3 text-muted-foreground">{intern.service || "—"}</td>
+                          <td className="truncate px-3 py-3 text-muted-foreground">{intern.service || "—"}</td>
                           <td className="whitespace-nowrap px-3 py-3 text-muted-foreground">
                             {intern.start ? `${fmtDate(intern.start, false)} → ${fmtDate(intern.end, false)}` : "À définir"}
                           </td>
