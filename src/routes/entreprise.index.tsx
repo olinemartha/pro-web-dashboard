@@ -226,8 +226,8 @@ function PipelineChart({
   acceptanceRate: number;
 }) {
   const [hover, setHover] = useState<CandidateStatus | null>(null);
-  const size = 168;
-  const stroke = 22;
+  const size = 136;
+  const stroke = 18;
   const r = (size - stroke) / 2;
   const c = 2 * Math.PI * r;
   const gap = total > 0 && steps.filter((s) => s.count > 0).length > 1 ? 3 : 0;
@@ -245,7 +245,7 @@ function PipelineChart({
     });
 
   return (
-    <div className="mt-5 grid items-center gap-6 sm:grid-cols-[auto_minmax(0,1fr)] sm:gap-8">
+    <div className="mt-4 grid items-center gap-5 sm:grid-cols-[auto_minmax(0,1fr)] sm:gap-8">
       {/* Anneau */}
       <div className="relative mx-auto" style={{ width: size, height: size }}>
         <svg viewBox={`0 0 ${size} ${size}`} className="-rotate-90" role="img" aria-label="Répartition des candidatures par statut">
@@ -274,7 +274,7 @@ function PipelineChart({
         </svg>
         <div className="pointer-events-none absolute inset-0 grid place-items-center text-center">
           <div>
-            <p className="text-[28px] font-semibold leading-none tracking-tight tabular-nums">
+            <p className="text-2xl font-semibold leading-none tracking-tight tabular-nums">
               {active ? active.count : <AnimatedNumber value={total} />}
             </p>
             <p className="mt-1 max-w-[96px] text-[11px] leading-tight text-muted-foreground">
@@ -295,7 +295,7 @@ function PipelineChart({
               onMouseEnter={() => setHover(step.status)}
               onMouseLeave={() => setHover(null)}
               className={cn(
-                "grid cursor-default grid-cols-[minmax(0,130px)_minmax(0,1fr)_auto] items-center gap-3 rounded-lg px-2 py-1.5 transition-all duration-200",
+                "grid cursor-default grid-cols-[minmax(0,130px)_minmax(0,1fr)_auto] items-center gap-3 rounded-lg px-2 py-1 transition-all duration-200",
                 hover === step.status && "bg-muted/60",
                 dim && "opacity-50"
               )}
@@ -321,7 +321,7 @@ function PipelineChart({
             </div>
           );
         })}
-        <div className="mt-3 flex items-center justify-between border-t px-2 pt-3">
+        <div className="mt-2 flex items-center justify-between border-t px-2 pt-2.5">
           <span className="text-[13px] text-muted-foreground">Taux d'acceptation (décisions prises)</span>
           <span className="text-[15px] font-semibold tabular-nums">
             <AnimatedNumber value={acceptanceRate} suffix=" %" />
@@ -751,10 +751,10 @@ function CompanyDashboard() {
 
         </aside>
 
-        {/* Ligne 2 : offres et activité, alignées en haut et de même hauteur */}
-        <div className="min-w-0">
+        {/* Ligne 2 : offres et activité, alignées en haut, chacune à sa hauteur naturelle */}
+        <div className="min-w-0 self-start">
           {/* Offres publiées : tableau */}
-          <Reveal as="section" delay={200} className="card-surface h-full overflow-hidden">
+          <Reveal as="section" delay={200} className="card-surface overflow-hidden">
             <div className="px-5 pb-4 pt-5">
               <SectionHeader title="Offres publiées" count={activeOffers.length} to="/entreprise/offres" linkLabel="Gérer les offres" />
             </div>
@@ -824,9 +824,9 @@ function CompanyDashboard() {
           </Reveal>
 
         </div>
-        <div className="min-w-0">
+        <div className="min-w-0 self-start">
           {/* Activité récente : fil chronologique */}
-          <Reveal delay={240} className="card-surface h-full p-5">
+          <Reveal delay={240} className="card-surface p-5">
             <SectionHeader title="Activité récente" to="/entreprise/candidatures" />
             {activity.length === 0 ? (
               <p className="mt-4 text-sm text-muted-foreground">Aucune activité pour le moment.</p>
@@ -857,8 +857,8 @@ function CompanyDashboard() {
           </Reveal>
         </div>
 
-        {/* Ligne 3 : dossiers stagiaires */}
-        <div className="min-w-0">
+        {/* Ligne 3 : dossiers stagiaires, sur toute la largeur */}
+        <div className="min-w-0 xl:col-span-2">
           {/* Dossiers stagiaires */}
           <Reveal as="section" delay={260} className="card-surface overflow-hidden">
             <div className="px-5 pb-4 pt-5">
