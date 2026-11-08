@@ -5,6 +5,7 @@ import {
   Building2,
   CalendarClock,
   ChevronsUpDown,
+  ArrowLeftRight,
   GraduationCap,
   Layers,
   LayoutDashboard,
@@ -271,6 +272,41 @@ function SidebarNav({
 /* Compte                                                              */
 /* ------------------------------------------------------------------ */
 
+/**
+ * Passage visible vers l'espace étudiant, au même endroit que le lien
+ * « Espace entreprise » de l'espace étudiant. Lien de démonstration : une fois
+ * l'authentification en place, chaque compte n'accèdera qu'à son propre espace.
+ */
+function SwitchSpaceLink({ collapsed = false, onNavigate }: { collapsed?: boolean; onNavigate?: () => void }) {
+  return (
+    <Link
+      to="/"
+      onClick={onNavigate}
+      aria-label={collapsed ? "Espace étudiant" : undefined}
+      className={cn(
+        "group relative flex h-9 items-center gap-3 rounded-lg border px-2.5 text-[13.5px] font-medium text-foreground transition-colors duration-200 hover:border-foreground/20 hover:bg-muted/70",
+        collapsed && "justify-center px-0"
+      )}
+    >
+      <GraduationCap className="size-[18px] shrink-0 text-muted-foreground group-hover:text-foreground" />
+      {!collapsed && (
+        <>
+          <span className="min-w-0 flex-1 truncate">Espace étudiant</span>
+          <ArrowLeftRight className="size-3.5 shrink-0 text-muted-foreground" />
+        </>
+      )}
+      {collapsed && (
+        <span
+          role="tooltip"
+          className="pointer-events-none absolute left-full top-1/2 z-50 ml-3 -translate-y-1/2 translate-x-1 whitespace-nowrap rounded-md bg-foreground px-2 py-1 text-xs font-medium text-background opacity-0 shadow-lg transition-all duration-150 group-hover:translate-x-0 group-hover:opacity-100"
+        >
+          Espace étudiant
+        </span>
+      )}
+    </Link>
+  );
+}
+
 function AccountMenu({ collapsed = false, onNavigate }: { collapsed?: boolean; onNavigate?: () => void }) {
   const { profile } = useCompanyStore();
   const [open, setOpen] = useState(false);
@@ -342,9 +378,6 @@ function AccountMenu({ collapsed = false, onNavigate }: { collapsed?: boolean; o
           </Link>
           <Link to="/entreprise/parametres" role="menuitem" onClick={close} className={itemClass}>
             <Settings className="size-4 text-muted-foreground" /> Paramètres
-          </Link>
-          <Link to="/" role="menuitem" onClick={close} className={itemClass}>
-            <GraduationCap className="size-4 text-muted-foreground" /> Espace étudiant (démo)
           </Link>
           <div className="my-1 h-px bg-border" />
           <button
@@ -464,7 +497,8 @@ function MobileBar({ pathname }: { pathname: string }) {
             <div className="flex-1 overflow-y-auto px-4 py-3">
               <SidebarNav pathname={pathname} onNavigate={() => setOpen(false)} />
             </div>
-            <div className="border-t p-3">
+            <div className="space-y-1 border-t p-3">
+              <SwitchSpaceLink onNavigate={() => setOpen(false)} />
               <AccountMenu onNavigate={() => setOpen(false)} />
             </div>
           </aside>
@@ -546,6 +580,7 @@ export function CompanyShell({ children }: { children: React.ReactNode }) {
               <PanelLeftOpen className="size-[18px]" />
             </button>
           )}
+          <SwitchSpaceLink collapsed={collapsed} />
           <AccountMenu collapsed={collapsed} />
         </div>
       </aside>
