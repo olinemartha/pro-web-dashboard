@@ -266,8 +266,17 @@ Tout s'immobilise sous `prefers-reduced-motion`.
 
 ### Code de référence
 Chaque motif ci-dessous existe en code ; les pages l'importent au lieu de le réécrire. Les règles d'usage et le contrôle automatique sont dans `CLAUDE.md` et `npm run check:design` (lancé aussi par `npm run build`).
-- `src/components/company/ui.tsx` : `SectionHeader`, `SectionLink`, `StatCard`, `EmptyNote`, `Badge`, `Field`, `Select`, `Modal`, `Drawer`, `ActionMenu`, `AvatarInitials`, `PageIntro` ; constantes `ARROW_NUDGE`, `SECTION_LINK`, `CARD_INTERACTIVE` ; `iconMotion(geste)`.
+- `src/components/company/ui.tsx` : `SectionHeader`, `SectionLink`, `StatCard`, `FilterChips`, `SearchInput`, `rowActionClass`, `PIPELINE_COLORS` / `StatusDot` / `PipelineBar`, `EmptyNote`, `Badge`, `Field`, `Select`, `Modal`, `Drawer`, `ActionMenu`, `AvatarInitials`, `PageIntro` ; constantes `ARROW_NUDGE`, `SECTION_LINK`, `CARD_INTERACTIVE` ; `iconMotion(geste)`.
 - `src/components/company/date-picker.tsx` : `DatePicker`.
+- `src/components/company/interview-fields.tsx` : champs d'entretien (date au calendrier, créneau de 30 min, lieu avec suggestions), partagés par Candidatures et Entretiens.
+
+### Gabarit des pages de liste (Mes offres, Candidatures, Entretiens)
+1. `PageIntro` : une phrase d'intention, l'action principale à droite.
+2. Quatre `StatCard` qui **filtrent** la page (un second clic rend tout), en cascade de 60 ms ; contour bleu roi quand le filtre est actif.
+3. La liste : une carte avec en-tête (titre 15 px + compteur gris, `FilterChips`, recherche), lignes séparées par un filet, `Reveal` en cascade de 40 ms ; un seul bouton de ligne `rowActionClass()` et le reste dans `ActionMenu`.
+4. État vide : `EmptyNote` + « Tout afficher ».
+5. Détail : `Modal` (offre) ou `Drawer` (candidat) ; repères en bande bordée, sections titrées en 13 px semibold, statuts aux couleurs du pipeline.
+6. Les offres restent des cartes (grille de 2 colonnes) avec leur mini-pipeline ; les candidatures et les entretiens sont des lignes. Les entretiens à venir passent avant l'historique, le prochain est mis en avant en bleu glacier, l'imminent (aujourd'hui, demain) en ambre.
 - `src/components/ui/motion.tsx` : `Reveal`, `AnimatedNumber`.
 - `src/lib/dates.ts` : formats de date français.
 - `src/index.css` : jetons de couleur (dont `--overlay` pour le voile des fenêtres), `card-surface`, `hover-lift`, `press`, gestes d'icônes `nav-icon--*`, animations.

@@ -21,6 +21,8 @@ import {
   AvatarInitials,
   Badge,
   EmptyNote,
+  PIPELINE_COLORS,
+  PIPELINE_ORDER,
   SECTION_LINK,
   SectionHeader,
   StatCard,
@@ -236,13 +238,10 @@ function TodoTarget({
  * bleu pour l'entretien, vert pour l'acceptation, rouge pour le refus.
  * Teintes adoucies (saturation modérée, clarté égale) : lisibles sans crier.
  */
-const PIPELINE: { status: CandidateStatus; color: string }[] = [
-  { status: "en_attente", color: "hsl(40 80% 60%)" },
-  { status: "examen", color: "hsl(256 48% 66%)" },
-  { status: "entretien", color: "hsl(218 68% 60%)" },
-  { status: "acceptee", color: "hsl(156 42% 48%)" },
-  { status: "refusee", color: "hsl(356 62% 64%)" },
-];
+const PIPELINE: { status: CandidateStatus; color: string }[] = PIPELINE_ORDER.map((status) => ({
+  status,
+  color: PIPELINE_COLORS[status],
+}));
 
 type PipelineStep = { status: CandidateStatus; color: string; count: number };
 

@@ -1,37 +1,57 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
+  ArrowRight,
   Briefcase,
+  CalendarClock,
   CalendarDays,
+  Check,
   Clock,
-  Eye,
+  FileText,
+  GraduationCap,
+  Inbox,
   MapPin,
   Pencil,
   Plus,
   Send,
-  Users,
   X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
+  ARROW_NUDGE,
   ActionMenu,
   Badge,
-  EmptyBlock,
+  CARD_INTERACTIVE,
+  EmptyNote,
   Field,
+  FilterChips,
   MenuItem,
   Modal,
+  PIPELINE_ORDER,
+  PIPELINE_SHORT_LABELS,
   PageIntro,
+  PipelineBar,
+  SECTION_LINK,
+  SearchInput,
   Select,
+  StatCard,
+  StatusDot,
   inputClass,
   textareaClass,
   type Tone,
 } from "@/components/company/ui";
+import { Reveal } from "@/components/ui/motion";
 import { DatePicker } from "@/components/company/date-picker";
 import { useCompanyStore } from "@/lib/company-store";
 import { daysFromToday, fmtDate, localIsoDate } from "@/lib/dates";
 import { cn } from "@/lib/utils";
-import { offerStatusLabels, type CompanyOffer, type OfferStatus } from "@/lib/company-data";
+import {
+  offerStatusLabels,
+  type CandidateStatus,
+  type CompanyOffer,
+  type OfferStatus,
+} from "@/lib/company-data";
 
 export const Route = createFileRoute("/entreprise/offres")({
   validateSearch: (search: Record<string, unknown>): { nouveau?: boolean } => ({
@@ -45,6 +65,9 @@ export const Route = createFileRoute("/entreprise/offres")({
 });
 
 const tone = (status: OfferStatus): Tone => offerStatusLabels[status].tone;
+
+/** Une offre publiée « clôture bientôt » sous ce nombre de jours. */
+const CLOSING_DAYS = 14;
 
 const FILTERS: { value: OfferStatus | "tous"; label: string }[] = [
   { value: "tous", label: "Toutes" },
@@ -124,7 +147,8 @@ function CompanyOffersPage() {
   const { offers, candidates, services, addOffer, updateOffer, setOfferStatus } = useCompanyStore();
   const { nouveau } = Route.useSearch();
   const navigate = useNavigate();
-  const [filter, setFilter] = useState<OfferStatus | "tous">("tous");
+  const [filter, setFilter] = useState<OfferStatus | "tous" | "bientot">("tous");
+  const [search, setSearch] = useState("");
 
   const [formOpen, setFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -142,10 +166,38 @@ function CompanyOffersPage() {
     navigate({ to: "/entreprise/offres", search: { nouveau: false }, replace: true });
   }, [nouveau, navigate]);
 
-  const filtered = useMemo(
-    () => (filter === "tous" ? offers : offers.filter((offer) => offer.status === filter)),
-    [offers, filter]
+  const closingSoon = useMemo(
+    () =>
+      offers.filter((offer) => {
+        const left = daysFromToday(offer.deadline);
+        return offer.status === "publiee" && left >= 0 && left <= CLOSING_DAYS;
+      }),
+    [offers]
   );
+
+  const filtered = useMemo(() => {
+    const term = search.trim().toLowerCase();
+    const base =
+      filter === "tous"
+        ? offers
+        : filter === "bientot"
+          ? closingSoon
+          : offers.filter((offer) => offer.status === filter);
+    if (!term) return base;
+    return base.filter((offer) =>
+      [offer.title, offer.department, offer.location, ...offer.skills].some((value) =>
+        value.toLowerCase().includes(term)
+      )
+    );
+  }, [offers, filter, search, closingSoon]);
+
+  const statusCount = (status: OfferStatus) => offers.filter((offer) => offer.status === status).length;
+  const activeCandidates = candidates.filter((candidate) => candidate.status !== "retiree");
+  const toReview = activeCandidates.filter(
+    (candidate) => candidate.status === "en_attente" || candidate.status === "examen"
+  ).length;
+  // Un indicateur déjà actif remet la liste à « Toutes ».
+  const toggleFilter = (value: OfferStatus | "bientot") => setFilter((current) => (current === value ? "tous" : value));
   const detail = offers.find((offer) => offer.id === detailId) ?? null;
   // Suggestions de compétences : celles déjà utilisées dans vos offres.
   const skillSuggestions = useMemo(
@@ -153,18 +205,24 @@ function CompanyOffersPage() {
     [offers]
   );
 
-  const pipeline = (offerId: string) => {
-    const list = candidates.filter(
-      (candidate) => candidate.offerId === offerId && candidate.status !== "retiree"
-    );
-    return {
-      total: list.length,
-      examine: list.filter(
-        (candidate) => candidate.status === "en_attente" || candidate.status === "examen"
-      ).length,
-      interview: list.filter((candidate) => candidate.status === "entretien").length,
-      accepted: list.filter((candidate) => candidate.status === "acceptee").length,
-    };
+  const countsFor = (offerId: string) => {
+    const counts: Partial<Record<CandidateStatus, number>> = {};
+    candidates
+      .filter((candidate) => candidate.offerId === offerId)
+      .forEach((candidate) => {
+        counts[candidate.status] = (counts[candidate.status] ?? 0) + 1;
+      });
+    return counts;
+  };
+
+  /** « Clôture dans 19 j », « Clôture aujourd'hui », « Clôturée le 4 nov. ». */
+  const deadlineLabel = (offer: CompanyOffer) => {
+    if (!offer.deadline) return "Sans date limite";
+    const left = daysFromToday(offer.deadline);
+    if (offer.status === "cloturee" || left < 0) return `Clôturée le ${fmtDate(offer.deadline, false)}`;
+    if (left === 0) return "Clôture aujourd'hui";
+    if (left === 1) return "Clôture demain";
+    return `Clôture dans ${left} j`;
   };
 
   const openCreate = () => {
@@ -280,155 +338,242 @@ function CompanyOffersPage() {
   return (
     <div className="space-y-6">
       <PageIntro
-        desc="Publiez, modifiez, désactivez ou clôturez vos offres de stage."
+        desc="Publiez, suivez et clôturez vos offres de stage. Chaque offre montre où en sont ses candidats."
         action={
-          <Button onClick={openCreate}>
-            <Plus className="mr-2 size-4" /> Publier une offre
+          <Button onClick={openCreate} className="group">
+            <Plus className="mr-2 size-4 transition-transform duration-300 [transition-timing-function:var(--ease-soft)] group-hover:rotate-90 motion-reduce:transition-none" />
+            Publier une offre
           </Button>
         }
       />
 
-      <div className="flex flex-wrap gap-2">
-        {FILTERS.map((entry) => {
-          const count =
-            entry.value === "tous"
-              ? offers.length
-              : offers.filter((offer) => offer.status === entry.value).length;
-          return (
-            <button
-              key={entry.value}
-              type="button"
-              onClick={() => setFilter(entry.value)}
-              className={
-                filter === entry.value
-                  ? "rounded-full bg-primary px-3.5 py-1.5 text-xs font-semibold text-primary-foreground"
-                  : "rounded-full border bg-background px-3.5 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted"
-              }
-            >
-              {entry.label} ({count})
-            </button>
-          );
-        })}
+      {/* Indicateurs : les deux premiers et le dernier filtrent la liste */}
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 lg:gap-6">
+        {[
+          <StatCard
+            key="publiees"
+            label="Offres publiées"
+            value={statusCount("publiee")}
+            icon={Briefcase}
+            motion="lift"
+            foot={`sur ${offers.length} offre${offers.length > 1 ? "s" : ""} créée${offers.length > 1 ? "s" : ""}`}
+            onClick={() => toggleFilter("publiee")}
+            pressed={filter === "publiee"}
+          />,
+          <StatCard
+            key="brouillons"
+            label="Brouillons"
+            value={statusCount("brouillon")}
+            icon={FileText}
+            motion="lift"
+            foot={statusCount("brouillon") ? "à compléter puis publier" : "aucun brouillon en cours"}
+            onClick={() => toggleFilter("brouillon")}
+            pressed={filter === "brouillon"}
+          />,
+          <StatCard
+            key="candidatures"
+            label="Candidatures reçues"
+            value={activeCandidates.length}
+            icon={Inbox}
+            motion="bounce"
+            foot={toReview ? `${toReview} à examiner` : "aucune en attente"}
+            tone={toReview ? "alert" : "neutral"}
+            to="/entreprise/candidatures"
+          />,
+          <StatCard
+            key="bientot"
+            label="Clôture proche"
+            value={closingSoon.length}
+            icon={CalendarClock}
+            motion="tilt"
+            foot={closingSoon.length ? `sous ${CLOSING_DAYS} jours` : `aucune sous ${CLOSING_DAYS} jours`}
+            tone={closingSoon.length ? "alert" : "neutral"}
+            onClick={() => toggleFilter("bientot")}
+            pressed={filter === "bientot"}
+          />,
+        ].map((card, index) => (
+          <Reveal key={index} delay={index * 60} className="min-w-0">
+            {card}
+          </Reveal>
+        ))}
       </div>
 
-      {filtered.length === 0 ? (
-        <EmptyBlock
-          title="Aucune offre dans cette catégorie"
-          desc="Modifiez le filtre ou publiez une nouvelle offre de stage."
+      {/* Filtres et recherche */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <FilterChips
+          label="Filtrer les offres par statut"
+          value={filter === "bientot" ? ("" as OfferStatus | "tous") : filter}
+          onChange={(value) => setFilter(value)}
+          options={FILTERS.map((entry) => ({
+            value: entry.value,
+            label: entry.label,
+            count: entry.value === "tous" ? offers.length : statusCount(entry.value),
+          }))}
         />
+        <SearchInput
+          id="offres-recherche"
+          label="Rechercher une offre"
+          placeholder="Rechercher une offre"
+          value={search}
+          onChange={setSearch}
+          className="w-full sm:w-64"
+        />
+      </div>
+      <p className="sr-only" aria-live="polite">
+        {`${filtered.length} offre${filtered.length > 1 ? "s" : ""} affichée${filtered.length > 1 ? "s" : ""}`}
+      </p>
+
+      {filtered.length === 0 ? (
+        <div className="card-surface">
+          <EmptyNote
+            icon={Briefcase}
+            title={search ? "Aucune offre ne correspond à votre recherche" : "Aucune offre dans cette catégorie"}
+            desc={search ? "Essayez un autre mot-clé." : "Changez de filtre ou publiez une nouvelle offre."}
+            className="py-12"
+          />
+          {(filter !== "tous" || search) && (
+            <div className="-mt-6 flex justify-center pb-10">
+              <button
+                type="button"
+                onClick={() => {
+                  setFilter("tous");
+                  setSearch("");
+                }}
+                className={SECTION_LINK}
+              >
+                Tout afficher
+              </button>
+            </div>
+          )}
+        </div>
       ) : (
-        <div className="grid gap-4 lg:grid-cols-2">
-          {filtered.map((offer) => {
-            const flow = pipeline(offer.id);
+        <div className="grid gap-4 lg:grid-cols-2 lg:gap-6">
+          {filtered.map((offer, index) => {
+            const counts = countsFor(offer.id);
+            const total = PIPELINE_ORDER.reduce((sum, status) => sum + (counts[status] ?? 0), 0);
+            const left = daysFromToday(offer.deadline);
+            const urgent = offer.status === "publiee" && left >= 0 && left <= CLOSING_DAYS;
             return (
-              <article key={offer.id} className="card-surface hover-lift group relative flex cursor-pointer flex-col p-5">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <h2 className="text-pretty text-lg font-semibold leading-snug tracking-tight">
-                      {/* Toute la carte ouvre le détail : le bouton du titre la recouvre. */}
-                      <button
-                        type="button"
-                        onClick={() => setDetailId(offer.id)}
-                        className="text-left transition-colors after:absolute after:inset-0 after:rounded-xl after:content-[''] group-hover:text-primary focus-visible:outline-none focus-visible:after:outline focus-visible:after:outline-2 focus-visible:after:outline-offset-2 focus-visible:after:outline-accent"
-                      >
-                        {offer.title}
-                      </button>
-                    </h2>
-                    <p className="mt-0.5 text-xs leading-4 text-muted-foreground">
-                      {offer.department}
-                    </p>
+              <Reveal key={offer.id} delay={index < 6 ? 80 + index * 50 : 0} className="min-w-0">
+                <article className={cn(CARD_INTERACTIVE, "relative flex h-full cursor-pointer flex-col p-5")}>
+                  {/* En-tête : titre (ouvre le détail, toute la carte est cliquable) et statut */}
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <h2 className="text-pretty text-[15px] font-semibold leading-snug tracking-tight">
+                        <button
+                          type="button"
+                          onClick={() => setDetailId(offer.id)}
+                          aria-label={`${offer.title} — ouvrir le détail`}
+                          className="text-left transition-colors after:absolute after:inset-0 after:rounded-xl after:content-[''] group-hover:text-primary focus-visible:outline-none focus-visible:after:outline focus-visible:after:outline-2 focus-visible:after:outline-offset-2 focus-visible:after:outline-accent"
+                        >
+                          {offer.title}
+                        </button>
+                      </h2>
+                      <p className="mt-0.5 truncate text-xs text-muted-foreground">{offer.department}</p>
+                    </div>
+                    <Badge label={offerStatusLabels[offer.status].label} tone={tone(offer.status)} className="shrink-0" />
                   </div>
-                  <Badge label={offerStatusLabels[offer.status].label} tone={tone(offer.status)} />
-                </div>
 
-                <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 text-xs text-muted-foreground">
-                  <span className="inline-flex items-center gap-1">
-                    <MapPin className="size-3.5" /> {offer.location}
-                  </span>
-                  <span className="inline-flex items-center gap-1">
-                    <Clock className="size-3.5" /> {offer.duration}
-                  </span>
-                  <span className="inline-flex items-center gap-1">
-                    <CalendarDays className="size-3.5" /> Clôture : {fmtDate(offer.deadline)}
-                  </span>
-                  <span className="inline-flex items-center gap-1">
-                    <Users className="size-3.5" /> {flow.total} candidature
-                    {flow.total > 1 ? "s" : ""}
-                  </span>
-                </div>
-
-                <p className="mt-3 line-clamp-2 text-sm leading-relaxed text-muted-foreground">
-                  {offer.description}
-                </p>
-
-                <div className="mt-3 flex flex-wrap gap-1.5">
-                  {offer.skills.slice(0, 5).map((skill) => (
-                    <span
-                      key={skill}
-                      className="rounded-full bg-accent-soft px-2 py-0.5 text-xs text-primary"
-                    >
-                      {skill}
+                  <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 text-xs text-muted-foreground">
+                    <span className="inline-flex items-center gap-1.5">
+                      <MapPin className="size-3.5" /> {offer.location || "Lieu à préciser"}
                     </span>
-                  ))}
-                </div>
-
-                <p className="mt-3 rounded-md bg-muted px-3 py-2 text-xs leading-relaxed tabular-nums text-foreground/70">
-                  <span className="font-medium text-foreground">{flow.total}</span> candidature
-                  {flow.total > 1 ? "s" : ""} ·{" "}
-                  <span className="font-medium text-foreground">{flow.examine}</span> à examiner ·{" "}
-                  <span className="font-medium text-foreground">{flow.interview}</span> en entretien
-                </p>
-
-                <div className="relative z-10 mt-auto flex flex-wrap items-center gap-2 border-t pt-3">
-                  {offer.status === "brouillon" && (
-                    <Button size="sm" onClick={() => changeStatus(offer, "publiee")}>
-                      <Send className="mr-1.5 size-3.5" /> Publier
-                    </Button>
-                  )}
-                  {offer.status === "publiee" && (
-                    <Button size="sm" asChild>
-                      <Link to="/entreprise/candidatures" search={{ offre: offer.id }}>
-                        <Users className="mr-1.5 size-3.5" /> Voir les candidatures
-                      </Link>
-                    </Button>
-                  )}
-                  {offer.status === "desactivee" && (
-                    <Button size="sm" onClick={() => changeStatus(offer, "publiee")}>
-                      Réactiver
-                    </Button>
-                  )}
-                  {offer.status === "cloturee" && (
-                    <Button size="sm" variant="outline" onClick={() => setDetailId(offer.id)}>
-                      <Eye className="mr-1.5 size-3.5" /> Consulter
-                    </Button>
-                  )}
-                  <Button variant="outline" size="sm" onClick={() => setDetailId(offer.id)}>
-                    Détails
-                  </Button>
-                  <div className="ml-auto">
-                    <ActionMenu>
-                      <MenuItem onSelect={() => openEdit(offer)}>
-                        <Pencil className="size-3.5" /> Modifier
-                      </MenuItem>
-                      {offer.status !== "cloturee" && (
-                        <MenuItem onSelect={() => changeStatus(offer, "cloturee")}>
-                          Clôturer l'offre
-                        </MenuItem>
-                      )}
-                      {offer.status === "publiee" && (
-                        <MenuItem onSelect={() => changeStatus(offer, "desactivee")}>
-                          Désactiver
-                        </MenuItem>
-                      )}
-                      {offer.status === "cloturee" && (
-                        <MenuItem onSelect={() => changeStatus(offer, "publiee")}>
-                          Rouvrir
-                        </MenuItem>
-                      )}
-                    </ActionMenu>
+                    <span className="inline-flex items-center gap-1.5">
+                      <Clock className="size-3.5" /> {offer.duration || "Durée à préciser"}
+                    </span>
+                    <span className="inline-flex items-center gap-1.5">
+                      <GraduationCap className="size-3.5" /> {offer.level || "Niveau à préciser"}
+                    </span>
                   </div>
-                </div>
-              </article>
+
+                  <p className="mt-3 line-clamp-2 text-pretty text-[13px] leading-relaxed text-muted-foreground">
+                    {offer.description}
+                  </p>
+
+                  {offer.skills.length > 0 && (
+                    <div className="mt-3 flex flex-wrap gap-1.5">
+                      {offer.skills.slice(0, 4).map((skill) => (
+                        <span key={skill} className="rounded-full bg-accent-soft px-2 py-0.5 text-xs text-primary">
+                          {skill}
+                        </span>
+                      ))}
+                      {offer.skills.length > 4 && (
+                        <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+                          +{offer.skills.length - 4}
+                        </span>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Candidats de l'offre : la même gamme que le pipeline du tableau de bord */}
+                  <div className="mt-4 border-t pt-4">
+                    <div className="flex items-baseline justify-between gap-3">
+                      <p className="text-[13px]">
+                        <span className="font-semibold tabular-nums">{total}</span>{" "}
+                        <span className="text-muted-foreground">candidature{total > 1 ? "s" : ""}</span>
+                      </p>
+                      <p
+                        className={cn(
+                          "inline-flex items-center gap-1 whitespace-nowrap text-xs tabular-nums",
+                          urgent ? "font-semibold text-warning" : "text-muted-foreground"
+                        )}
+                      >
+                        {urgent && <Clock className="size-3" />}
+                        {deadlineLabel(offer)}
+                      </p>
+                    </div>
+                    <PipelineBar counts={counts} className="mt-2.5" />
+                    {total > 0 && (
+                      <ul className="mt-2.5 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                        {PIPELINE_ORDER.filter((status) => counts[status]).map((status) => (
+                          <li key={status} className="inline-flex items-center gap-1.5">
+                            <StatusDot status={status} />
+                            <span className="font-medium tabular-nums text-foreground">{counts[status]}</span>
+                            {PIPELINE_SHORT_LABELS[status].toLowerCase()}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+
+                  {/* Actions : au-dessus du lien étiré */}
+                  <div className="relative z-10 mt-auto flex items-center gap-2 pt-4">
+                    {offer.status === "publiee" && (
+                      <Link to="/entreprise/candidatures" search={{ offre: offer.id }} className={SECTION_LINK}>
+                        Voir les candidatures
+                        <ArrowRight className={cn("size-3.5", ARROW_NUDGE)} />
+                      </Link>
+                    )}
+                    {offer.status === "brouillon" && (
+                      <Button size="sm" onClick={() => changeStatus(offer, "publiee")} className="group/send">
+                        <Send className="mr-1.5 size-3.5 transition-transform duration-300 [transition-timing-function:var(--ease-soft)] group-hover/send:-translate-y-px group-hover/send:translate-x-0.5 motion-reduce:transition-none" />
+                        Publier
+                      </Button>
+                    )}
+                    {offer.status === "desactivee" && (
+                      <button type="button" onClick={() => changeStatus(offer, "publiee")} className={SECTION_LINK}>
+                        Réactiver
+                      </button>
+                    )}
+                    <div className="ml-auto">
+                      <ActionMenu>
+                        <MenuItem onSelect={() => openEdit(offer)}>
+                          <Pencil className="size-3.5" /> Modifier
+                        </MenuItem>
+                        {offer.status !== "cloturee" && (
+                          <MenuItem onSelect={() => changeStatus(offer, "cloturee")}>Clôturer l'offre</MenuItem>
+                        )}
+                        {offer.status === "publiee" && (
+                          <MenuItem onSelect={() => changeStatus(offer, "desactivee")}>Désactiver</MenuItem>
+                        )}
+                        {offer.status === "cloturee" && (
+                          <MenuItem onSelect={() => changeStatus(offer, "publiee")}>Rouvrir</MenuItem>
+                        )}
+                      </ActionMenu>
+                    </div>
+                  </div>
+                </article>
+              </Reveal>
             );
           })}
         </div>
@@ -607,118 +752,115 @@ function CompanyOffersPage() {
       <Modal
         open={Boolean(detail)}
         onClose={() => setDetailId(null)}
+        icon={Briefcase}
         title={detail?.title ?? "Détail de l'offre"}
         description={detail ? `${detail.department} · ${detail.location}` : undefined}
         wide
         footer={
           detail && (
             <>
-              <Button variant="outline" onClick={() => setDetailId(null)}>
-                Fermer
-              </Button>
-              <Button asChild>
-                <Link to="/entreprise/candidatures" search={{ offre: detail.id }}>
-                  <Users className="mr-2 size-4" /> Voir les candidatures
-                </Link>
-              </Button>
               <Button variant="outline" onClick={() => openEdit(detail)}>
                 <Pencil className="mr-2 size-4" /> Modifier l'offre
+              </Button>
+              <Button asChild className="group">
+                <Link to="/entreprise/candidatures" search={{ offre: detail.id }}>
+                  Voir les candidatures
+                  <ArrowRight className={cn("ml-2 size-4", ARROW_NUDGE)} />
+                </Link>
               </Button>
             </>
           )
         }
       >
-        {detail && (
-          <div className="space-y-5">
-            <div className="flex flex-wrap items-center gap-2">
-              <Badge label={offerStatusLabels[detail.status].label} tone={tone(detail.status)} />
-              <Badge label={detail.type} tone="accent" />
-              <Badge label={detail.level} tone="muted" />
-            </div>
-
-            <div className="rounded-lg border bg-muted/40 p-4">
-              <p className="text-xs font-semibold uppercase leading-4 tracking-[0.08em] text-muted-foreground">
-                Pipeline de l'offre
-              </p>
-              <div className="mt-2 grid grid-cols-3 gap-3 text-center">
-                <div>
-                  <p className="text-lg font-semibold leading-tight tabular-nums">
-                    {pipeline(detail.id).total}
-                  </p>
-                  <p className="text-xs leading-4 text-muted-foreground">Candidatures</p>
+        {detail &&
+          (() => {
+            const counts = countsFor(detail.id);
+            const total = PIPELINE_ORDER.reduce((sum, status) => sum + (counts[status] ?? 0), 0);
+            return (
+              <div className="space-y-6">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge label={offerStatusLabels[detail.status].label} tone={tone(detail.status)} />
+                  {detail.type && <Badge label={detail.type} tone="accent" />}
+                  {detail.level && <Badge label={detail.level} tone="muted" />}
                 </div>
-                <div>
-                  <p className="text-lg font-semibold leading-tight tabular-nums">
-                    {pipeline(detail.id).examine}
-                  </p>
-                  <p className="text-xs leading-4 text-muted-foreground">À examiner</p>
-                </div>
-                <div>
-                  <p className="text-lg font-semibold leading-tight tabular-nums">
-                    {pipeline(detail.id).interview}
-                  </p>
-                  <p className="text-xs leading-4 text-muted-foreground">En entretien</p>
-                </div>
-              </div>
-            </div>
 
-            <div className="grid gap-3 text-sm sm:grid-cols-2">
-              <p>
-                <span className="text-muted-foreground">Durée : </span>
-                {detail.duration}
-              </p>
-              <p>
-                <span className="text-muted-foreground">Date limite : </span>
-                {fmtDate(detail.deadline)}
-              </p>
-              <p>
-                <span className="text-muted-foreground">Publiée le : </span>
-                {fmtDate(detail.published)}
-              </p>
-              <p className="inline-flex items-center gap-1">
-                <Briefcase className="size-4 text-muted-foreground" /> {detail.department}
-              </p>
-            </div>
-
-            <div>
-              <h3 className="text-sm font-semibold leading-snug">Description</h3>
-              <p className="mt-1 max-w-[68ch] text-pretty text-sm leading-relaxed text-muted-foreground">
-                {detail.description}
-              </p>
-            </div>
-
-            <div>
-              <h3 className="text-sm font-semibold leading-snug">Missions</h3>
-              {detail.missions.length === 0 ? (
-                <p className="mt-1 text-sm text-muted-foreground">Aucune mission renseignée.</p>
-              ) : (
-                <ul className="mt-1 list-disc space-y-1 pl-5 text-sm leading-relaxed text-muted-foreground">
-                  {detail.missions.map((mission) => (
-                    <li key={mission}>{mission}</li>
+                {/* Repères : une bande de faits, pas de cartes imbriquées */}
+                <dl className="grid grid-cols-2 gap-y-4 rounded-xl border py-3.5 sm:grid-cols-4 sm:divide-x">
+                  {[
+                    { label: "Durée", value: detail.duration || "—" },
+                    { label: "Lieu", value: detail.location || "—" },
+                    { label: "Date limite", value: fmtDate(detail.deadline), hint: deadlineLabel(detail) },
+                    { label: "Publiée le", value: fmtDate(detail.published) },
+                  ].map((fact) => (
+                    <div key={fact.label} className="min-w-0 px-4">
+                      <dt className="text-xs text-muted-foreground">{fact.label}</dt>
+                      <dd className="mt-0.5 truncate text-[13px] font-medium">{fact.value}</dd>
+                      {fact.hint && <dd className="truncate text-xs text-muted-foreground">{fact.hint}</dd>}
+                    </div>
                   ))}
-                </ul>
-              )}
-            </div>
+                </dl>
 
-            <div>
-              <h3 className="text-sm font-semibold">Compétences recherchées</h3>
-              <div className="mt-1 flex flex-wrap gap-1.5">
-                {detail.skills.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">Aucune compétence renseignée.</p>
-                ) : (
-                  detail.skills.map((skill) => (
-                    <span
-                      key={skill}
-                      className="rounded-full bg-accent-soft px-2 py-0.5 text-xs text-primary"
-                    >
-                      {skill}
-                    </span>
-                  ))
-                )}
+                <section>
+                  <div className="flex items-baseline justify-between gap-3">
+                    <h3 className="text-[13px] font-semibold">Candidatures</h3>
+                    <p className="text-xs tabular-nums text-muted-foreground">
+                      {total} au total
+                    </p>
+                  </div>
+                  <PipelineBar counts={counts} className="mt-3 h-2" />
+                  <ul className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-5">
+                    {PIPELINE_ORDER.map((status) => (
+                      <li key={status} className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <StatusDot status={status} />
+                        <span className="min-w-0 truncate">{PIPELINE_SHORT_LABELS[status]}</span>
+                        <span className="ml-auto font-semibold tabular-nums text-foreground sm:ml-0">
+                          {counts[status] ?? 0}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+
+                <section>
+                  <h3 className="text-[13px] font-semibold">Description</h3>
+                  <p className="mt-1.5 max-w-[68ch] text-pretty text-[13px] leading-relaxed text-muted-foreground">
+                    {detail.description}
+                  </p>
+                </section>
+
+                <section>
+                  <h3 className="text-[13px] font-semibold">Missions</h3>
+                  {detail.missions.length === 0 ? (
+                    <p className="mt-1.5 text-[13px] text-muted-foreground">Aucune mission renseignée.</p>
+                  ) : (
+                    <ul className="mt-2 space-y-1.5">
+                      {detail.missions.map((mission) => (
+                        <li key={mission} className="flex gap-2.5 text-[13px] leading-relaxed text-muted-foreground">
+                          <Check className="mt-1 size-3.5 shrink-0 text-primary" />
+                          {mission}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </section>
+
+                <section>
+                  <h3 className="text-[13px] font-semibold">Compétences recherchées</h3>
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {detail.skills.length === 0 ? (
+                      <p className="text-[13px] text-muted-foreground">Aucune compétence renseignée.</p>
+                    ) : (
+                      detail.skills.map((skill) => (
+                        <span key={skill} className="rounded-full bg-accent-soft px-2.5 py-0.5 text-xs text-primary">
+                          {skill}
+                        </span>
+                      ))
+                    )}
+                  </div>
+                </section>
               </div>
-            </div>
-          </div>
-        )}
+            );
+          })()}
       </Modal>
     </div>
   );

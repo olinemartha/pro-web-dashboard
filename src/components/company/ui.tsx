@@ -1,9 +1,10 @@
 import * as React from "react";
 import { createPortal } from "react-dom";
 import { Link } from "@tanstack/react-router";
-import { ArrowRight, ChevronDown, Clock, MoreHorizontal, TrendingUp, X } from "lucide-react";
+import { ArrowRight, ChevronDown, Clock, MoreHorizontal, Search, TrendingUp, X } from "lucide-react";
 import { AnimatedNumber } from "@/components/ui/motion";
 import { cn } from "@/lib/utils";
+import type { CandidateStatus } from "@/lib/company-data";
 
 /* ------------------------------------------------------------------ */
 /* Badges                                                              */
@@ -413,37 +414,36 @@ export function Drawer({
   children: React.ReactNode;
   footer?: React.ReactNode;
 }) {
-  useOverlayBehaviour(open, onClose);
+  const panelRef = React.useRef<HTMLDivElement>(null);
+  const titleId = React.useId();
+  const descId = React.useId();
+  useOverlayBehaviour(open, onClose, panelRef);
   if (!open || typeof document === "undefined") return null;
 
   return createPortal(
     <div className="fixed inset-0 z-[60]">
       <Backdrop onClick={onClose} />
       <div
+        ref={panelRef}
         role="dialog"
         aria-modal="true"
-        aria-label={title}
-        className="animate-slide-in-right absolute inset-y-0 right-0 flex w-full flex-col border-l bg-background shadow-2xl sm:max-w-2xl"
+        aria-labelledby={titleId}
+        aria-describedby={description ? descId : undefined}
+        tabIndex={-1}
+        className="animate-slide-in-right absolute inset-y-0 right-0 flex w-full flex-col border-l bg-card shadow-[0_24px_64px_-16px_rgba(15,23,42,0.35)] outline-none sm:max-w-xl"
       >
-        <div className="flex items-start justify-between gap-4 border-b px-5 py-4">
+        <div className="flex items-start justify-between gap-4 border-b px-5 py-4 sm:px-6">
           <div className="min-w-0">
-            <h2 className="text-pretty text-lg font-semibold leading-snug tracking-tight">{title}</h2>
+            <h2 id={titleId} className="text-pretty text-lg font-semibold leading-snug tracking-tight">{title}</h2>
             {description && (
-              <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{description}</p>
+              <p id={descId} className="mt-0.5 text-pretty text-[13px] leading-relaxed text-muted-foreground">{description}</p>
             )}
           </div>
-          <button
-            type="button"
-            aria-label="Fermer"
-            onClick={onClose}
-            className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-          >
-            <X className="size-4" />
-          </button>
+          <CloseButton onClose={onClose} />
         </div>
-        <div className="flex-1 overflow-y-auto px-5 py-4">{children}</div>
+        <div className="flex-1 overflow-y-auto px-5 py-5 sm:px-6">{children}</div>
         {footer && (
-          <div className="flex flex-wrap justify-end gap-2 border-t px-5 py-3">{footer}</div>
+          <div className="flex flex-col-reverse gap-2 border-t bg-muted/30 px-5 py-3.5 sm:flex-row sm:flex-wrap sm:justify-end sm:px-6 [&>*]:w-full sm:[&>*]:w-auto">{footer}</div>
         )}
       </div>
     </div>
@@ -629,21 +629,35 @@ export function StatCard({
   foot,
   tone = "neutral",
   to,
+  onClick,
+  pressed,
   aside,
+  suffix,
 }: {
   label: string;
   value: number;
+  /** Unité collée à la valeur (ex. « % »). */
+  suffix?: string;
   icon: React.ComponentType<{ className?: string }>;
   motion: IconMotion;
   foot: string;
   /** neutral : gris · trend : vert avec flèche montante · alert : ambre avec horloge. */
   tone?: "neutral" | "trend" | "alert";
-  to: string;
+  /** Page qui détaille le chiffre (carte-lien). */
+  to?: string;
+  /** Sinon : la carte filtre la page en cours (bouton à bascule). */
+  onClick?: () => void;
+  pressed?: boolean;
   /** Visuel facultatif à droite de la valeur (ex. une petite courbe). */
   aside?: React.ReactNode;
 }) {
-  return (
-    <Link to={to} className={cn(CARD_INTERACTIVE, "flex h-full flex-col gap-4 p-4 sm:p-5")}>
+  const shell = cn(
+    CARD_INTERACTIVE,
+    "flex h-full w-full flex-col gap-4 p-4 text-left sm:p-5",
+    pressed && "border-primary ring-1 ring-primary"
+  );
+  const body = (
+    <>
       <div className="flex items-start justify-between gap-2.5">
         <span className="line-clamp-2 min-w-0 flex-1 text-[13px] font-medium leading-snug text-muted-foreground xl:line-clamp-1">
           {label}
@@ -654,7 +668,7 @@ export function StatCard({
       </div>
       <div className="flex items-end justify-between gap-2">
         <p className="text-[30px] font-semibold leading-none tracking-tight">
-          <AnimatedNumber value={value} />
+          <AnimatedNumber value={value} suffix={suffix} />
         </p>
         {aside}
       </div>
@@ -668,6 +682,178 @@ export function StatCard({
         {tone === "alert" && <Clock className="size-3.5 shrink-0" />}
         <span className="line-clamp-2 xl:line-clamp-1">{foot}</span>
       </p>
-    </Link>
+    </>
+  );
+  if (to)
+    return (
+      <Link to={to} className={shell}>
+        {body}
+      </Link>
+    );
+  return (
+    <button type="button" onClick={onClick} aria-pressed={pressed} className={shell}>
+      {body}
+    </button>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Listes : filtres, recherche, boutons de ligne, pipeline             */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Couleurs de sens du pipeline (tableau de bord, offres, candidatures) :
+ * jaune attend, violet examen, bleu entretien, vert accepté, rouge refus.
+ */
+export const PIPELINE_COLORS: Record<CandidateStatus, string> = {
+  en_attente: "hsl(40 80% 60%)",
+  examen: "hsl(256 48% 66%)",
+  entretien: "hsl(218 68% 60%)",
+  acceptee: "hsl(156 42% 48%)",
+  refusee: "hsl(356 62% 64%)",
+  retiree: "hsl(220 12% 74%)",
+};
+
+/** Libellés courts pour les légendes étroites. */
+export const PIPELINE_SHORT_LABELS: Record<CandidateStatus, string> = {
+  en_attente: "En attente",
+  examen: "En examen",
+  entretien: "En entretien",
+  acceptee: "Acceptée",
+  refusee: "Refusée",
+  retiree: "Retirée",
+};
+
+export const PIPELINE_ORDER: CandidateStatus[] = ["en_attente", "examen", "entretien", "acceptee", "refusee"];
+
+/** Pastille ronde de 8 px à la couleur d'un statut. */
+export function StatusDot({ status, className }: { status: CandidateStatus; className?: string }) {
+  return (
+    <span
+      className={cn("inline-block size-2 shrink-0 rounded-full", className)}
+      style={{ background: PIPELINE_COLORS[status] }}
+      aria-hidden
+    />
+  );
+}
+
+/** Barre empilée fine : répartition des candidatures d'une offre par statut. */
+export function PipelineBar({
+  counts,
+  className,
+}: {
+  counts: Partial<Record<CandidateStatus, number>>;
+  className?: string;
+}) {
+  const total = PIPELINE_ORDER.reduce((sum, status) => sum + (counts[status] ?? 0), 0);
+  return (
+    <div className={cn("flex h-1.5 w-full gap-0.5 overflow-hidden rounded-full bg-muted", className)} aria-hidden>
+      {total > 0 &&
+        PIPELINE_ORDER.filter((status) => (counts[status] ?? 0) > 0).map((status, index) => (
+          <span
+            key={status}
+            className="animate-grow-x h-full first:rounded-l-full last:rounded-r-full"
+            style={{
+              width: `${((counts[status] ?? 0) / total) * 100}%`,
+              background: PIPELINE_COLORS[status],
+              ["--delay" as string]: `${200 + index * 80}ms`,
+            }}
+          />
+        ))}
+    </div>
+  );
+}
+
+/**
+ * Filtres en puces (comme « À traiter ») : boutons à bascule de 28 px,
+ * actif en bleu glacier, compteur discret, pastille de couleur facultative.
+ */
+export function FilterChips<T extends string>({
+  label,
+  options,
+  value,
+  onChange,
+  className,
+}: {
+  label: string;
+  options: { value: T; label: string; count?: number; dot?: CandidateStatus }[];
+  value: T;
+  onChange: (value: T) => void;
+  className?: string;
+}) {
+  return (
+    <div role="group" aria-label={label} className={cn("flex flex-wrap gap-0.5 sm:gap-1", className)}>
+      {options.map((option) => {
+        const active = option.value === value;
+        return (
+          <button
+            key={option.value}
+            type="button"
+            aria-pressed={active}
+            onClick={() => onChange(option.value)}
+            className={cn(
+              "press inline-flex h-7 items-center gap-1.5 whitespace-nowrap rounded-lg px-2 text-[13px] transition-colors duration-200 sm:px-2.5",
+              active
+                ? "bg-primary-soft font-semibold text-primary"
+                : "font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
+            )}
+          >
+            {option.dot && <StatusDot status={option.dot} />}
+            {option.label}
+            {option.count !== undefined && (
+              <span className={cn("text-xs tabular-nums", active ? "text-primary/70" : "text-muted-foreground/80")}>
+                {option.count}
+              </span>
+            )}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+/** Champ de recherche avec loupe, pour filtrer une liste. */
+export function SearchInput({
+  id,
+  value,
+  onChange,
+  placeholder,
+  label,
+  className,
+}: {
+  id: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder: string;
+  label: string;
+  className?: string;
+}) {
+  return (
+    <div className={cn("relative", className)}>
+      <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
+      <input
+        id={id}
+        type="search"
+        aria-label={label}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        placeholder={placeholder}
+        className={cn(inputClass, "h-9 pl-9")}
+      />
+    </div>
+  );
+}
+
+/**
+ * Bouton de ligne : discret, largeur fixe (144 px) pour un bord droit régulier,
+ * glacier au survol de la ligne ; flèche seule sur téléphone.
+ * `primary` : le seul bouton plein d'une liste (l'action recommandée).
+ */
+export function rowActionClass(primary = false) {
+  return cn(
+    "press inline-flex h-8 w-8 shrink-0 items-center justify-center gap-1 rounded-lg text-xs transition-colors duration-200 sm:w-36 sm:px-3",
+    primary
+      ? "bg-primary font-semibold text-primary-foreground shadow-sm hover:bg-primary-hover"
+      : "bg-muted/70 font-medium text-muted-foreground hover:bg-primary-soft hover:text-primary group-hover:bg-primary-soft group-hover:text-primary"
   );
 }

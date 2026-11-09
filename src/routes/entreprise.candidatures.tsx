@@ -3,29 +3,52 @@ import { useEffect, useMemo, useState } from "react";
 import {
   ArrowRight,
   CalendarPlus,
+  Check,
   Download,
   FileText,
+  Inbox,
   Lock,
   Mail,
   Phone,
+  Sparkles,
   UserCheck,
+  UserSearch,
   UserX,
+  Users,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Reveal } from "@/components/ui/motion";
 import {
+  ARROW_NUDGE,
   AvatarInitials,
   Badge,
   Drawer,
-  EmptyBlock,
+  EmptyNote,
   Field,
+  FilterChips,
   Modal,
+  PIPELINE_COLORS,
+  PIPELINE_SHORT_LABELS,
   PageIntro,
-  inputClass,
+  SECTION_LINK,
+  SearchInput,
+  Select,
+  StatCard,
+  StatusDot,
+  rowActionClass,
   textareaClass,
   type Tone,
 } from "@/components/company/ui";
+import {
+  EMPTY_INTERVIEW,
+  InterviewFields,
+  validateInterview,
+  type InterviewDraft,
+} from "@/components/company/interview-fields";
 import { useCompanyStore } from "@/lib/company-store";
+import { fmtDate, relativeDay } from "@/lib/dates";
+import { cn } from "@/lib/utils";
 import {
   candidateStatusLabels,
   isContactVisible,
@@ -34,9 +57,7 @@ import {
 } from "@/lib/company-data";
 
 export const Route = createFileRoute("/entreprise/candidatures")({
-  validateSearch: (
-    search: Record<string, unknown>
-  ): { q?: string; offre?: string } => ({
+  validateSearch: (search: Record<string, unknown>): { q?: string; offre?: string } => ({
     q: typeof search.q === "string" && search.q.trim() ? search.q : undefined,
     offre: typeof search.offre === "string" && search.offre ? search.offre : undefined,
   }),
@@ -48,7 +69,10 @@ export const Route = createFileRoute("/entreprise/candidatures")({
 
 const tone = (status: CandidateStatus): Tone => candidateStatusLabels[status].tone;
 
-const STATUS_STEPS: { value: CandidateStatus | "toutes"; label: string }[] = [
+/** « a_examiner » regroupe les candidatures en attente et en examen. */
+type StatusFilter = CandidateStatus | "toutes" | "a_examiner";
+
+const STATUS_STEPS: { value: StatusFilter; label: string }[] = [
   { value: "toutes", label: "Toutes" },
   { value: "en_attente", label: "En attente" },
   { value: "examen", label: "En examen" },
@@ -58,15 +82,15 @@ const STATUS_STEPS: { value: CandidateStatus | "toutes"; label: string }[] = [
   { value: "retiree", label: "Retirées" },
 ];
 
-function fmtDate(value: string) {
-  return new Date(`${value}T00:00:00`).toLocaleDateString("fr-FR", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
-}
+/** Étapes du parcours, dans l'ordre, pour la frise du panneau candidat. */
+const JOURNEY: { status: CandidateStatus; label: string }[] = [
+  { status: "en_attente", label: "Reçue" },
+  { status: "examen", label: "Examen" },
+  { status: "entretien", label: "Entretien" },
+  { status: "acceptee", label: "Décision" },
+];
 
-const EMPTY_INTERVIEW = { date: "", time: "10:00", location: "Siège FINCA — Salle 1" };
+const isOpen = (status: CandidateStatus) => status === "en_attente" || status === "examen" || status === "entretien";
 
 function CompanyApplicationsPage() {
   const {
@@ -82,13 +106,13 @@ function CompanyApplicationsPage() {
   const { q, offre } = Route.useSearch();
 
   const [offerFilter, setOfferFilter] = useState(offre ?? "toutes");
-  const [statusFilter, setStatusFilter] = useState<CandidateStatus | "toutes">("toutes");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("toutes");
   const [search, setSearch] = useState(q ?? "");
 
   const [detailId, setDetailId] = useState<string | null>(null);
   const [interviewFor, setInterviewFor] = useState<Candidate | null>(null);
-  const [interviewForm, setInterviewForm] = useState(EMPTY_INTERVIEW);
-  const [interviewError, setInterviewError] = useState("");
+  const [interviewForm, setInterviewForm] = useState<InterviewDraft>(EMPTY_INTERVIEW);
+  const [interviewErrors, setInterviewErrors] = useState<Partial<Record<keyof InterviewDraft, string>>>({});
 
   const [acceptTarget, setAcceptTarget] = useState<Candidate | null>(null);
   const [refuseTarget, setRefuseTarget] = useState<Candidate | null>(null);
@@ -104,33 +128,44 @@ function CompanyApplicationsPage() {
     setSearch(q ?? "");
   }, [q]);
 
-  const offerTitle = (id: string) => offers.find((offer) => offer.id === id)?.title ?? "Offre supprimée";
+  const offerOf = (id: string) => offers.find((offer) => offer.id === id);
+  const offerTitle = (id: string) => offerOf(id)?.title.replace(/^Stagiaire\s+/i, "") ?? "Offre supprimée";
   const internFor = (candidateId: string) => interns.find((intern) => intern.candidateId === candidateId);
 
+  // Les compteurs suivent le filtre d'offre : ils décrivent ce qu'on regarde.
+  const scoped = useMemo(
+    () => (offerFilter === "toutes" ? candidates : candidates.filter((candidate) => candidate.offerId === offerFilter)),
+    [candidates, offerFilter]
+  );
+
   const counts = useMemo(() => {
-    const base: Record<string, number> = { toutes: candidates.length };
+    const base: Record<string, number> = { toutes: scoped.length };
     for (const step of STATUS_STEPS) {
-      if (step.value === "toutes") continue;
-      base[step.value] = candidates.filter((candidate) => candidate.status === step.value).length;
+      if (step.value !== "toutes") base[step.value] = scoped.filter((candidate) => candidate.status === step.value).length;
     }
     return base;
-  }, [candidates]);
+  }, [scoped]);
 
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase();
-    return candidates.filter((candidate) => {
-      if (offerFilter !== "toutes" && candidate.offerId !== offerFilter) return false;
-      if (statusFilter !== "toutes" && candidate.status !== statusFilter) return false;
-      if (!term) return true;
-      return [
-        candidate.name,
-        candidate.filiere,
-        candidate.universite,
-        candidate.niveau,
-        offerTitle(candidate.offerId),
-      ].some((value) => value.toLowerCase().includes(term));
-    });
-  }, [candidates, offerFilter, statusFilter, search, offers]);
+    return scoped
+      .filter((candidate) => {
+        if (statusFilter === "a_examiner") {
+          if (candidate.status !== "en_attente" && candidate.status !== "examen") return false;
+        } else if (statusFilter !== "toutes" && candidate.status !== statusFilter) return false;
+        if (!term) return true;
+        return [candidate.name, candidate.filiere, candidate.universite, candidate.niveau, offerTitle(candidate.offerId)].some(
+          (value) => value.toLowerCase().includes(term)
+        );
+      })
+      .sort((a, b) => b.appliedAt.localeCompare(a.appliedAt));
+  }, [scoped, statusFilter, search, offers]);
+
+  const toReview = scoped.filter((candidate) => candidate.status === "en_attente" || candidate.status === "examen").length;
+  const decided = scoped.filter((candidate) => candidate.status === "acceptee" || candidate.status === "refusee");
+  const acceptance = decided.length
+    ? Math.round((decided.filter((candidate) => candidate.status === "acceptee").length / decided.length) * 100)
+    : null;
 
   const detail = candidates.find((candidate) => candidate.id === detailId) ?? null;
 
@@ -144,19 +179,18 @@ function CompanyApplicationsPage() {
   const openInterview = (candidate: Candidate) => {
     setDetailId(null);
     setInterviewForm(EMPTY_INTERVIEW);
-    setInterviewError("");
+    setInterviewErrors({});
     setInterviewFor(candidate);
   };
 
   const submitInterview = () => {
     if (!interviewFor) return;
-    if (!interviewForm.date) {
-      setInterviewError("Choisissez une date d'entretien.");
-      return;
-    }
+    const errors = validateInterview(interviewForm);
+    setInterviewErrors(errors);
+    if (Object.keys(errors).length) return;
     scheduleInterview(interviewFor.id, interviewForm.date, interviewForm.time, interviewForm.location);
     toast.success("Entretien programmé", {
-      description: `${interviewFor.name} — ${fmtDate(interviewForm.date)} à ${interviewForm.time}`,
+      description: `${interviewFor.name} — ${fmtDate(interviewForm.date)} à ${interviewForm.time.replace(":", " h ")}`,
     });
     setInterviewFor(null);
   };
@@ -179,363 +213,456 @@ function CompanyApplicationsPage() {
       return;
     }
     refuseCandidate(refuseTarget.id, refuseReason);
-    toast.success("Candidature refusée", {
-      description: `${refuseTarget.name} sera informé du motif.`,
-    });
+    toast.success("Candidature refusée", { description: `${refuseTarget.name} sera informé du motif.` });
     setRefuseTarget(null);
     setRefuseReason("");
     setRefuseError("");
     setDetailId(null);
   };
 
-  const primaryAction = (candidate: Candidate) => {
-    if (candidate.status === "acceptee") {
-      const intern = internFor(candidate.id);
-      if (intern) {
-        return (
-          <Button size="sm" asChild>
-            <Link to="/entreprise/stagiaires/$internId" params={{ internId: intern.id }}>
-              Ouvrir le dossier <ArrowRight className="ml-1.5 size-3.5" />
-            </Link>
-          </Button>
-        );
-      }
+  /** Prochaine étape d'une candidature : un seul bouton de ligne, discret. */
+  const rowAction = (candidate: Candidate) => {
+    const intern = candidate.status === "acceptee" ? internFor(candidate.id) : undefined;
+    const content = (label: string) => (
+      <>
+        <span className="hidden whitespace-nowrap sm:inline">{label}</span>
+        <ArrowRight className={cn("size-3.5 shrink-0", ARROW_NUDGE)} />
+      </>
+    );
+    if (intern) {
       return (
-        <Button size="sm" variant="outline" onClick={() => setDetailId(candidate.id)}>
-          Voir le profil
-        </Button>
-      );
-    }
-    if (candidate.status === "en_attente") {
-      return (
-        <Button
-          size="sm"
-          onClick={() => {
-            setStatus(candidate, "examen", "Profil en cours d'examen");
-            setDetailId(candidate.id);
-          }}
+        <Link
+          to="/entreprise/stagiaires/$internId"
+          params={{ internId: intern.id }}
+          aria-label={`Ouvrir le dossier de ${candidate.name}`}
+          className={rowActionClass()}
         >
-          Examiner
-        </Button>
+          {content("Ouvrir le dossier")}
+        </Link>
       );
     }
-    if (candidate.status === "examen") {
-      return (
-        <Button size="sm" onClick={() => openInterview(candidate)}>
-          <CalendarPlus className="mr-1.5 size-3.5" /> Convoquer
-        </Button>
-      );
-    }
-    if (candidate.status === "entretien") {
-      return (
-        <Button size="sm" onClick={() => setDetailId(candidate.id)}>
-          Décider
-        </Button>
-      );
-    }
+    const action =
+      candidate.status === "en_attente"
+        ? {
+            label: "Examiner",
+            run: () => {
+              setStatus(candidate, "examen", "Profil en cours d'examen");
+              setDetailId(candidate.id);
+            },
+          }
+        : candidate.status === "examen"
+          ? { label: "Convoquer", run: () => openInterview(candidate) }
+          : candidate.status === "entretien"
+            ? { label: "Décider", run: () => setDetailId(candidate.id) }
+            : { label: "Voir le profil", run: () => setDetailId(candidate.id) };
     return (
-      <Button size="sm" variant="outline" onClick={() => setDetailId(candidate.id)}>
-        Voir le profil
-      </Button>
+      <button
+        type="button"
+        onClick={action.run}
+        aria-label={`${action.label} — ${candidate.name}`}
+        className={rowActionClass()}
+      >
+        {content(action.label)}
+      </button>
     );
   };
 
   return (
     <div className="space-y-6">
-      <PageIntro
-        desc="Une chaîne de décision continue : examiner, convoquer, accepter, affecter."
-        action={<Badge label={`${candidates.length} candidature(s)`} tone="primary" />}
-      />
+      <PageIntro desc="Examinez, convoquez puis décidez : chaque candidature avance d'une étape à la fois." />
 
-      <div className="flex flex-wrap gap-2">
-        {STATUS_STEPS.map((step) => (
-          <button
-            key={step.value}
-            type="button"
-            onClick={() => setStatusFilter(step.value)}
-            className={
-              statusFilter === step.value
-                ? "rounded-full bg-primary px-3.5 py-1.5 text-xs font-semibold text-primary-foreground"
-                : "rounded-full border bg-background px-3.5 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted"
-            }
-          >
-            {step.label} ({counts[step.value] ?? 0})
-          </button>
+      {/* Indicateurs : ils filtrent la liste */}
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 lg:gap-6">
+        {[
+          <StatCard
+            key="recues"
+            label="Candidatures reçues"
+            value={scoped.length}
+            icon={Inbox}
+            motion="bounce"
+            foot={offerFilter === "toutes" ? "toutes offres confondues" : offerTitle(offerFilter)}
+            onClick={() => setStatusFilter("toutes")}
+          />,
+          <StatCard
+            key="examiner"
+            label="À examiner"
+            value={toReview}
+            icon={UserSearch}
+            motion="pop"
+            foot={toReview ? "en attente de votre décision" : "rien en attente"}
+            tone={toReview ? "alert" : "neutral"}
+            onClick={() => setStatusFilter((current) => (current === "a_examiner" ? "toutes" : "a_examiner"))}
+            pressed={statusFilter === "a_examiner"}
+          />,
+          <StatCard
+            key="entretien"
+            label="En entretien"
+            value={counts.entretien ?? 0}
+            icon={CalendarPlus}
+            motion="tilt"
+            foot="décision attendue après l'entretien"
+            onClick={() => setStatusFilter((current) => (current === "entretien" ? "toutes" : "entretien"))}
+            pressed={statusFilter === "entretien"}
+          />,
+          <StatCard
+            key="taux"
+            label="Taux d'acceptation"
+            value={acceptance ?? 0}
+            suffix={acceptance === null ? undefined : " %"}
+            icon={UserCheck}
+            motion="bounce"
+            foot={acceptance === null ? "aucune décision prise" : `sur ${decided.length} décision${decided.length > 1 ? "s" : ""} prise${decided.length > 1 ? "s" : ""}`}
+            tone={acceptance !== null && acceptance >= 50 ? "trend" : "neutral"}
+            onClick={() => setStatusFilter((current) => (current === "acceptee" ? "toutes" : "acceptee"))}
+            pressed={statusFilter === "acceptee"}
+          />,
+        ].map((card, index) => (
+          <Reveal key={index} delay={index * 60} className="min-w-0">
+            {card}
+          </Reveal>
         ))}
       </div>
 
-      <div className="card-surface grid gap-3 p-4 sm:grid-cols-3">
-        <Field label="Rechercher" htmlFor="filtre-recherche">
-          <input
-            id="filtre-recherche"
-            type="search"
-            className={inputClass}
-            placeholder="Nom, filière, offre..."
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-          />
-        </Field>
-        <Field label="Filtrer par offre" htmlFor="filtre-offre">
-          <select
-            id="filtre-offre"
-            className={inputClass}
-            value={offerFilter}
-            onChange={(event) => setOfferFilter(event.target.value)}
-          >
-            <option value="toutes">Toutes les offres</option>
-            {offers.map((offer) => (
-              <option key={offer.id} value={offer.id}>
-                {offer.title}
-              </option>
-            ))}
-          </select>
-        </Field>
-        <Field label="Filtrer par étape" htmlFor="filtre-statut">
-          <select
-            id="filtre-statut"
-            className={inputClass}
+      {/* Liste : une carte, des lignes séparées par un filet */}
+      <Reveal as="section" delay={120} className="card-surface overflow-hidden" aria-labelledby="candidatures-titre">
+        <div className="space-y-3 border-b px-5 pb-3.5 pt-4">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <h2 id="candidatures-titre" className="flex items-center gap-2 text-[15px] font-semibold tracking-tight">
+              Candidatures
+              <span className="rounded-md bg-muted px-1.5 py-0.5 text-[11px] font-medium tabular-nums text-muted-foreground">
+                {filtered.length}
+              </span>
+            </h2>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <SearchInput
+                id="filtre-recherche"
+                label="Rechercher une candidature"
+                placeholder="Nom, filière, université…"
+                value={search}
+                onChange={setSearch}
+                className="sm:w-64"
+              />
+              <div className="sm:w-56">
+                <Select
+                  id="filtre-offre"
+                  aria-label="Filtrer par offre"
+                  value={offerFilter}
+                  onChange={(event) => setOfferFilter(event.target.value)}
+                  className="h-9"
+                >
+                  <option value="toutes">Toutes les offres</option>
+                  {offers.map((offer) => (
+                    <option key={offer.id} value={offer.id}>
+                      {offer.title.replace(/^Stagiaire\s+/i, "")}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+            </div>
+          </div>
+          <FilterChips
+            label="Filtrer par étape"
             value={statusFilter}
-            onChange={(event) => setStatusFilter(event.target.value as CandidateStatus | "toutes")}
-          >
-            {STATUS_STEPS.map((step) => (
-              <option key={step.value} value={step.value}>
-                {step.label}
-              </option>
-            ))}
-          </select>
-        </Field>
-      </div>
+            onChange={setStatusFilter}
+            options={STATUS_STEPS.map((step) => ({
+              value: step.value,
+              label: step.label,
+              count: counts[step.value] ?? 0,
+              dot: step.value === "toutes" || step.value === "a_examiner" ? undefined : step.value,
+            }))}
+            className="-mx-1"
+          />
+        </div>
+        <p className="sr-only" aria-live="polite">
+          {`${filtered.length} candidature${filtered.length > 1 ? "s" : ""} affichée${filtered.length > 1 ? "s" : ""}`}
+        </p>
 
-      {filtered.length === 0 ? (
-        <EmptyBlock
-          title="Aucune candidature"
-          desc="Aucune candidature ne correspond aux filtres sélectionnés."
-        />
-      ) : (
-        <div className="space-y-3">
-          {filtered.map((candidate) => (
-            <article key={candidate.id} className="card-surface p-4 sm:p-5">
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
-                <div className="flex min-w-0 flex-1 items-start gap-3">
-                  <AvatarInitials initials={candidate.initials} className="size-10" />
+        {filtered.length === 0 ? (
+          <div className="pb-8">
+            <EmptyNote
+              icon={Users}
+              title="Aucune candidature ne correspond"
+              desc="Changez de filtre ou effacez la recherche."
+              className="pb-4"
+            />
+            <div className="flex justify-center">
+              <button
+                type="button"
+                onClick={() => {
+                  setStatusFilter("toutes");
+                  setOfferFilter("toutes");
+                  setSearch("");
+                }}
+                className={SECTION_LINK}
+              >
+                Tout afficher
+              </button>
+            </div>
+          </div>
+        ) : (
+          <ul className="divide-y">
+            {filtered.map((candidate, index) => {
+              const contact = isContactVisible("email", candidate.status);
+              return (
+                <Reveal
+                  as="li"
+                  key={candidate.id}
+                  delay={index < 8 ? 160 + index * 40 : 0}
+                  className="group relative grid grid-cols-[36px_minmax(0,1fr)_auto] items-center gap-x-3.5 px-5 py-3.5 transition-colors duration-150 hover:bg-muted/50 md:grid-cols-[36px_minmax(0,1.5fr)_minmax(0,1.2fr)_8.5rem_auto]"
+                >
+                  <AvatarInitials initials={candidate.initials} />
+
+                  {/* Qui : le nom ouvre le profil, toute la ligne est cliquable */}
                   <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <h2 className="text-sm font-semibold">{candidate.name}</h2>
-                      <Badge
-                        label={candidateStatusLabels[candidate.status].label}
-                        tone={tone(candidate.status)}
-                      />
-                    </div>
-                    <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                      {candidate.filiere} · {candidate.niveau} · {candidate.universite}
-                    </p>
-                    <p className="mt-0.5 text-xs text-muted-foreground">
-                      <span className="font-medium text-foreground">{offerTitle(candidate.offerId)}</span>{" "}
-                      · déposée le {fmtDate(candidate.appliedAt)}
-                    </p>
-                    <p className="mt-1 inline-flex items-center gap-1 text-xs text-muted-foreground">
-                      {isContactVisible("email", candidate.status) ? (
-                        <>
-                          <Mail className="size-3.5" /> Coordonnées visibles
-                        </>
-                      ) : (
-                        <>
-                          <Lock className="size-3.5" /> Coordonnées masquées
-                        </>
+                    <p className="flex min-w-0 items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => setDetailId(candidate.id)}
+                        className="truncate text-left text-sm font-semibold transition-colors after:absolute after:inset-0 after:content-[''] group-hover:text-primary focus-visible:outline-none focus-visible:after:outline focus-visible:after:outline-2 focus-visible:after:-outline-offset-2 focus-visible:after:outline-accent"
+                      >
+                        {candidate.name}
+                      </button>
+                      {!contact && (
+                        <Lock className="size-3 shrink-0 text-muted-foreground/70" aria-label="Coordonnées masquées" />
                       )}
                     </p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {candidate.filiere} · {candidate.niveau}
+                      <span className="md:hidden"> · {offerTitle(candidate.offerId)}</span>
+                    </p>
+                    <p className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground md:hidden">
+                      <StatusDot status={candidate.status} />
+                      {PIPELINE_SHORT_LABELS[candidate.status]} · {relativeDay(candidate.appliedAt)}
+                    </p>
                   </div>
-                </div>
 
-                <div className="flex shrink-0 flex-wrap items-center gap-2">
-                  {primaryAction(candidate)}
-                  <Button variant="ghost" size="sm" onClick={() => setDetailId(candidate.id)}>
-                    Profil
-                  </Button>
-                </div>
-              </div>
-            </article>
-          ))}
-        </div>
-      )}
+                  {/* Pour quelle offre, et depuis quand */}
+                  <div className="hidden min-w-0 md:block">
+                    <p className="truncate text-[13px]">{offerTitle(candidate.offerId)}</p>
+                    <p className="truncate text-xs text-muted-foreground">{candidate.universite}</p>
+                  </div>
+
+                  <div className="hidden min-w-0 flex-col items-start gap-1 md:flex">
+                    <Badge label={candidateStatusLabels[candidate.status].label} tone={tone(candidate.status)} className="whitespace-nowrap" />
+                    <span className="text-xs tabular-nums text-muted-foreground">{relativeDay(candidate.appliedAt)}</span>
+                  </div>
+
+                  <div className="relative z-10">{rowAction(candidate)}</div>
+                </Reveal>
+              );
+            })}
+          </ul>
+        )}
+      </Reveal>
 
       {/* Panneau candidat */}
       <Drawer
         open={Boolean(detail)}
         onClose={() => setDetailId(null)}
         title={detail?.name ?? "Profil du candidat"}
-        description={detail ? `${detail.filiere} · ${detail.niveau}` : undefined}
+        description={detail ? `Candidature à ${offerOf(detail.offerId)?.title ?? "une offre supprimée"}` : undefined}
         footer={
-          detail && (
+          detail &&
+          (isOpen(detail.status) ? (
             <>
-              <Button variant="outline" onClick={() => setDetailId(null)}>
-                Fermer
+              <Button variant="outline" onClick={() => setRefuseTarget(detail)} className="text-destructive hover:text-destructive">
+                <UserX className="mr-2 size-4" /> Refuser
               </Button>
-              {detail.status !== "refusee" && detail.status !== "retiree" && detail.status !== "acceptee" && (
-                <>
-                  <Button variant="destructive" onClick={() => setRefuseTarget(detail)}>
-                    <UserX className="mr-2 size-4" /> Refuser
-                  </Button>
-                  <Button variant="outline" onClick={() => openInterview(detail)}>
-                    <CalendarPlus className="mr-2 size-4" /> Convoquer
-                  </Button>
-                  <Button onClick={() => setAcceptTarget(detail)}>
-                    <UserCheck className="mr-2 size-4" /> Accepter
-                  </Button>
-                </>
-              )}
-              {detail.status === "acceptee" && internFor(detail.id) && (
-                <Button asChild>
-                  <Link
-                    to="/entreprise/stagiaires/$internId"
-                    params={{ internId: internFor(detail.id)!.id }}
-                  >
-                    Ouvrir le dossier <ArrowRight className="ml-2 size-4" />
-                  </Link>
+              {detail.status !== "entretien" && (
+                <Button variant="outline" onClick={() => openInterview(detail)}>
+                  <CalendarPlus className="mr-2 size-4" /> Convoquer
                 </Button>
               )}
+              <Button onClick={() => setAcceptTarget(detail)}>
+                <UserCheck className="mr-2 size-4" /> Accepter
+              </Button>
             </>
-          )
+          ) : detail.status === "acceptee" && internFor(detail.id) ? (
+            <Button asChild className="group">
+              <Link to="/entreprise/stagiaires/$internId" params={{ internId: internFor(detail.id)!.id }}>
+                Ouvrir le dossier stagiaire <ArrowRight className={cn("ml-2 size-4", ARROW_NUDGE)} />
+              </Link>
+            </Button>
+          ) : null)
         }
       >
-        {detail && (
-          <div className="space-y-5">
-            <div className="flex items-center gap-4">
-              <AvatarInitials initials={detail.initials} className="size-14 text-lg" />
-              <div className="min-w-0">
-                <p className="text-lg font-semibold leading-snug tracking-tight">{detail.name}</p>
-                <p className="truncate text-sm leading-relaxed text-muted-foreground">
-                  {detail.universite}
-                </p>
-                <Badge
-                  label={candidateStatusLabels[detail.status].label}
-                  tone={tone(detail.status)}
-                  className="mt-1"
-                />
-              </div>
-            </div>
-
-            <dl className="grid gap-3 rounded-lg border p-4 text-sm sm:grid-cols-2">
-              <div>
-                <dt className="text-xs leading-4 text-muted-foreground">Filière</dt>
-                <dd className="font-medium leading-snug">{detail.filiere}</dd>
-              </div>
-              <div>
-                <dt className="text-xs leading-4 text-muted-foreground">Niveau d'études</dt>
-                <dd className="font-medium leading-snug">{detail.niveau}</dd>
-              </div>
-              <div className="sm:col-span-2">
-                <dt className="text-xs leading-4 text-muted-foreground">Offre concernée</dt>
-                <dd className="font-medium leading-snug">{offerTitle(detail.offerId)}</dd>
-              </div>
-            </dl>
-
-            <div className="rounded-lg border p-4">
-              <div className="flex items-center gap-2">
-                {isContactVisible("email", detail.status) ? (
-                  <Mail className="size-4 text-primary" />
-                ) : (
-                  <Lock className="size-4 text-muted-foreground" />
-                )}
-                <h3 className="text-sm font-semibold">
-                  {isContactVisible("email", detail.status) ? "Coordonnées" : "Coordonnées masquées"}
-                </h3>
-              </div>
-              {isContactVisible("email", detail.status) ? (
-                <div className="mt-2 space-y-1 text-sm">
-                  <p className="inline-flex items-center gap-2">
-                    <Mail className="size-3.5 text-muted-foreground" /> {detail.email}
-                  </p>
-                  <p className="inline-flex items-center gap-2">
-                    <Phone className="size-3.5 text-muted-foreground" /> {detail.phone}
-                  </p>
+        {detail &&
+          (() => {
+            const offer = offerOf(detail.offerId);
+            const wanted = new Set((offer?.skills ?? []).map((skill) => skill.toLowerCase()));
+            const matched = detail.competences.filter((skill) => wanted.has(skill.toLowerCase())).length;
+            const contact = isContactVisible("email", detail.status);
+            const reached = JOURNEY.findIndex((step) => step.status === detail.status);
+            const lastIndex = reached >= 0 ? reached : JOURNEY.length - 1;
+            return (
+              <div className="space-y-6">
+                <div className="flex items-center gap-4">
+                  <AvatarInitials initials={detail.initials} className="size-12 text-base" />
+                  <div className="min-w-0">
+                    <p className="truncate text-[15px] font-semibold tracking-tight">{detail.universite}</p>
+                    <div className="mt-1 flex flex-wrap items-center gap-2">
+                      <Badge label={candidateStatusLabels[detail.status].label} tone={tone(detail.status)} />
+                      <span className="text-xs text-muted-foreground">déposée {relativeDay(detail.appliedAt)}</span>
+                    </div>
+                  </div>
                 </div>
-              ) : (
-                <p className="mt-2 max-w-[62ch] text-pretty text-sm leading-relaxed text-muted-foreground">
-                  L'e-mail et le téléphone seront révélés lorsque la candidature sera acceptée.
-                  Cette règle est centralisée et peut être resserrée sans refonte.
-                </p>
-              )}
-            </div>
 
-            <div>
-              <h3 className="text-sm font-semibold">Compétences déclarées</h3>
-              <div className="mt-1 flex flex-wrap gap-1.5">
-                {detail.competences.map((skill) => (
-                  <span
-                    key={skill}
-                    className="rounded-full bg-accent-soft px-2 py-0.5 text-xs text-primary"
-                  >
-                    {skill}
+                {/* Frise du parcours, aux couleurs du pipeline */}
+                <ol className="grid grid-cols-4 gap-1.5" aria-label="Avancement de la candidature">
+                  {JOURNEY.map((step, index) => {
+                    const final = index === JOURNEY.length - 1 && (detail.status === "refusee" || detail.status === "retiree");
+                    const done = index <= lastIndex;
+                    const color = final ? PIPELINE_COLORS[detail.status] : PIPELINE_COLORS[step.status];
+                    const label = final ? candidateStatusLabels[detail.status].label : step.label;
+                    return (
+                      <li key={step.status} className="min-w-0" aria-current={index === lastIndex ? "step" : undefined}>
+                        <span
+                          className="block h-1.5 rounded-full transition-colors"
+                          style={{ background: done ? color : "hsl(var(--muted))" }}
+                        />
+                        <span className={cn("mt-1.5 block truncate text-xs", index === lastIndex ? "font-semibold text-foreground" : "text-muted-foreground")}>
+                          {label}
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ol>
+
+                <dl className="grid grid-cols-2 gap-y-4 rounded-xl border py-3.5 sm:divide-x">
+                  {[
+                    { label: "Filière", value: detail.filiere },
+                    { label: "Niveau d'études", value: detail.niveau },
+                  ].map((fact) => (
+                    <div key={fact.label} className="min-w-0 px-4">
+                      <dt className="text-xs text-muted-foreground">{fact.label}</dt>
+                      <dd className="mt-0.5 truncate text-[13px] font-medium">{fact.value}</dd>
+                    </div>
+                  ))}
+                </dl>
+
+                <section>
+                  <div className="flex items-baseline justify-between gap-3">
+                    <h3 className="text-[13px] font-semibold">Compétences déclarées</h3>
+                    {offer && offer.skills.length > 0 && (
+                      <p className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                        <Sparkles className="size-3 text-primary" />
+                        <span className="font-semibold tabular-nums text-primary">
+                          {matched}/{offer.skills.length}
+                        </span>{" "}
+                        attendues par l'offre
+                      </p>
+                    )}
+                  </div>
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {detail.competences.map((skill) => {
+                      const hit = wanted.has(skill.toLowerCase());
+                      return (
+                        <span
+                          key={skill}
+                          className={cn(
+                            "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs",
+                            hit ? "bg-primary-soft font-medium text-primary" : "bg-muted text-muted-foreground"
+                          )}
+                        >
+                          {hit && <Check className="size-3" aria-label="attendue par l'offre" />}
+                          {skill}
+                        </span>
+                      );
+                    })}
+                  </div>
+                </section>
+
+                <section>
+                  <h3 className="text-[13px] font-semibold">Coordonnées</h3>
+                  {contact ? (
+                    <ul className="mt-2 space-y-1.5 text-[13px]">
+                      <li>
+                        <a href={`mailto:${detail.email}`} className="inline-flex items-center gap-2 text-foreground hover:text-primary">
+                          <Mail className="size-3.5 text-muted-foreground" /> {detail.email}
+                        </a>
+                      </li>
+                      <li>
+                        <a href={`tel:${detail.phone.replace(/\s/g, "")}`} className="inline-flex items-center gap-2 text-foreground hover:text-primary">
+                          <Phone className="size-3.5 text-muted-foreground" /> {detail.phone}
+                        </a>
+                      </li>
+                    </ul>
+                  ) : (
+                    <p className="mt-1.5 flex items-start gap-2 text-pretty text-[13px] leading-relaxed text-muted-foreground">
+                      <Lock className="mt-0.5 size-3.5 shrink-0" />
+                      L'e-mail et le téléphone seront révélés à l'acceptation de la candidature.
+                    </p>
+                  )}
+                </section>
+
+                <section className="flex items-center justify-between gap-3 rounded-xl border px-4 py-3">
+                  <span className="flex min-w-0 items-center gap-2.5 text-[13px]">
+                    <FileText className="size-4 shrink-0 text-muted-foreground" />
+                    <span className="truncate font-medium">{detail.cvName}</span>
                   </span>
-                ))}
+                  <button
+                    type="button"
+                    onClick={() => toast.success("Téléchargement du CV", { description: detail.cvName })}
+                    className={SECTION_LINK}
+                  >
+                    <Download className="size-3.5" /> Télécharger
+                  </button>
+                </section>
+
+                <section>
+                  <h3 className="text-[13px] font-semibold">Historique</h3>
+                  <ol className="mt-3 space-y-3">
+                    {[...detail.history].reverse().map((entry, index) => (
+                      <li key={`${entry.status}-${entry.date}-${index}`} className="flex gap-3">
+                        <StatusDot status={entry.status} className="mt-1.5" />
+                        <div className="min-w-0">
+                          <p className="text-[13px] font-medium leading-snug">{candidateStatusLabels[entry.status].label}</p>
+                          <p className="text-xs leading-relaxed tabular-nums text-muted-foreground">
+                            {fmtDate(entry.date)}
+                            {entry.note ? ` · ${entry.note}` : ""}
+                          </p>
+                        </div>
+                      </li>
+                    ))}
+                  </ol>
+                </section>
+
+                {isOpen(detail.status) && (
+                  <div className="flex flex-wrap gap-x-4 gap-y-1 border-t pt-4 text-xs">
+                    {detail.status !== "en_attente" && (
+                      <button
+                        type="button"
+                        onClick={() => setStatus(detail, "en_attente", "Remise en attente")}
+                        className="font-medium text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+                      >
+                        Remettre en attente
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setStatus(detail, "retiree", "Candidature retirée")}
+                      className="font-medium text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+                    >
+                      Marquer comme retirée
+                    </button>
+                  </div>
+                )}
+
+                {detail.status === "acceptee" && !internFor(detail.id) && (
+                  <p className="rounded-lg bg-primary-soft px-4 py-3 text-[13px] text-primary">
+                    Candidature acceptée. Le dossier stagiaire sera créé à la prochaine étape.
+                  </p>
+                )}
               </div>
-            </div>
-
-            <div className="flex items-center justify-between rounded-lg border p-3">
-              <div className="flex items-center gap-2 text-sm">
-                <FileText className="size-4 text-primary" />
-                <span className="font-medium">{detail.cvName}</span>
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => toast.success("Téléchargement du CV", { description: detail.cvName })}
-              >
-                <Download className="mr-1.5 size-3.5" /> Télécharger
-              </Button>
-            </div>
-
-            <div>
-              <h3 className="text-sm font-semibold">Chronologie des statuts</h3>
-              <ol className="mt-2 space-y-2 border-l pl-4">
-                {detail.history.map((entry, index) => (
-                  <li key={`${entry.status}-${entry.date}-${index}`} className="relative">
-                    <span className="absolute -left-[22px] top-1.5 size-2 rounded-full bg-accent ring-2 ring-background" />
-                    <p className="text-sm font-medium leading-snug">
-                      {candidateStatusLabels[entry.status].label}
-                    </p>
-                    <p className="text-xs leading-relaxed tabular-nums text-muted-foreground">
-                      {fmtDate(entry.date)}
-                      {entry.note ? ` · ${entry.note}` : ""}
-                    </p>
-                  </li>
-                ))}
-              </ol>
-            </div>
-
-            {detail.status !== "acceptee" && detail.status !== "refusee" && detail.status !== "retiree" && (
-              <div className="flex flex-wrap gap-2 border-t pt-4">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setStatus(detail, "en_attente", "Remise en attente")}
-                >
-                  Remettre en attente
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setStatus(detail, "retiree", "Candidature retirée")}
-                >
-                  Marquer retirée
-                </Button>
-              </div>
-            )}
-
-            {detail.status === "acceptee" && !internFor(detail.id) && (
-              <p className="rounded-md bg-accent-soft p-3 text-sm text-primary">
-                Candidature acceptée. Le dossier stagiaire sera créé à la prochaine étape.
-              </p>
-            )}
-          </div>
-        )}
+            );
+          })()}
       </Drawer>
 
       {/* Confirmation d'acceptation */}
       <Modal
         open={Boolean(acceptTarget)}
         onClose={() => setAcceptTarget(null)}
+        icon={UserCheck}
         title="Accepter la candidature ?"
         description={acceptTarget ? `${acceptTarget.name} — ${offerTitle(acceptTarget.offerId)}` : undefined}
         footer={
@@ -549,12 +676,13 @@ function CompanyApplicationsPage() {
           </>
         }
       >
-        <div className="space-y-3 text-sm text-muted-foreground">
+        <div className="space-y-3 text-[13px] leading-relaxed text-muted-foreground">
           <p>
-            L'acceptation révèle les coordonnées du candidat et crée un dossier stagiaire avec le
-            statut « Affectation à confirmer ».
+            L'acceptation révèle les coordonnées du candidat et crée son dossier stagiaire, avec une affectation à
+            confirmer.
           </p>
-          <p className="rounded-md bg-accent-soft p-3 text-primary">
+          <p className="flex items-start gap-2 rounded-lg bg-primary-soft px-4 py-3 text-primary">
+            <Sparkles className="mt-0.5 size-3.5 shrink-0" />
             Le système expert recommandera ensuite un service. La décision finale vous appartient.
           </p>
         </div>
@@ -564,6 +692,7 @@ function CompanyApplicationsPage() {
       <Modal
         open={Boolean(refuseTarget)}
         onClose={() => setRefuseTarget(null)}
+        icon={UserX}
         title="Refuser la candidature"
         description={refuseTarget ? `${refuseTarget.name} — ${offerTitle(refuseTarget.offerId)}` : undefined}
         footer={
@@ -587,8 +716,12 @@ function CompanyApplicationsPage() {
           <textarea
             id="refus-motif"
             className={textareaClass}
+            placeholder="Ex. Le niveau d'études ne correspond pas à celui demandé."
             value={refuseReason}
-            onChange={(event) => setRefuseReason(event.target.value)}
+            onChange={(event) => {
+              setRefuseReason(event.target.value);
+              if (refuseError && event.target.value.trim()) setRefuseError("");
+            }}
           />
         </Field>
       </Modal>
@@ -597,6 +730,7 @@ function CompanyApplicationsPage() {
       <Modal
         open={Boolean(newInternId)}
         onClose={() => setNewInternId(null)}
+        icon={UserCheck}
         title="Candidature acceptée"
         description="Le dossier stagiaire est créé."
         footer={
@@ -605,22 +739,17 @@ function CompanyApplicationsPage() {
               Plus tard
             </Button>
             {newInternId && (
-              <Button asChild>
-                <Link
-                  to="/entreprise/stagiaires/$internId"
-                  params={{ internId: newInternId }}
-                  onClick={() => setNewInternId(null)}
-                >
-                  Affecter maintenant <ArrowRight className="ml-2 size-4" />
+              <Button asChild className="group">
+                <Link to="/entreprise/stagiaires/$internId" params={{ internId: newInternId }} onClick={() => setNewInternId(null)}>
+                  Affecter maintenant <ArrowRight className={cn("ml-2 size-4", ARROW_NUDGE)} />
                 </Link>
               </Button>
             )}
           </>
         }
       >
-        <p className="text-sm text-muted-foreground">
-          Le dossier attend une affectation. Ouvrez-le pour consulter le rapport d'expertise et
-          valider le service.
+        <p className="text-[13px] leading-relaxed text-muted-foreground">
+          Le dossier attend une affectation. Ouvrez-le pour consulter le rapport d'expertise et valider le service.
         </p>
       </Modal>
 
@@ -628,60 +757,37 @@ function CompanyApplicationsPage() {
       <Modal
         open={Boolean(interviewFor)}
         onClose={() => setInterviewFor(null)}
-        title="Planifier un entretien"
-        description={
-          interviewFor ? `${interviewFor.name} — ${offerTitle(interviewFor.offerId)}` : undefined
-        }
+        icon={CalendarPlus}
+        title="Convoquer à un entretien"
+        description={interviewFor ? `${interviewFor.name} — ${offerTitle(interviewFor.offerId)}` : undefined}
         footer={
           <>
             <Button variant="outline" onClick={() => setInterviewFor(null)}>
               Annuler
             </Button>
             <Button onClick={submitInterview}>
-              <CalendarPlus className="mr-2 size-4" /> Programmer
+              <CalendarPlus className="mr-2 size-4" /> Programmer l'entretien
             </Button>
           </>
         }
       >
         {interviewFor && (
           <div className="space-y-4">
-            <p className="rounded-md bg-accent-soft p-3 text-sm text-primary">
-              Le candidat sera notifié et sa candidature passera au statut « En entretien ».
+            <InterviewFields
+              value={interviewForm}
+              onChange={(patch) => {
+                setInterviewForm((current) => ({ ...current, ...patch }));
+                setInterviewErrors((current) => {
+                  const next = { ...current };
+                  (Object.keys(patch) as (keyof InterviewDraft)[]).forEach((key) => delete next[key]);
+                  return next;
+                });
+              }}
+              errors={interviewErrors}
+            />
+            <p className="text-pretty text-xs leading-relaxed text-muted-foreground">
+              Le candidat est notifié et sa candidature passe à l'étape « En entretien ».
             </p>
-            <Field label="Date de l'entretien" htmlFor="entretien-date" required error={interviewError}>
-              <input
-                id="entretien-date"
-                type="date"
-                className={inputClass}
-                value={interviewForm.date}
-                onChange={(event) =>
-                  setInterviewForm((current) => ({ ...current, date: event.target.value }))
-                }
-              />
-            </Field>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Heure" htmlFor="entretien-heure" required>
-                <input
-                  id="entretien-heure"
-                  type="time"
-                  className={inputClass}
-                  value={interviewForm.time}
-                  onChange={(event) =>
-                    setInterviewForm((current) => ({ ...current, time: event.target.value }))
-                  }
-                />
-              </Field>
-              <Field label="Lieu" htmlFor="entretien-lieu" required>
-                <input
-                  id="entretien-lieu"
-                  className={inputClass}
-                  value={interviewForm.location}
-                  onChange={(event) =>
-                    setInterviewForm((current) => ({ ...current, location: event.target.value }))
-                  }
-                />
-              </Field>
-            </div>
           </div>
         )}
       </Modal>

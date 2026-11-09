@@ -19,7 +19,11 @@ Application web de gestion des stages (mémoire de fin d'études), premier clien
 | Carte cliquable (une seule destination) | `CARD_INTERACTIVE` + un seul lien étiré | `@/components/company/ui` |
 | En-tête de carte | `SectionHeader` (titre 15 px, compteur, lien « Tout voir ») | idem |
 | Lien de section | `SectionLink` / `SECTION_LINK` (contour → bleu roi plein au survol) | idem |
-| Indicateur chiffré | `StatCard` | idem |
+| Indicateur chiffré | `StatCard` (`to` = lien vers la page qui détaille ; `onClick` + `pressed` = filtre la page) | idem |
+| Filtres de liste | `FilterChips` (puces glacier, compteurs, pastille de couleur) + `SearchInput` | idem |
+| Bouton de ligne | `rowActionClass()` (discret, 144 px, flèche seule sur téléphone) | idem |
+| Couleurs de statut | `PIPELINE_COLORS`, `StatusDot`, `PipelineBar`, `PIPELINE_SHORT_LABELS` | idem |
+| Programmer un entretien | `InterviewFields` + `validateInterview` | `interview-fields` |
 | État vide | `EmptyNote` | idem |
 | Statut | `Badge` avec un `Tone` | idem |
 | Formulaire | `Field`, `inputClass`, `textareaClass`, `Select`, `DatePicker` | `ui`, `date-picker` |
@@ -31,6 +35,10 @@ Application web de gestion des stages (mémoire de fin d'études), premier clien
 | Icône animée | `iconMotion("lift")` sur une icône lucide dans un parent `group` | `ui` |
 | Flèche « → » qui glisse | `ARROW_NUDGE` | `ui` |
 | Dates | `fmtDate`, `relativeDay`, `shortDay`, `daysFromToday`, `localIsoDate` | `@/lib/dates` |
+
+## Gabarit d'une page de liste
+
+Mes offres, Candidatures et Entretiens suivent ce gabarit ; toute nouvelle page de liste aussi (voir DESIGN.md, « Gabarit des pages de liste »).
 
 ## Règles non négociables
 
