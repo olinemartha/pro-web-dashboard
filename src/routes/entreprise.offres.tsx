@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ArrowRight,
   Briefcase,
@@ -14,7 +14,6 @@ import {
   Pencil,
   Plus,
   Send,
-  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -43,6 +42,7 @@ import {
 } from "@/components/company/ui";
 import { Reveal } from "@/components/ui/motion";
 import { DatePicker } from "@/components/company/date-picker";
+import { TagInput } from "@/components/company/tag-input";
 import { useCompanyStore } from "@/lib/company-store";
 import { daysFromToday, fmtDate, localIsoDate } from "@/lib/dates";
 import { cn } from "@/lib/utils";
@@ -739,10 +739,15 @@ function CompanyOffersPage() {
                 onChange={(event) => set({ missions: event.target.value })}
               />
             </Field>
-            <SkillsInput
+            <TagInput
+              id="offre-skills"
+              label="Compétences recherchées"
               value={form.skills}
               onChange={(skills) => set({ skills })}
               suggestions={skillSuggestions}
+              addPlaceholder="Ajouter une compétence"
+              hint="Appuyez sur Entrée ou tapez une virgule pour ajouter une compétence."
+              className="sm:col-span-2"
             />
           </FormSection>
         </div>
@@ -876,108 +881,5 @@ function FormSection({ title, desc, children }: { title: string; desc?: string; 
       </div>
       <div className="grid gap-x-4 gap-y-4 sm:grid-cols-2">{children}</div>
     </section>
-  );
-}
-
-/**
- * Compétences en étiquettes : Entrée ou virgule ajoute, la croix retire,
- * Retour arrière sur un champ vide retire la dernière. Pas de doublon.
- */
-function SkillsInput({
-  value,
-  onChange,
-  suggestions,
-}: {
-  value: string[];
-  onChange: (skills: string[]) => void;
-  suggestions: string[];
-}) {
-  const [draft, setDraft] = useState("");
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  const add = (raw: string) => {
-    const parts = raw
-      .split(",")
-      .map((part) => part.trim())
-      .filter(Boolean);
-    if (parts.length === 0) return;
-    const next = [...value];
-    parts.forEach((part) => {
-      if (!next.some((skill) => skill.toLowerCase() === part.toLowerCase())) next.push(part);
-    });
-    onChange(next);
-    setDraft("");
-  };
-
-  const remove = (skill: string) => {
-    onChange(value.filter((entry) => entry !== skill));
-    inputRef.current?.focus();
-  };
-
-  const available = suggestions.filter(
-    (suggestion) => !value.some((skill) => skill.toLowerCase() === suggestion.toLowerCase())
-  );
-
-  return (
-    <Field
-      label="Compétences recherchées"
-      htmlFor="offre-skills"
-      hint="Appuyez sur Entrée ou tapez une virgule pour ajouter une compétence."
-      className="sm:col-span-2"
-    >
-      <div
-        onClick={() => inputRef.current?.focus()}
-        className="flex min-h-10 w-full cursor-text flex-wrap items-center gap-1.5 rounded-md border border-input bg-background px-2 py-1.5 transition hover:border-foreground/25 focus-within:border-accent focus-within:ring-[3px] focus-within:ring-ring/15"
-      >
-        {value.map((skill) => (
-          <span
-            key={skill}
-            className="animate-scale-in inline-flex h-7 items-center gap-1 rounded-full bg-accent-soft pl-2.5 pr-1 text-xs font-medium text-primary"
-          >
-            {skill}
-            <button
-              type="button"
-              onClick={(event) => {
-                event.stopPropagation();
-                remove(skill);
-              }}
-              aria-label={`Retirer ${skill}`}
-              className="grid size-5 place-items-center rounded-full text-primary/70 transition-colors hover:bg-primary hover:text-primary-foreground"
-            >
-              <X className="size-3" />
-            </button>
-          </span>
-        ))}
-        <input
-          ref={inputRef}
-          id="offre-skills"
-          list="offre-skills-list"
-          autoComplete="off"
-          aria-describedby="offre-skills-hint"
-          className="h-7 min-w-[10rem] flex-1 bg-transparent px-1 text-base outline-none placeholder:text-muted-foreground sm:text-sm"
-          placeholder={value.length ? "Ajouter une compétence" : "Ex. Excel, Analyse financière"}
-          value={draft}
-          onChange={(event) => {
-            const next = event.target.value;
-            if (next.includes(",")) add(next);
-            else setDraft(next);
-          }}
-          onKeyDown={(event) => {
-            if (event.key === "Enter") {
-              event.preventDefault();
-              add(draft);
-            } else if (event.key === "Backspace" && !draft && value.length) {
-              onChange(value.slice(0, -1));
-            }
-          }}
-          onBlur={() => add(draft)}
-        />
-      </div>
-      <datalist id="offre-skills-list">
-        {available.map((suggestion) => (
-          <option key={suggestion} value={suggestion} />
-        ))}
-      </datalist>
-    </Field>
   );
 }

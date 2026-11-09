@@ -1,8 +1,12 @@
 import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
-import { BadgeCheck, ClipboardCheck, FileText, UserCheck, Users } from "lucide-react";
-import { AvatarInitials, Badge, KpiCard, PageIntro } from "@/components/company/ui";
+import { useState } from "react";
+import { ClipboardCheck, FileText, UserCheck, Users } from "lucide-react";
+import { Reveal } from "@/components/ui/motion";
+import { AvatarInitials, EmptyNote, PageIntro, SECTION_LINK, StatCard } from "@/components/company/ui";
 import { useCompanyStore } from "@/lib/company-store";
+import { daysFromToday, fmtDate } from "@/lib/dates";
 import { cn } from "@/lib/utils";
+import type { Intern } from "@/lib/company-data";
 
 export const Route = createFileRoute("/entreprise/stagiaires")({
   head: () => ({
@@ -11,115 +15,182 @@ export const Route = createFileRoute("/entreprise/stagiaires")({
   component: CompanyInternsLayout,
 });
 
-function fmtDate(value: string) {
-  return new Date(`${value}T00:00:00`).toLocaleDateString("fr-FR", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
+type Filter = "tous" | "a_affecter" | "rapports" | "a_evaluer";
+
+const pendingReports = (intern: Intern) => intern.reports.filter((report) => report.status === "soumis").length;
+
+/** Avancement du stage entre la date de début et la date de fin (0 à 100). */
+function progressOf(intern: Intern) {
+  if (!intern.start || !intern.end) return 0;
+  const total = -daysFromToday(intern.start) + daysFromToday(intern.end);
+  if (total <= 0) return 0;
+  return Math.min(100, Math.max(0, Math.round((-daysFromToday(intern.start) / total) * 100)));
 }
 
 function CompanyInternsLayout() {
   const { interns } = useCompanyStore();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const dossierOpen = pathname.startsWith("/entreprise/stagiaires/");
+  const [filter, setFilter] = useState<Filter>("tous");
 
-  const pendingReports = interns.reduce(
-    (sum, intern) => sum + intern.reports.filter((report) => report.status === "soumis").length,
-    0
-  );
-  const evaluated = interns.filter((intern) => intern.evaluation).length;
-  const confirmed = interns.filter((intern) => intern.confirmed).length;
+  const toAssign = interns.filter((intern) => !intern.confirmed);
+  const withReports = interns.filter((intern) => pendingReports(intern) > 0);
+  const reportsCount = withReports.reduce((sum, intern) => sum + pendingReports(intern), 0);
+  const toEvaluate = interns.filter((intern) => !intern.evaluation);
+
+  const visible = interns.filter((intern) => {
+    if (filter === "a_affecter") return !intern.confirmed;
+    if (filter === "rapports") return pendingReports(intern) > 0;
+    if (filter === "a_evaluer") return !intern.evaluation;
+    return true;
+  });
+
+  const toggle = (value: Filter) => setFilter((current) => (current === value ? "tous" : value));
 
   return (
     <div className="space-y-6">
-      <PageIntro
-        desc="Chaque dossier rassemble l'affectation, le suivi, l'évaluation et l'attestation."
-        action={<Badge label={`${interns.length} stagiaire(s)`} tone="primary" />}
-      />
+      <PageIntro desc="Un dossier par stagiaire : affectation recommandée par le système expert, suivi des rapports, évaluation et attestation." />
 
-      {/* Les indicateurs de la liste s'effacent quand un dossier est ouvert :
-          le rapport d'expertise doit tenir dans le premier écran. */}
+      {/* Les indicateurs s'effacent quand un dossier est ouvert : le rapport d'expertise tient dans le premier écran. */}
       {!dossierOpen && (
-        <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
-          <KpiCard
-            label="Stagiaires accueillis"
-            value={interns.length}
-            hint="Période en cours"
-            icon={Users}
-          />
-          <KpiCard
-            label="Affectations confirmées"
-            value={confirmed}
-            hint={`${interns.length - confirmed} à confirmer`}
-            icon={UserCheck}
-          />
-          <KpiCard
-            label="Rapports à examiner"
-            value={pendingReports}
-            hint="Soumis par les stagiaires"
-            icon={FileText}
-          />
-          <KpiCard
-            label="Évaluations saisies"
-            value={evaluated}
-            hint={`${interns.length - evaluated} en attente`}
-            icon={ClipboardCheck}
-          />
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 lg:gap-6">
+          {[
+            <StatCard
+              key="tous"
+              label="Stagiaires accueillis"
+              value={interns.length}
+              icon={Users}
+              motion="bounce"
+              foot={`${interns.length - toAssign.length} affectation${interns.length - toAssign.length > 1 ? "s" : ""} confirmée${interns.length - toAssign.length > 1 ? "s" : ""}`}
+              onClick={() => setFilter("tous")}
+            />,
+            <StatCard
+              key="affecter"
+              label="À affecter"
+              value={toAssign.length}
+              icon={UserCheck}
+              motion="bounce"
+              foot={toAssign.length ? "recommandation à valider" : "toutes confirmées"}
+              tone={toAssign.length ? "alert" : "neutral"}
+              onClick={() => toggle("a_affecter")}
+              pressed={filter === "a_affecter"}
+            />,
+            <StatCard
+              key="rapports"
+              label="Rapports à relire"
+              value={reportsCount}
+              icon={FileText}
+              motion="lift"
+              foot={reportsCount ? `chez ${withReports.length} stagiaire${withReports.length > 1 ? "s" : ""}` : "aucun en attente"}
+              tone={reportsCount ? "alert" : "neutral"}
+              onClick={() => toggle("rapports")}
+              pressed={filter === "rapports"}
+            />,
+            <StatCard
+              key="evaluer"
+              label="Évaluations à saisir"
+              value={toEvaluate.length}
+              icon={ClipboardCheck}
+              motion="pop"
+              foot={`${interns.length - toEvaluate.length} saisie${interns.length - toEvaluate.length > 1 ? "s" : ""}`}
+              onClick={() => toggle("a_evaluer")}
+              pressed={filter === "a_evaluer"}
+            />,
+          ].map((card, index) => (
+            <Reveal key={index} delay={index * 60} className="min-w-0">
+              {card}
+            </Reveal>
+          ))}
         </div>
       )}
 
-      <div className="grid gap-6 lg:grid-cols-[260px_minmax(0,1fr)] xl:grid-cols-[300px_minmax(0,1fr)]">
+      <div className="grid gap-6 lg:grid-cols-[280px_minmax(0,1fr)] xl:grid-cols-[320px_minmax(0,1fr)]">
         {/* Sur téléphone et tablette, un dossier ouvert remplace la liste. */}
-        <aside className={cn("space-y-2", dossierOpen && "hidden lg:block")}>
-          {interns.length === 0 ? (
-            <div className="card-surface p-5 text-sm text-muted-foreground">
-              Aucun stagiaire enregistré. Les dossiers sont créés à l'acceptation d'une candidature.
-            </div>
+        <Reveal
+          as="aside"
+          delay={dossierOpen ? 0 : 120}
+          className={cn("card-surface self-start overflow-hidden", dossierOpen && "hidden lg:block")}
+          aria-labelledby="dossiers-titre"
+        >
+          <div className="flex items-center justify-between gap-3 border-b px-5 pb-3.5 pt-4">
+            <h2 id="dossiers-titre" className="flex items-center gap-2 text-[15px] font-semibold tracking-tight">
+              Dossiers
+              <span className="rounded-md bg-muted px-1.5 py-0.5 text-[11px] font-medium tabular-nums text-muted-foreground">
+                {visible.length}
+              </span>
+            </h2>
+            {filter !== "tous" && (
+              <button type="button" onClick={() => setFilter("tous")} className="text-xs font-medium text-primary hover:underline">
+                Tout afficher
+              </button>
+            )}
+          </div>
+
+          {visible.length === 0 ? (
+            <EmptyNote
+              icon={Users}
+              title={interns.length ? "Aucun dossier ici" : "Aucun stagiaire"}
+              desc={interns.length ? "Changez de filtre pour voir les autres dossiers." : "Un dossier est créé à l'acceptation d'une candidature."}
+            />
           ) : (
-            interns.map((intern) => {
-              const href = `/entreprise/stagiaires/${intern.id}`;
-              const active = pathname === href;
-              return (
-                <Link
-                  key={intern.id}
-                  to="/entreprise/stagiaires/$internId"
-                  params={{ internId: intern.id }}
-                  className={
-                    active
-                      ? "block w-full rounded-lg border border-accent bg-accent-soft p-3 text-left ring-1 ring-accent"
-                      : "block w-full rounded-lg border bg-card p-3 text-left transition-colors hover:border-accent/60"
-                  }
-                >
-                  <div className="flex items-center gap-3">
-                    <AvatarInitials initials={intern.initials} />
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-semibold leading-snug">{intern.name}</p>
-                      <p className="truncate text-xs leading-4 text-muted-foreground">
-                        {intern.service}
-                      </p>
-                    </div>
-                    {intern.confirmed ? (
-                      <BadgeCheck className="size-4 shrink-0 text-success" />
-                    ) : (
-                      <span
-                        className="size-2 shrink-0 rounded-full bg-warning"
-                        title="Affectation à confirmer"
-                      />
-                    )}
-                  </div>
-                  <p className="mt-2 text-xs leading-4 tabular-nums text-muted-foreground">
-                    {fmtDate(intern.start)} → {fmtDate(intern.end)}
-                  </p>
-                  <div className="mt-1.5 flex flex-wrap gap-1.5">
-                    <Badge label={`${intern.reports.length} rapport(s)`} tone="muted" />
-                    {!intern.confirmed && <Badge label="À affecter" tone="accent" />}
-                  </div>
-                </Link>
-              );
-            })
+            <ul className="divide-y">
+              {visible.map((intern, index) => {
+                const active = pathname === `/entreprise/stagiaires/${intern.id}`;
+                const reports = pendingReports(intern);
+                const progress = progressOf(intern);
+                return (
+                  <Reveal as="li" key={intern.id} delay={index < 8 ? 160 + index * 40 : 0}>
+                    <Link
+                      to="/entreprise/stagiaires/$internId"
+                      params={{ internId: intern.id }}
+                      aria-current={active ? "page" : undefined}
+                      className={cn(
+                        "group grid grid-cols-[36px_minmax(0,1fr)_auto] items-center gap-x-3 px-5 py-3.5 transition-colors duration-150 focus-visible:outline-offset-[-3px]",
+                        active ? "bg-primary-soft shadow-[inset_3px_0_0_hsl(var(--primary))]" : "hover:bg-muted/50"
+                      )}
+                    >
+                      <AvatarInitials initials={intern.initials} />
+                      <span className="min-w-0">
+                        <span className={cn("block truncate text-sm font-semibold transition-colors", active ? "text-primary" : "group-hover:text-primary")}>
+                          {intern.name}
+                        </span>
+                        <span className={cn("block truncate text-xs", intern.confirmed ? "text-muted-foreground" : "font-medium text-warning")}>
+                          {intern.confirmed ? intern.service : "Affectation à confirmer"}
+                        </span>
+                        {/* Avancement du stage */}
+                        <span className="mt-2 flex items-center gap-2">
+                          <span className="h-1 flex-1 overflow-hidden rounded-full bg-muted">
+                            <span className="animate-grow-x block h-full rounded-full bg-primary" style={{ width: `${progress}%` }} />
+                          </span>
+                          <span className="shrink-0 text-[11px] tabular-nums text-muted-foreground">
+                            {intern.end ? `→ ${fmtDate(intern.end, false)}` : "dates à fixer"}
+                          </span>
+                        </span>
+                      </span>
+                      {reports > 0 ? (
+                        <span
+                          className="grid h-5 min-w-5 place-items-center rounded-full bg-primary px-1.5 text-[11px] font-semibold tabular-nums text-primary-foreground"
+                          aria-label={`${reports} rapport${reports > 1 ? "s" : ""} à relire`}
+                        >
+                          {reports}
+                        </span>
+                      ) : (
+                        <span className="w-5" aria-hidden />
+                      )}
+                    </Link>
+                  </Reveal>
+                );
+              })}
+            </ul>
           )}
-        </aside>
+          {interns.length === 0 && (
+            <div className="flex justify-center pb-6">
+              <Link to="/entreprise/candidatures" className={SECTION_LINK}>
+                Voir les candidatures
+              </Link>
+            </div>
+          )}
+        </Reveal>
 
         <div className="min-w-0">
           <Outlet />
