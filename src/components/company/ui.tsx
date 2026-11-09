@@ -1,6 +1,6 @@
 import * as React from "react";
 import { createPortal } from "react-dom";
-import { MoreHorizontal, X } from "lucide-react";
+import { ChevronDown, MoreHorizontal, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 /* ------------------------------------------------------------------ */
@@ -99,7 +99,7 @@ export function SectionLabel({
  * La densité revient à 14 px dès 640 px, conformément au Design Brief.
  */
 export const inputClass =
-  "h-10 w-full rounded-md border border-input bg-background px-3 text-base text-foreground outline-none transition placeholder:text-muted-foreground focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-ring/20 disabled:cursor-not-allowed disabled:opacity-50 sm:text-sm";
+  "h-10 w-full rounded-md border border-input bg-background px-3 text-base text-foreground outline-none transition placeholder:text-muted-foreground hover:border-foreground/25 focus-visible:border-accent focus-visible:ring-[3px] focus-visible:ring-ring/15 aria-[invalid=true]:border-destructive aria-[invalid=true]:ring-[3px] aria-[invalid=true]:ring-destructive/10 disabled:cursor-not-allowed disabled:opacity-50 sm:text-sm";
 
 export const textareaClass = cn(inputClass, "h-auto min-h-[90px] py-2 leading-relaxed");
 
@@ -120,17 +120,73 @@ export function Field({
   className?: string;
   children: React.ReactNode;
 }) {
+  // Le champ natif enfant reçoit l'état d'erreur et le lien vers son message.
+  const messageId = htmlFor ? `${htmlFor}-${error ? "error" : "hint"}` : undefined;
+  const control =
+    htmlFor &&
+    React.isValidElement(children) &&
+    (["input", "select", "textarea"].includes(children.type as string) || children.type === Select)
+      ? React.cloneElement(children as React.ReactElement<Record<string, unknown>>, {
+          "aria-invalid": error ? true : undefined,
+          "aria-describedby": error || hint ? messageId : undefined,
+          "aria-required": required || undefined,
+        })
+      : children;
   return (
     <div className={cn("space-y-1.5", className)}>
       <label htmlFor={htmlFor} className="block text-xs font-medium leading-4 text-foreground">
         {label}
-        {required && <span className="ml-1 text-destructive">*</span>}
+        {/* Le rouge est réservé aux erreurs : l'astérisque reste neutre. */}
+        {required && (
+          <span className="ml-0.5 text-muted-foreground" aria-hidden>
+            *
+          </span>
+        )}
       </label>
-      {children}
+      {control}
       {hint && !error && (
-        <p className="text-xs leading-relaxed text-muted-foreground">{hint}</p>
+        <p id={messageId} className="text-pretty text-xs leading-relaxed text-muted-foreground">
+          {hint}
+        </p>
       )}
-      {error && <p className="text-xs font-medium leading-relaxed text-destructive">{error}</p>}
+      {error && (
+        <p id={messageId} className="text-xs font-medium leading-relaxed text-destructive">
+          {error}
+        </p>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Liste déroulante native habillée : chevron au trait des icônes et texte
+ * gris tant qu'aucune option n'est choisie (le placeholder).
+ */
+export function Select({
+  className,
+  value,
+  placeholder,
+  children,
+  ...props
+}: React.SelectHTMLAttributes<HTMLSelectElement> & { placeholder?: string }) {
+  return (
+    <div className="relative">
+      <select
+        {...props}
+        value={value}
+        className={cn(inputClass, "cursor-pointer appearance-none pr-9", !value && "text-muted-foreground", className)}
+      >
+        {placeholder && (
+          <option value="" disabled>
+            {placeholder}
+          </option>
+        )}
+        {children}
+      </select>
+      <ChevronDown
+        className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+        aria-hidden
+      />
     </div>
   );
 }
@@ -144,18 +200,61 @@ export function Field({
  * l'écran, barre latérale comprise, quel que soit l'endroit où elles sont
  * déclarées. Échap ferme, et la page derrière ne défile plus.
  */
-function useOverlayBehaviour(open: boolean, onClose: () => void) {
+const FOCUSABLE =
+  'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+function useOverlayBehaviour(
+  open: boolean,
+  onClose: () => void,
+  panelRef?: React.RefObject<HTMLElement>
+) {
+  const closeRef = React.useRef(onClose);
+  closeRef.current = onClose;
+
   React.useEffect(() => {
     if (!open) return;
-    const onKey = (event: KeyboardEvent) => event.key === "Escape" && onClose();
+    const trigger = document.activeElement as HTMLElement | null;
+    const panel = panelRef?.current ?? null;
+
+    // Focus initial : le champ marqué, sinon le premier champ, sinon la fenêtre.
+    if (panel) {
+      const first =
+        panel.querySelector<HTMLElement>("[data-autofocus]") ??
+        panel.querySelector<HTMLElement>(
+          "input:not([disabled]), textarea:not([disabled]), select:not([disabled])"
+        );
+      (first ?? panel).focus({ preventScroll: true });
+    }
+
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") return closeRef.current();
+      if (event.key !== "Tab" || !panel) return;
+      // Le focus reste dans la fenêtre : Tab boucle du dernier au premier élément.
+      const items = Array.from(panel.querySelectorAll<HTMLElement>(FOCUSABLE)).filter(
+        (element) => element.offsetParent !== null
+      );
+      if (items.length === 0) return;
+      const head = items[0];
+      const tail = items[items.length - 1];
+      const current = document.activeElement;
+      if (event.shiftKey && (current === head || current === panel || !panel.contains(current))) {
+        event.preventDefault();
+        tail.focus();
+      } else if (!event.shiftKey && (current === tail || !panel.contains(current))) {
+        event.preventDefault();
+        head.focus();
+      }
+    };
     document.addEventListener("keydown", onKey);
     const previous = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
       document.removeEventListener("keydown", onKey);
       document.body.style.overflow = previous;
+      // Le focus revient au bouton qui a ouvert la fenêtre.
+      if (trigger && document.contains(trigger)) trigger.focus({ preventScroll: true });
     };
-  }, [open, onClose]);
+  }, [open, panelRef]);
 }
 
 /** Voile flouté : l'arrière-plan reste lisible mais s'efface doucement. */
@@ -205,18 +304,24 @@ export function Modal({
   wide?: boolean;
   icon?: React.ComponentType<{ className?: string }>;
 }) {
-  useOverlayBehaviour(open, onClose);
+  const panelRef = React.useRef<HTMLDivElement>(null);
+  const titleId = React.useId();
+  const descId = React.useId();
+  useOverlayBehaviour(open, onClose, panelRef);
   if (!open || typeof document === "undefined") return null;
 
   return createPortal(
     <div className="fixed inset-0 z-[60] flex items-end justify-center sm:items-center sm:p-6">
       <Backdrop onClick={onClose} />
       <div
+        ref={panelRef}
         role="dialog"
         aria-modal="true"
-        aria-label={title}
+        aria-labelledby={titleId}
+        aria-describedby={description ? descId : undefined}
+        tabIndex={-1}
         className={cn(
-          "animate-scale-in relative z-10 flex max-h-[92dvh] w-full flex-col overflow-hidden rounded-t-2xl border bg-card shadow-[0_24px_64px_-16px_rgba(15,23,42,0.35)] sm:max-h-[86dvh] sm:rounded-2xl",
+          "animate-scale-in relative z-10 flex max-h-[92dvh] w-full flex-col overflow-hidden rounded-t-2xl border bg-card shadow-[0_24px_64px_-16px_rgba(15,23,42,0.35)] outline-none sm:max-h-[86dvh] sm:rounded-2xl",
           wide ? "sm:max-w-[720px]" : "sm:max-w-lg"
         )}
       >
@@ -229,8 +334,12 @@ export function Modal({
             </span>
           )}
           <div className="min-w-0 flex-1">
-            <h2 className="text-pretty text-lg font-semibold leading-snug tracking-tight">{title}</h2>
-            {description && <p className="mt-0.5 text-[13px] leading-relaxed text-muted-foreground">{description}</p>}
+            <h2 id={titleId} className="text-pretty text-lg font-semibold leading-snug tracking-tight">{title}</h2>
+            {description && (
+              <p id={descId} className="mt-0.5 text-pretty text-[13px] leading-relaxed text-muted-foreground">
+                {description}
+              </p>
+            )}
           </div>
           <CloseButton onClose={onClose} />
         </div>

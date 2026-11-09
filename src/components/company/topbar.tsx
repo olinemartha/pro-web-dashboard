@@ -230,7 +230,7 @@ type Notice = {
 
 /** Cloche translucide et discrète ; le panneau liste ce qui demande une attention. */
 export function NotificationBell({ align = "right" }: { align?: "right" | "left" }) {
-  const { candidates, offers, interns, interviews } = useCompanyStore();
+  const { candidates, offers, interns, interviews, readNotices, markNoticesRead } = useCompanyStore();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   useOutside(ref, open, () => setOpen(false));
@@ -296,14 +296,17 @@ export function NotificationBell({ align = "right" }: { align?: "right" | "left"
     return list;
   }, [candidates, offers, interns, interviews]);
 
-  const count = notices.length;
+  // Les non lues d'abord, chacune dans son ordre d'origine.
+  const isRead = (id: string) => readNotices.includes(id);
+  const sorted = [...notices.filter((n) => !isRead(n.id)), ...notices.filter((n) => isRead(n.id))];
+  const count = notices.filter((n) => !isRead(n.id)).length;
 
   return (
     <div ref={ref} className="relative">
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
-        aria-label={count ? `Notifications : ${count} à consulter` : "Notifications"}
+        aria-label={count ? `Notifications : ${count} non lue${count > 1 ? "s" : ""}` : "Notifications"}
         aria-expanded={open}
         className={cn(
           "press group relative grid size-10 shrink-0 place-items-center rounded-full bg-card/60 text-muted-foreground ring-1 ring-inset ring-border/70 backdrop-blur-md transition-all duration-200 hover:bg-card hover:text-foreground hover:ring-accent/40",
@@ -326,32 +329,77 @@ export function NotificationBell({ align = "right" }: { align?: "right" | "left"
             align === "right" ? "right-0 origin-top-right" : "left-0 origin-top-left"
           )}
         >
-          <div className="flex items-center justify-between px-4 py-3">
-            <p className="text-sm font-semibold">Notifications</p>
-            {count > 0 && <span className="text-xs text-muted-foreground">{count} à consulter</span>}
+          <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 px-4 py-3">
+            <p className="flex items-center gap-2 text-sm font-semibold">
+              Notifications
+              {count > 0 && (
+                <span className="whitespace-nowrap rounded-full bg-primary-soft px-1.5 py-px text-[11px] font-semibold tabular-nums text-primary">
+                  {count} non lue{count > 1 ? "s" : ""}
+                </span>
+              )}
+            </p>
+            {count > 0 && (
+              <button
+                type="button"
+                onClick={() => markNoticesRead(notices.map((n) => n.id))}
+                className="-mr-1.5 whitespace-nowrap rounded-md px-1.5 py-0.5 text-xs font-medium text-primary transition-colors hover:bg-primary-soft"
+              >
+                Tout marquer comme lu
+              </button>
+            )}
           </div>
-          {count === 0 ? (
+          {notices.length === 0 ? (
             <p className="border-t px-4 py-8 text-center text-sm text-muted-foreground">Vous êtes à jour.</p>
           ) : (
-            <ul className="max-h-[360px] overflow-y-auto border-t p-1.5">
-              {notices.slice(0, 6).map((n) => (
-                <li key={n.id}>
-                  <Link
-                    to={n.to}
-                    params={n.params as never}
-                    search={n.search as never}
-                    onClick={() => setOpen(false)}
-                    className="group flex items-start gap-3 rounded-xl px-2.5 py-2.5 transition-colors hover:bg-muted/60"
-                  >
-                    <n.icon className="nav-icon nav-icon--pop mt-0.5 size-4 shrink-0 text-muted-foreground group-hover:text-foreground" />
-                    <span className="min-w-0 flex-1">
-                      <span className="block text-[13px] font-medium leading-snug">{n.title}</span>
-                      <span className="block truncate text-xs text-muted-foreground">{n.meta}</span>
-                    </span>
-                    <span className="shrink-0 text-[11px] text-muted-foreground">{n.when}</span>
-                  </Link>
-                </li>
-              ))}
+            <ul className="space-y-0.5 border-t p-1.5">
+              {sorted.slice(0, 8).map((n) => {
+                const read = isRead(n.id);
+                return (
+                  <li key={n.id}>
+                    <Link
+                      to={n.to}
+                      params={n.params as never}
+                      search={n.search as never}
+                      onClick={() => {
+                        markNoticesRead([n.id]);
+                        setOpen(false);
+                      }}
+                      className={cn(
+                        "group relative flex items-start gap-3 rounded-xl py-2.5 pl-2.5 pr-6 transition-colors",
+                        read ? "hover:bg-muted/60" : "bg-primary-soft/50 hover:bg-primary-soft"
+                      )}
+                    >
+                      <n.icon
+                        className={cn(
+                          "nav-icon nav-icon--pop mt-0.5 size-4 shrink-0 transition-colors",
+                          read ? "text-muted-foreground/70 group-hover:text-muted-foreground" : "text-primary"
+                        )}
+                      />
+                      <span className="min-w-0 flex-1">
+                        {!read && <span className="sr-only">Non lue : </span>}
+                        <span
+                          className={cn(
+                            "block text-[13px] leading-snug",
+                            read ? "font-normal text-muted-foreground" : "font-semibold text-foreground"
+                          )}
+                        >
+                          {n.title}
+                        </span>
+                        <span className={cn("block truncate text-xs", read ? "text-muted-foreground/80" : "text-muted-foreground")}>
+                          {n.meta}
+                        </span>
+                      </span>
+                      <span className={cn("shrink-0 text-[11px]", read ? "text-muted-foreground/80" : "font-medium text-primary")}>
+                        {n.when}
+                      </span>
+                      {/* Pastille des non lues, alignée sur la première ligne. */}
+                      {!read && (
+                        <span className="absolute right-2.5 top-[15px] size-2 rounded-full bg-accent" aria-hidden />
+                      )}
+                    </Link>
+                  </li>
+                );
+              })}
             </ul>
           )}
           <Link

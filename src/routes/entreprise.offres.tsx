@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Briefcase,
   CalendarDays,
@@ -10,6 +10,7 @@ import {
   Plus,
   Send,
   Users,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -21,6 +22,7 @@ import {
   MenuItem,
   Modal,
   PageIntro,
+  Select,
   inputClass,
   textareaClass,
   type Tone,
@@ -31,7 +33,8 @@ import { offerStatusLabels, type CompanyOffer, type OfferStatus } from "@/lib/co
 
 export const Route = createFileRoute("/entreprise/offres")({
   validateSearch: (search: Record<string, unknown>): { nouveau?: boolean } => ({
-    nouveau: search.nouveau === true || search.nouveau === "1" ? true : undefined,
+    // Le routeur lit « ?nouveau=1 » comme le nombre 1.
+    nouveau: search.nouveau === true || search.nouveau === 1 || search.nouveau === "1" ? true : undefined,
   }),
   head: () => ({
     meta: [{ title: "Mes offres — Espace entreprise" }],
@@ -59,23 +62,56 @@ interface OfferForm {
   deadline: string;
   description: string;
   missions: string;
-  skills: string;
+  skills: string[];
   status: OfferStatus;
 }
 
+/** Aucun champ prérempli : chaque valeur publiée a été choisie. */
 const EMPTY_FORM: OfferForm = {
   title: "",
   department: "",
-  location: "Kinshasa, Gombe",
-  type: "Stage académique",
-  duration: "3 mois",
-  level: "Licence (L3)",
+  location: "",
+  type: "",
+  duration: "",
+  level: "",
   deadline: "",
   description: "",
   missions: "",
-  skills: "",
+  skills: [],
   status: "brouillon",
 };
+
+const TYPES = ["Stage académique", "Stage professionnel", "Stage de fin d'études"];
+const LEVELS = ["Licence (L2)", "Licence (L3)", "Master (M1)", "Master (M2)"];
+const DURATIONS = ["1 mois", "2 mois", "3 mois", "4 mois", "5 mois", "6 mois"];
+
+/** Ordre des champs à l'écran : le focus va au premier champ en erreur. */
+const FIELD_ORDER: { key: keyof OfferForm; id: string }[] = [
+  { key: "title", id: "offre-titre" },
+  { key: "department", id: "offre-service" },
+  { key: "location", id: "offre-lieu" },
+  { key: "type", id: "offre-type" },
+  { key: "level", id: "offre-niveau" },
+  { key: "duration", id: "offre-duree" },
+  { key: "deadline", id: "offre-deadline" },
+  { key: "description", id: "offre-description" },
+];
+
+function localIso(date: Date) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}
+
+/** « dans 19 jours » à partir d'une date AAAA-MM-JJ. */
+function daysFromToday(value: string) {
+  const today = new Date(`${localIso(new Date())}T00:00:00`);
+  const target = new Date(`${value}T00:00:00`);
+  return Math.round((target.getTime() - today.getTime()) / 86_400_000);
+}
+
+/** Garde l'option actuelle d'une offre existante même si elle sort de la liste. */
+function withCurrent(options: string[], current: string) {
+  return current && !options.includes(current) ? [current, ...options] : options;
+}
 
 function toForm(offer: CompanyOffer): OfferForm {
   return {
@@ -88,7 +124,7 @@ function toForm(offer: CompanyOffer): OfferForm {
     deadline: offer.deadline,
     description: offer.description,
     missions: offer.missions.join("\n"),
-    skills: offer.skills.join(", "),
+    skills: [...offer.skills],
     status: offer.status,
   };
 }
@@ -129,6 +165,11 @@ function CompanyOffersPage() {
     [offers, filter]
   );
   const detail = offers.find((offer) => offer.id === detailId) ?? null;
+  // Suggestions de compétences : celles déjà utilisées dans vos offres.
+  const skillSuggestions = useMemo(
+    () => Array.from(new Set(offers.flatMap((offer) => offer.skills))).sort((x, y) => x.localeCompare(y, "fr")),
+    [offers]
+  );
 
   const pipeline = (offerId: string) => {
     const list = candidates.filter(
@@ -159,17 +200,46 @@ function CompanyOffersPage() {
     setFormOpen(true);
   };
 
-  const set = (patch: Partial<OfferForm>) => setForm((current) => ({ ...current, ...patch }));
+  const validate = (values: OfferForm) => {
+    const next: Record<string, string> = {};
+    if (!values.title.trim()) next.title = "Le titre de l'offre est obligatoire.";
+    if (!values.department.trim()) next.department = "Précisez le service concerné.";
+    if (!values.location.trim()) next.location = "Indiquez le lieu du stage.";
+    if (!values.type) next.type = "Choisissez le type de stage.";
+    if (!values.level) next.level = "Choisissez le niveau requis.";
+    if (!values.duration) next.duration = "Choisissez la durée du stage.";
+    if (!values.deadline) next.deadline = "La date limite de candidature est obligatoire.";
+    else if (!editingId && daysFromToday(values.deadline) < 1)
+      next.deadline = "Choisissez une date à partir de demain.";
+    if (!values.description.trim()) next.description = "Ajoutez une description de l'offre.";
+    return next;
+  };
 
-  const submit = () => {
-    const nextErrors: Record<string, string> = {};
-    if (!form.title.trim()) nextErrors.title = "Le titre de l'offre est obligatoire.";
-    if (!form.department.trim()) nextErrors.department = "Précisez le service concerné.";
-    if (!form.deadline) nextErrors.deadline = "La date limite de candidature est obligatoire.";
-    if (!form.description.trim()) nextErrors.description = "Ajoutez une description de l'offre.";
+  const set = (patch: Partial<OfferForm>) =>
+    setForm((current) => {
+      const next = { ...current, ...patch };
+      // Après une première tentative, chaque erreur disparaît dès qu'elle est corrigée.
+      if (Object.keys(errors).length > 0) {
+        const fresh = validate(next);
+        setErrors((previous) =>
+          Object.fromEntries(Object.keys(previous).filter((key) => fresh[key]).map((key) => [key, fresh[key]]))
+        );
+      }
+      return next;
+    });
+
+  const submit = (status: OfferStatus = form.status) => {
+    const nextErrors = validate(form);
     setErrors(nextErrors);
-    if (Object.keys(nextErrors).length > 0) {
-      toast.error("Formulaire incomplet", { description: "Vérifiez les champs signalés en rouge." });
+    const firstInvalid = FIELD_ORDER.find((field) => nextErrors[field.key]);
+    if (firstInvalid) {
+      const element = document.getElementById(firstInvalid.id);
+      element?.focus({ preventScroll: true });
+      element?.scrollIntoView({ block: "center", behavior: "smooth" });
+      const count = Object.keys(nextErrors).length;
+      toast.error("Formulaire incomplet", {
+        description: `${count} champ${count > 1 ? "s" : ""} à compléter, signalé${count > 1 ? "s" : ""} en rouge.`,
+      });
       return;
     }
 
@@ -186,11 +256,8 @@ function CompanyOffersPage() {
         .split("\n")
         .map((mission) => mission.trim())
         .filter(Boolean),
-      skills: form.skills
-        .split(",")
-        .map((skill) => skill.trim())
-        .filter(Boolean),
-      status: form.status,
+      skills: form.skills,
+      status,
     };
 
     if (editingId) {
@@ -205,7 +272,7 @@ function CompanyOffersPage() {
       }
     } else {
       addOffer(payload);
-      toast.success(form.status === "publiee" ? "Offre publiée" : "Offre enregistrée en brouillon", {
+      toast.success(status === "publiee" ? "Offre publiée" : "Offre enregistrée en brouillon", {
         description: form.title,
       });
     }
@@ -384,28 +451,51 @@ function CompanyOffersPage() {
         onClose={() => setFormOpen(false)}
         icon={editingId ? Pencil : Briefcase}
         title={editingId ? "Modifier l'offre" : "Publier une offre de stage"}
-        description="Les champs marqués d'un astérisque sont obligatoires."
+        description={
+          editingId
+            ? "Les candidats déjà inscrits seront informés de vos modifications."
+            : "Rien n'est visible par les étudiants tant que vous n'avez pas publié."
+        }
         wide
         footer={
           <>
-            <Button variant="outline" onClick={() => setFormOpen(false)}>
-              Annuler
-            </Button>
-            <Button onClick={submit}>
-              {editingId
-                ? "Enregistrer les modifications"
-                : form.status === "publiee"
-                  ? "Publier l'offre"
-                  : "Enregistrer le brouillon"}
-            </Button>
+            <p className="hidden min-w-0 items-center gap-1.5 text-xs text-muted-foreground sm:mr-auto sm:flex">
+              {form.deadline && daysFromToday(form.deadline) >= 1 ? (
+                <>
+                  <CalendarDays className="size-3.5 shrink-0" aria-hidden />
+                  <span className="truncate">Clôture le {fmtDate(form.deadline)}</span>
+                </>
+              ) : (
+                <span className="truncate">* Champs obligatoires</span>
+              )}
+            </p>
+            {editingId ? (
+              <>
+                <Button variant="outline" onClick={() => setFormOpen(false)}>
+                  Annuler
+                </Button>
+                <Button onClick={() => submit()}>Enregistrer les modifications</Button>
+              </>
+            ) : (
+              <>
+                <Button variant="outline" onClick={() => submit("brouillon")}>
+                  Enregistrer en brouillon
+                </Button>
+                <Button onClick={() => submit("publiee")} className="group">
+                  <Send className="mr-2 size-4 transition-transform duration-300 [transition-timing-function:var(--ease-soft)] group-hover:-translate-y-px group-hover:translate-x-0.5 motion-reduce:transition-none" />
+                  Publier l'offre
+                </Button>
+              </>
+            )}
           </>
         }
       >
-        <div className="space-y-7">
-          <FormSection title="L'offre" desc="Ce que verront les étudiants en premier.">
+        <div className="divide-y">
+          <FormSection title="L'offre" desc="Ce que les étudiants voient en premier.">
             <Field label="Titre de l'offre" htmlFor="offre-titre" required error={errors.title} className="sm:col-span-2">
               <input
                 id="offre-titre"
+                data-autofocus
                 className={inputClass}
                 placeholder="Ex. Stagiaire Analyste Crédit"
                 value={form.title}
@@ -418,66 +508,92 @@ function CompanyOffersPage() {
                 className={inputClass}
                 placeholder="Ex. Direction Crédit"
                 list="offre-services"
+                autoComplete="off"
                 value={form.department}
                 onChange={(event) => set({ department: event.target.value })}
               />
-              <datalist id="offre-services">
-                {services.map((service) => (
-                  <option key={service.id} value={service.name} />
-                ))}
-              </datalist>
             </Field>
-            <Field label="Lieu" htmlFor="offre-lieu">
+            <Field label="Lieu du stage" htmlFor="offre-lieu" required error={errors.location}>
               <input
                 id="offre-lieu"
                 className={inputClass}
+                placeholder="Ex. Kinshasa, Gombe"
                 value={form.location}
                 onChange={(event) => set({ location: event.target.value })}
               />
             </Field>
+            <datalist id="offre-services">
+              {services.map((service) => (
+                <option key={service.id} value={service.name} />
+              ))}
+            </datalist>
           </FormSection>
 
           <FormSection title="Conditions" desc="Le cadre du stage proposé.">
-            <Field label="Type de stage" htmlFor="offre-type">
-              <select id="offre-type" className={inputClass} value={form.type} onChange={(event) => set({ type: event.target.value })}>
-                <option>Stage académique</option>
-                <option>Stage professionnel</option>
-                <option>Stage de fin d'études</option>
-              </select>
+            <Field label="Type de stage" htmlFor="offre-type" required error={errors.type}>
+              <Select
+                id="offre-type"
+                placeholder="Choisir un type"
+                value={form.type}
+                onChange={(event) => set({ type: event.target.value })}
+              >
+                {withCurrent(TYPES, form.type).map((option) => (
+                  <option key={option}>{option}</option>
+                ))}
+              </Select>
             </Field>
-            <Field label="Niveau requis" htmlFor="offre-niveau">
-              <select id="offre-niveau" className={inputClass} value={form.level} onChange={(event) => set({ level: event.target.value })}>
-                <option>Licence (L2)</option>
-                <option>Licence (L3)</option>
-                <option>Master (M1)</option>
-                <option>Master (M2)</option>
-              </select>
+            <Field label="Niveau requis" htmlFor="offre-niveau" required error={errors.level}>
+              <Select
+                id="offre-niveau"
+                placeholder="Choisir un niveau"
+                value={form.level}
+                onChange={(event) => set({ level: event.target.value })}
+              >
+                {withCurrent(LEVELS, form.level).map((option) => (
+                  <option key={option}>{option}</option>
+                ))}
+              </Select>
             </Field>
-            <Field label="Durée" htmlFor="offre-duree">
-              <input
+            <Field label="Durée" htmlFor="offre-duree" required error={errors.duration}>
+              <Select
                 id="offre-duree"
-                className={inputClass}
+                placeholder="Choisir une durée"
                 value={form.duration}
                 onChange={(event) => set({ duration: event.target.value })}
-              />
+              >
+                {withCurrent(DURATIONS, form.duration).map((option) => (
+                  <option key={option}>{option}</option>
+                ))}
+              </Select>
             </Field>
-            <Field label="Date limite de candidature" htmlFor="offre-deadline" required error={errors.deadline}>
+            <Field
+              label="Date limite de candidature"
+              htmlFor="offre-deadline"
+              required
+              error={errors.deadline}
+              hint={
+                form.deadline && daysFromToday(form.deadline) >= 1
+                  ? `Les candidatures ferment dans ${daysFromToday(form.deadline)} jour${daysFromToday(form.deadline) > 1 ? "s" : ""}.`
+                  : undefined
+              }
+            >
               <input
                 id="offre-deadline"
                 type="date"
-                className={inputClass}
+                min={editingId ? undefined : localIso(new Date(Date.now() + 86_400_000))}
+                className={cn(inputClass, !form.deadline && "text-muted-foreground")}
                 value={form.deadline}
                 onChange={(event) => set({ deadline: event.target.value })}
               />
             </Field>
           </FormSection>
 
-          <FormSection title="Contenu" desc="Missions et compétences : elles servent aussi au système expert.">
+          <FormSection title="Contenu" desc="Missions et compétences alimentent aussi le système expert.">
             <Field label="Description" htmlFor="offre-description" required error={errors.description} className="sm:col-span-2">
               <textarea
                 id="offre-description"
-                className={textareaClass}
-                placeholder="Présentez la mission proposée au stagiaire."
+                className={cn(textareaClass, "min-h-[120px]")}
+                placeholder="Présentez la mission, l'équipe d'accueil et ce que le stagiaire apprendra."
                 value={form.description}
                 onChange={(event) => set({ description: event.target.value })}
               />
@@ -486,74 +602,16 @@ function CompanyOffersPage() {
               <textarea
                 id="offre-missions"
                 className={textareaClass}
-                placeholder={"Analyser les dossiers de crédit\nParticiper aux visites terrain"}
+                placeholder={"Ex. Analyser les dossiers de crédit\nParticiper aux visites terrain"}
                 value={form.missions}
                 onChange={(event) => set({ missions: event.target.value })}
               />
             </Field>
-            <Field
-              label="Compétences recherchées"
-              htmlFor="offre-skills"
-              hint="Séparez les compétences par des virgules."
-              className="sm:col-span-2"
-            >
-              <input
-                id="offre-skills"
-                className={inputClass}
-                placeholder="Excel, Analyse financière, Rédaction"
-                value={form.skills}
-                onChange={(event) => set({ skills: event.target.value })}
-              />
-              {form.skills.trim() && (
-                <div className="flex flex-wrap gap-1.5 pt-1">
-                  {form.skills
-                    .split(",")
-                    .map((skill) => skill.trim())
-                    .filter(Boolean)
-                    .map((skill) => (
-                      <span key={skill} className="rounded-md border bg-muted/50 px-2 py-0.5 text-xs text-foreground">
-                        {skill}
-                      </span>
-                    ))}
-                </div>
-              )}
-            </Field>
-          </FormSection>
-
-          <FormSection title="Publication" desc="Une offre publiée est visible immédiatement par les étudiants.">
-            <div role="radiogroup" aria-label="Statut de l'offre" className="grid grid-cols-2 gap-2 sm:col-span-2 sm:grid-cols-4">
-              {(editingId
-                ? (["brouillon", "publiee", "desactivee", "cloturee"] as OfferStatus[])
-                : (["brouillon", "publiee"] as OfferStatus[])
-              ).map((status) => {
-                const active = form.status === status;
-                return (
-                  <button
-                    key={status}
-                    type="button"
-                    role="radio"
-                    aria-checked={active}
-                    onClick={() => set({ status })}
-                    className={cn(
-                      "press flex items-center gap-2 rounded-xl border px-3 py-2.5 text-left text-sm transition-all duration-200",
-                      active
-                        ? "border-primary bg-primary-soft/60 font-medium text-primary ring-1 ring-primary"
-                        : "text-muted-foreground hover:border-foreground/30 hover:text-foreground"
-                    )}
-                  >
-                    <span
-                      className={cn(
-                        "grid size-4 shrink-0 place-items-center rounded-full border",
-                        active ? "border-primary" : "border-muted-foreground/40"
-                      )}
-                    >
-                      {active && <span className="size-2 rounded-full bg-primary" />}
-                    </span>
-                    {offerStatusLabels[status].label}
-                  </button>
-                );
-              })}
-            </div>
+            <SkillsInput
+              value={form.skills}
+              onChange={(skills) => set({ skills })}
+              suggestions={skillSuggestions}
+            />
           </FormSection>
         </div>
       </Modal>
@@ -679,15 +737,118 @@ function CompanyOffersPage() {
   );
 }
 
-/** Section de formulaire : un titre, une phrase d'aide, puis une grille de champs. */
+/** Section de formulaire : titre et phrase d'aide au-dessus, champs sur deux colonnes. */
 function FormSection({ title, desc, children }: { title: string; desc?: string; children: React.ReactNode }) {
   return (
-    <section className="grid gap-x-6 gap-y-4 sm:grid-cols-[170px_minmax(0,1fr)]">
-      <div>
-        <h3 className="text-sm font-semibold">{title}</h3>
-        {desc && <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">{desc}</p>}
+    <section className="py-6 first:pt-1 last:pb-1">
+      <div className="mb-4">
+        <h3 className="text-[15px] font-semibold tracking-tight">{title}</h3>
+        {desc && <p className="mt-0.5 text-pretty text-[13px] leading-relaxed text-muted-foreground">{desc}</p>}
       </div>
-      <div className="grid content-start gap-4 sm:grid-cols-2">{children}</div>
+      <div className="grid gap-x-4 gap-y-4 sm:grid-cols-2">{children}</div>
     </section>
+  );
+}
+
+/**
+ * Compétences en étiquettes : Entrée ou virgule ajoute, la croix retire,
+ * Retour arrière sur un champ vide retire la dernière. Pas de doublon.
+ */
+function SkillsInput({
+  value,
+  onChange,
+  suggestions,
+}: {
+  value: string[];
+  onChange: (skills: string[]) => void;
+  suggestions: string[];
+}) {
+  const [draft, setDraft] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const add = (raw: string) => {
+    const parts = raw
+      .split(",")
+      .map((part) => part.trim())
+      .filter(Boolean);
+    if (parts.length === 0) return;
+    const next = [...value];
+    parts.forEach((part) => {
+      if (!next.some((skill) => skill.toLowerCase() === part.toLowerCase())) next.push(part);
+    });
+    onChange(next);
+    setDraft("");
+  };
+
+  const remove = (skill: string) => {
+    onChange(value.filter((entry) => entry !== skill));
+    inputRef.current?.focus();
+  };
+
+  const available = suggestions.filter(
+    (suggestion) => !value.some((skill) => skill.toLowerCase() === suggestion.toLowerCase())
+  );
+
+  return (
+    <Field
+      label="Compétences recherchées"
+      htmlFor="offre-skills"
+      hint="Appuyez sur Entrée ou tapez une virgule pour ajouter une compétence."
+      className="sm:col-span-2"
+    >
+      <div
+        onClick={() => inputRef.current?.focus()}
+        className="flex min-h-10 w-full cursor-text flex-wrap items-center gap-1.5 rounded-md border border-input bg-background px-2 py-1.5 transition hover:border-foreground/25 focus-within:border-accent focus-within:ring-[3px] focus-within:ring-ring/15"
+      >
+        {value.map((skill) => (
+          <span
+            key={skill}
+            className="animate-scale-in inline-flex h-7 items-center gap-1 rounded-full bg-accent-soft pl-2.5 pr-1 text-xs font-medium text-primary"
+          >
+            {skill}
+            <button
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+                remove(skill);
+              }}
+              aria-label={`Retirer ${skill}`}
+              className="grid size-5 place-items-center rounded-full text-primary/70 transition-colors hover:bg-primary hover:text-primary-foreground"
+            >
+              <X className="size-3" />
+            </button>
+          </span>
+        ))}
+        <input
+          ref={inputRef}
+          id="offre-skills"
+          list="offre-skills-list"
+          autoComplete="off"
+          aria-describedby="offre-skills-hint"
+          className="h-7 min-w-[10rem] flex-1 bg-transparent px-1 text-base outline-none placeholder:text-muted-foreground sm:text-sm"
+          placeholder={value.length ? "Ajouter une compétence" : "Ex. Excel, Analyse financière"}
+          value={draft}
+          onChange={(event) => {
+            const next = event.target.value;
+            if (next.includes(",")) add(next);
+            else setDraft(next);
+          }}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              event.preventDefault();
+              add(draft);
+            } else if (event.key === "Backspace" && !draft && value.length) {
+              onChange(value.slice(0, -1));
+            }
+          }}
+          onBlur={() => add(draft)}
+        />
+      </div>
+      <datalist id="offre-skills-list">
+        {available.map((suggestion) => (
+          <option key={suggestion} value={suggestion} />
+        ))}
+      </datalist>
+    </Field>
   );
 }

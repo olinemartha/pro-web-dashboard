@@ -18,11 +18,11 @@ colors:
   warning-soft: "#FFFBEB"
   destructive-red: "#DC2828"
   destructive-soft: "#FBE9E9"
-  pipeline-waiting: "hsl(220 25% 85%)"
-  pipeline-review: "hsl(218 90% 78%)"
+  pipeline-waiting: "hsl(42 92% 54%)"
+  pipeline-review: "hsl(262 66% 64%)"
   pipeline-interview: "#2F6FED"
-  pipeline-accepted: "#1E3A8A"
-  pipeline-refused: "hsl(220 12% 64%)"
+  pipeline-accepted: "hsl(152 55% 40%)"
+  pipeline-refused: "hsl(0 72% 58%)"
 typography:
   kpi:
     fontFamily: "Inter, sans-serif"
@@ -162,14 +162,14 @@ Le système est sobre par doctrine. Il privilégie la lisibilité, les libellés
 La palette est institutionnelle et à faible distraction : trois bleus de marque, un blanc dominant, des gris froids pour la structure et des couleurs fonctionnelles strictement réservées au statut.
 
 ### Primary
-- **Bleu roi** (#1E3A8A) : identité (logo), boutons principaux, titres forts, élément actif du menu, série « Acceptée » du pipeline. C'est la couleur d'autorité et d'action. Au survol, il s'assombrit (#18306F).
+- **Bleu roi** (#1E3A8A) : identité (logo), boutons principaux, titres forts, élément actif du menu. C'est la couleur d'autorité et d'action. Au survol, il s'assombrit (#18306F).
 - **Bleu glacier** (#E8F0FE) : pastille de l'élément actif du menu, badges primaires, fond de la carte entreprise, ligne mise en avant dans « À traiter » (recommandation du système expert).
 
 ### Secondary
 - **Bleu vif** (#2F6FED) : liens, anneau de focus clavier, courbe des candidatures, série « En entretien » du pipeline, indicateurs d'activité. Le texte posé sur le bleu vif est blanc.
 
 ### Pipeline (gamme de données)
-Une seule famille de bleus, du plus clair au plus foncé, le refus restant en gris neutre plutôt qu'en rouge : En attente `hsl(220 25% 85%)` · En cours d'examen `hsl(218 90% 78%)` · En entretien #2F6FED · Acceptée #1E3A8A · Refusée `hsl(220 12% 64%)`. Les chiffres sont toujours écrits en texte à côté du graphique : la teinte claire d'« En attente » n'a pas à porter l'information seule.
+Couleurs de sens (choix du 9 nov. 2026) : En attente jaune `hsl(42 92% 54%)` · En cours d'examen violet `hsl(262 66% 64%)` · En entretien bleu vif #2F6FED · Acceptée vert `hsl(152 55% 40%)` · Refusée rouge `hsl(0 72% 58%)`. Clarté et saturation proches pour qu'aucune série ne domine. Les chiffres restent écrits en texte à côté du graphique.
 
 ### Tertiary
 - **Vert validation** (#27865A) sur fond **vert très clair** (#E7F8F0) : accepter, valider, réussir, attestation validée, tendance positive.
@@ -291,7 +291,10 @@ Une ligne par candidat, son dernier événement seulement (pas de doublon). Lign
 
 ### Inputs / Fields
 - Fond blanc, bordure 1 px, rayon 6 px, hauteur 40 px, texte 14 px (16 px sur téléphone pour éviter le zoom iOS).
-- **Focus** : bordure bleu vif + anneau de 3–4 px à 12–15 %.
+- **Focus** : bordure bleu vif + anneau de 3 px à 15 %. Survol : bordure légèrement plus sombre.
+- **Erreur** : bordure rouge + anneau rouge léger, message rouge sous le champ (relié par `aria-describedby`, `aria-invalid`). L'astérisque des champs obligatoires reste gris : le rouge est réservé aux erreurs. À l'envoi, le focus va au premier champ en erreur ; chaque erreur disparaît dès qu'elle est corrigée.
+- **Placeholders, jamais de valeur préremplie** : « Ex. Kinshasa, Gombe », « Choisir une durée ». Les listes déroulantes ont un chevron au trait des icônes et un texte gris tant que rien n'est choisi.
+- **Compétences** : saisie en étiquettes (pilules bleu glacier, comme sur les cartes d'offre) ; Entrée ou virgule ajoute, la croix retire, pas de doublon, suggestions tirées des offres existantes.
 - **Recherche** : pilule de 40 px marquée « Rechercher », qui s'élargit doucement au focus ; les résultats n'apparaissent qu'à la saisie.
 
 ### Navigation
@@ -301,10 +304,11 @@ Une ligne par candidat, son dernier événement seulement (pas de doublon). Lign
 - Mobile : tiroir blanc avec voile flouté, fermeture par X, clic extérieur ou Échap.
 
 ### Notifications
-Cloche ronde translucide avec compteur bleu roi ; panneau blanc opaque listant les événements à traiter, chaque ligne menant à l'objet concerné.
+Cloche ronde translucide ; le compteur bleu roi ne compte que les **non lues**. Panneau blanc opaque : « Notifications » + pastille « N non lues » + « Tout marquer comme lu ». Non lue : fond glacier, titre en gras, icône et date bleu roi, point bleu vif à droite. Lue : fond blanc, titre gris normal, icône grise. Les non lues passent en premier ; ouvrir une notification la marque comme lue.
 
 ### Modals
-Rendues au niveau de la page entière (portail) : voile `slate-900/25` flouté de 6 px sur tout l'écran, barre latérale comprise. Panneau blanc de 16 px de rayon, largeur 512 px (720 px pour les formulaires longs), centré à l'écran ; sur mobile, ancré en bas avec une poignée. En-tête avec icône nue, titre et fermeture ; pied d'actions sur fond atténué. Échap ferme, la page derrière ne défile plus. Les formulaires longs sont découpés en sections titrées.
+Rendues au niveau de la page entière (portail) : voile `slate-900/25` flouté de 6 px sur tout l'écran, barre latérale comprise. Panneau blanc de 16 px de rayon, largeur 512 px (720 px pour les formulaires longs), centré à l'écran ; sur mobile, ancré en bas avec une poignée. En-tête avec icône nue, titre et fermeture ; pied d'actions sur fond atténué. Échap ferme, la page derrière ne défile plus. Le focus entre dans la fenêtre (premier champ), y reste (Tab boucle) et revient au bouton d'origine à la fermeture. Barres de défilement fines, teintées de la palette. Les formulaires longs sont découpés en sections titrées empilées (titre 15 px + phrase d'aide au-dessus, champs sur deux colonnes, filet entre sections).
+- **Publier une offre** : sous-titre rassurant (« Rien n'est visible par les étudiants tant que vous n'avez pas publié »), pas de choix de statut dans le formulaire : le pied porte « Enregistrer en brouillon » (contour) et « Publier l'offre » (plein, icône d'envoi), avec à gauche la date de clôture choisie. En modification : « Annuler » et « Enregistrer les modifications » ; désactiver ou clôturer se fait depuis le menu de la carte.
 
 ## Do's and Don'ts
 

@@ -318,15 +318,16 @@ function TodoTarget({
 /* ------------------------------------------------------------------ */
 
 /**
- * Une seule famille de bleus, du plus clair (en attente) au plus foncé
- * (acceptée) ; le refus reste en gris neutre. Pas d'arc-en-ciel.
+ * Couleurs de sens : jaune pour ce qui attend, violet pour l'examen,
+ * bleu pour l'entretien, vert pour l'acceptation, rouge pour le refus.
+ * Même clarté et même saturation pour qu'aucune ne crie plus que l'autre.
  */
 const PIPELINE: { status: CandidateStatus; color: string }[] = [
-  { status: "en_attente", color: "hsl(220 25% 85%)" },
-  { status: "examen", color: "hsl(218 90% 78%)" },
+  { status: "en_attente", color: "hsl(42 92% 54%)" },
+  { status: "examen", color: "hsl(262 66% 64%)" },
   { status: "entretien", color: "hsl(220 84% 56%)" },
-  { status: "acceptee", color: "hsl(224 64% 33%)" },
-  { status: "refusee", color: "hsl(220 12% 64%)" },
+  { status: "acceptee", color: "hsl(152 55% 40%)" },
+  { status: "refusee", color: "hsl(0 72% 58%)" },
 ];
 
 type PipelineStep = { status: CandidateStatus; color: string; count: number };

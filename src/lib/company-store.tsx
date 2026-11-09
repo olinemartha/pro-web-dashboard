@@ -81,7 +81,10 @@ interface CompanyState {
   services: Service[];
   expertRuns: ExpertRun[];
   decisions: AssignmentDecision[];
+  /** Identifiants des notifications déjà consultées. */
+  readNotices: string[];
 
+  markNoticesRead: (ids: string[]) => void;
   updateProfile: (p: Partial<CompanyProfile>) => void;
   addOffer: (o: Omit<CompanyOffer, "id" | "applicationsCount" | "published">) => void;
   updateOffer: (offerId: string, patch: Partial<CompanyOffer>) => void;
@@ -117,6 +120,11 @@ export const useCompanyStore = create<CompanyState>((set, get) => ({
   services: demoServices,
   expertRuns: seedRuns,
   decisions: seedDecisions,
+  // Démo : les plus anciennes notifications sont déjà lues.
+  readNotices: ["c-c2", "e-i5", "r-s1"],
+
+  markNoticesRead: (ids) =>
+    set((state) => ({ readNotices: Array.from(new Set([...state.readNotices, ...ids])) })),
 
   updateProfile: (p) => set({ profile: { ...get().profile, ...p } }),
 
