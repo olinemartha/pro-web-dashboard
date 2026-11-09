@@ -226,7 +226,7 @@ function CompanySettingsPage() {
           />
         </SettingRow>
         {!spaceActive && (
-          <p className="mt-3 max-w-[70ch] rounded-md border border-amber-200 bg-amber-50 p-3 text-sm leading-relaxed text-amber-800">
+          <p className="mt-3 max-w-[70ch] rounded-md border border-warning/30 bg-warning-soft p-3 text-sm leading-relaxed text-warning">
             Votre espace est actuellement désactivé. Les données sont conservées et pourront être restaurées à la
             réactivation.
           </p>

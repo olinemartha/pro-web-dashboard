@@ -1,6 +1,8 @@
 import * as React from "react";
 import { createPortal } from "react-dom";
-import { ChevronDown, MoreHorizontal, X } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { ArrowRight, ChevronDown, Clock, MoreHorizontal, TrendingUp, X } from "lucide-react";
+import { AnimatedNumber } from "@/components/ui/motion";
 import { cn } from "@/lib/utils";
 
 /* ------------------------------------------------------------------ */
@@ -263,7 +265,7 @@ function useOverlayBehaviour(
 function Backdrop({ onClick }: { onClick: () => void }) {
   return (
     <div
-      className="animate-fade-in absolute inset-0 bg-slate-900/25 backdrop-blur-[6px] backdrop-saturate-150"
+      className="animate-fade-in absolute inset-0 bg-overlay/25 backdrop-blur-[6px] backdrop-saturate-150"
       onClick={onClick}
       aria-hidden
     />
@@ -512,5 +514,160 @@ export function MenuItem({
     >
       {children}
     </button>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Système de design : mouvements et blocs du tableau de bord          */
+/* À réutiliser sur toutes les pages (voir DESIGN.md et CLAUDE.md).    */
+/* ------------------------------------------------------------------ */
+
+/** Geste d'icône au survol de son parent `.group` (défini dans index.css). */
+export type IconMotion = "pop" | "lift" | "fly" | "tilt" | "bounce" | "stack" | "spin";
+
+/** Classe d'une icône animée : `<Icon className={iconMotion("lift")} />`. */
+export function iconMotion(motion: IconMotion, className = "size-[18px]") {
+  return cn("nav-icon", `nav-icon--${motion}`, className);
+}
+
+/** Flèche « → » qui glisse de 4 px au survol ou au focus de son parent `.group`. */
+export const ARROW_NUDGE =
+  "transition-transform duration-300 [transition-timing-function:var(--ease-soft)] group-hover:translate-x-1 group-focus-visible:translate-x-1 motion-reduce:transition-none";
+
+/** Lien de section compact : contour, puis fond bleu roi et texte blanc au survol. */
+export const SECTION_LINK =
+  "press group inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border bg-card px-3 text-[13px] font-medium text-foreground shadow-sm transition-all duration-200 hover:border-primary hover:bg-primary hover:text-primary-foreground hover:shadow-md";
+
+/** Carte entièrement cliquable (une seule destination) : se soulève au survol. */
+export const CARD_INTERACTIVE = "card-surface hover-lift group";
+
+export function SectionLink({
+  to,
+  label = "Tout voir",
+  context,
+  className,
+}: {
+  to: string;
+  label?: string;
+  /** Section concernée, pour un nom accessible complet (« Tout voir — Pipeline »). */
+  context?: string;
+  className?: string;
+}) {
+  return (
+    <Link to={to} aria-label={context ? `${label} — ${context}` : undefined} className={cn(SECTION_LINK, className)}>
+      {label}
+      <ArrowRight className={cn("size-3.5", ARROW_NUDGE)} />
+    </Link>
+  );
+}
+
+/** En-tête de carte : titre 15 px, compteur gris facultatif, phrase d'aide, lien à droite. */
+export function SectionHeader({
+  title,
+  description,
+  count,
+  to,
+  linkLabel = "Tout voir",
+  as: Heading = "h2",
+}: {
+  title: string;
+  description?: string;
+  count?: number;
+  to?: string;
+  linkLabel?: string;
+  as?: "h2" | "h3";
+}) {
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="min-w-0">
+        <Heading className="flex items-center gap-2 text-[15px] font-semibold tracking-tight">
+          {title}
+          {count !== undefined && (
+            <span className="rounded-md bg-muted px-1.5 py-0.5 text-[11px] font-medium tabular-nums text-muted-foreground">
+              {count}
+            </span>
+          )}
+        </Heading>
+        {description && <p className="mt-0.5 text-pretty text-xs text-muted-foreground">{description}</p>}
+      </div>
+      {to && <SectionLink to={to} label={linkLabel} context={title} />}
+    </div>
+  );
+}
+
+/** État vide unique pour toutes les cartes : icône nue, titre, phrase courte. */
+export function EmptyNote({
+  icon: Icon,
+  title,
+  desc,
+  className,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  title: string;
+  desc?: string;
+  className?: string;
+}) {
+  return (
+    <div className={cn("flex flex-col items-center justify-center px-5 py-8 text-center", className)}>
+      <Icon className="size-6 text-muted-foreground" />
+      <p className="mt-2 text-sm font-medium">{title}</p>
+      {desc && <p className="mt-0.5 text-pretty text-xs text-muted-foreground">{desc}</p>}
+    </div>
+  );
+}
+
+/**
+ * Carte indicateur (KPI) : libellé gris à gauche, icône nue animée à droite,
+ * valeur 30 px qui compte jusqu'à sa valeur, précision sous un filet.
+ * Toujours un lien vers la page qui détaille le chiffre.
+ */
+export function StatCard({
+  label,
+  value,
+  icon: Icon,
+  motion,
+  foot,
+  tone = "neutral",
+  to,
+  aside,
+}: {
+  label: string;
+  value: number;
+  icon: React.ComponentType<{ className?: string }>;
+  motion: IconMotion;
+  foot: string;
+  /** neutral : gris · trend : vert avec flèche montante · alert : ambre avec horloge. */
+  tone?: "neutral" | "trend" | "alert";
+  to: string;
+  /** Visuel facultatif à droite de la valeur (ex. une petite courbe). */
+  aside?: React.ReactNode;
+}) {
+  return (
+    <Link to={to} className={cn(CARD_INTERACTIVE, "flex h-full flex-col gap-4 p-4 sm:p-5")}>
+      <div className="flex items-start justify-between gap-2.5">
+        <span className="line-clamp-2 min-w-0 flex-1 text-[13px] font-medium leading-snug text-muted-foreground xl:line-clamp-1">
+          {label}
+        </span>
+        <span className="grid size-5 shrink-0 place-items-center text-muted-foreground transition-colors duration-200 group-hover:text-foreground">
+          <Icon className={iconMotion(motion)} />
+        </span>
+      </div>
+      <div className="flex items-end justify-between gap-2">
+        <p className="text-[30px] font-semibold leading-none tracking-tight">
+          <AnimatedNumber value={value} />
+        </p>
+        {aside}
+      </div>
+      <p
+        className={cn(
+          "mt-auto flex items-center gap-1 border-t pt-3 text-xs",
+          tone === "trend" ? "font-medium text-success-ink" : tone === "alert" ? "font-medium text-warning" : "text-muted-foreground"
+        )}
+      >
+        {tone === "trend" && <TrendingUp className="size-3.5 shrink-0" />}
+        {tone === "alert" && <Clock className="size-3.5 shrink-0" />}
+        <span className="line-clamp-2 xl:line-clamp-1">{foot}</span>
+      </p>
+    </Link>
   );
 }

@@ -29,6 +29,7 @@ import {
 } from "@/components/company/ui";
 import { DatePicker } from "@/components/company/date-picker";
 import { useCompanyStore } from "@/lib/company-store";
+import { daysFromToday, fmtDate, localIsoDate } from "@/lib/dates";
 import { cn } from "@/lib/utils";
 import { offerStatusLabels, type CompanyOffer, type OfferStatus } from "@/lib/company-data";
 
@@ -98,17 +99,6 @@ const FIELD_ORDER: { key: keyof OfferForm; id: string }[] = [
   { key: "description", id: "offre-description" },
 ];
 
-function localIso(date: Date) {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
-}
-
-/** « dans 19 jours » à partir d'une date AAAA-MM-JJ. */
-function daysFromToday(value: string) {
-  const today = new Date(`${localIso(new Date())}T00:00:00`);
-  const target = new Date(`${value}T00:00:00`);
-  return Math.round((target.getTime() - today.getTime()) / 86_400_000);
-}
-
 /** Garde l'option actuelle d'une offre existante même si elle sort de la liste. */
 function withCurrent(options: string[], current: string) {
   return current && !options.includes(current) ? [current, ...options] : options;
@@ -128,15 +118,6 @@ function toForm(offer: CompanyOffer): OfferForm {
     skills: [...offer.skills],
     status: offer.status,
   };
-}
-
-function fmtDate(value: string) {
-  if (!value) return "—";
-  return new Date(`${value}T00:00:00`).toLocaleDateString("fr-FR", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
 }
 
 function CompanyOffersPage() {
@@ -587,7 +568,7 @@ function CompanyOffersPage() {
             >
               <DatePicker
                 id="offre-deadline"
-                min={editingId ? undefined : localIso(new Date(Date.now() + 86_400_000))}
+                min={editingId ? undefined : localIsoDate(new Date(Date.now() + 86_400_000))}
                 value={form.deadline}
                 onChange={(deadline) => set({ deadline })}
               />

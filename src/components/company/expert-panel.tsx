@@ -78,7 +78,7 @@ function ProposalCard({ proposal }: { proposal: ExpertProposal }) {
         {missing.map((criterion) => (
           <span
             key={criterion.ruleId}
-            className="inline-flex items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-800"
+            className="inline-flex items-center gap-1 rounded-full border border-warning/30 bg-warning-soft px-2 py-0.5 text-xs font-medium text-warning"
           >
             <ShieldAlert className="size-3" /> {criterion.label}
           </span>
@@ -86,7 +86,7 @@ function ProposalCard({ proposal }: { proposal: ExpertProposal }) {
       </div>
 
       {proposal.limits.length > 0 && (
-        <ul className="mt-2 space-y-0.5 text-xs leading-relaxed text-amber-800">
+        <ul className="mt-2 space-y-0.5 text-xs leading-relaxed text-warning">
           {proposal.limits.map((limit) => (
             <li key={limit}>• {limit}</li>
           ))}
@@ -105,7 +105,7 @@ function ProposalCard({ proposal }: { proposal: ExpertProposal }) {
                   className={
                     criterion.satisfied
                       ? "mt-1 size-1.5 shrink-0 rounded-full bg-success"
-                      : "mt-1 size-1.5 shrink-0 rounded-full bg-amber-500"
+                      : "mt-1 size-1.5 shrink-0 rounded-full bg-warning"
                   }
                 />
                 <span>
@@ -223,7 +223,7 @@ export function ExpertPanel({ intern }: { intern: Intern }) {
           </span>
         </div>
 
-        <p className="mt-3 flex max-w-[75ch] items-start gap-2 rounded-md border border-amber-200 bg-amber-50 p-3 text-xs leading-relaxed text-amber-800">
+        <p className="mt-3 flex max-w-[75ch] items-start gap-2 rounded-md border border-warning/30 bg-warning-soft p-3 text-xs leading-relaxed text-warning">
           <Info className="mt-0.5 size-3.5 shrink-0" />
           Les règles utilisées sont des règles de démonstration : elles ne représentent pas les règles
           réelles d'affectation de FINCA RDC.
@@ -244,9 +244,9 @@ export function ExpertPanel({ intern }: { intern: Intern }) {
       ) : (
         <>
           {latestRun.status !== "prete" && (
-            <div className="card-surface border-amber-200 p-5">
+            <div className="card-surface border-warning/30 p-5">
               <div className="flex items-start gap-3">
-                <ShieldAlert className="mt-0.5 size-5 shrink-0 text-amber-600" />
+                <ShieldAlert className="mt-0.5 size-5 shrink-0 text-warning" />
                 <div>
                   <h3 className="text-sm font-semibold leading-snug">
                     {latestRun.status === "donnees_insuffisantes"

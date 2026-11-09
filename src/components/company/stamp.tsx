@@ -40,6 +40,7 @@ export function Stamp({
       aria-hidden="true"
     >
       <span className="pointer-events-none absolute inset-[3px] rounded-[2px] border border-current opacity-30" />
+      {/* design-ok: lettrage de tampon officiel, volontairement gras */}
       <span className="relative text-[11px] font-bold uppercase leading-none tracking-[0.14em]">
         {label}
       </span>

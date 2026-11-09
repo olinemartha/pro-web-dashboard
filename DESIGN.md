@@ -264,6 +264,14 @@ Tout s'immobilise sous `prefers-reduced-motion`.
 
 ## Components
 
+### Code de référence
+Chaque motif ci-dessous existe en code ; les pages l'importent au lieu de le réécrire. Les règles d'usage et le contrôle automatique sont dans `CLAUDE.md` et `npm run check:design` (lancé aussi par `npm run build`).
+- `src/components/company/ui.tsx` : `SectionHeader`, `SectionLink`, `StatCard`, `EmptyNote`, `Badge`, `Field`, `Select`, `Modal`, `Drawer`, `ActionMenu`, `AvatarInitials`, `PageIntro` ; constantes `ARROW_NUDGE`, `SECTION_LINK`, `CARD_INTERACTIVE` ; `iconMotion(geste)`.
+- `src/components/company/date-picker.tsx` : `DatePicker`.
+- `src/components/ui/motion.tsx` : `Reveal`, `AnimatedNumber`.
+- `src/lib/dates.ts` : formats de date français.
+- `src/index.css` : jetons de couleur (dont `--overlay` pour le voile des fenêtres), `card-surface`, `hover-lift`, `press`, gestes d'icônes `nav-icon--*`, animations.
+
 ### Buttons
 - **Primary** : fond bleu roi, texte blanc, rayon 8 px, hauteur 40 px (36 px dans les barres), légère ombre teintée. Une seule action principale par zone.
 - **Bouton de ligne** (« Examiner », « Relire », « Mettre à jour ») : discret, fond gris atténué, texte gris, largeur fixe (136 px) pour un bord droit régulier ; au survol de la ligne, fond glacier et texte bleu roi. Sur téléphone, flèche seule. **Exception :** le bouton « Voir l'explication » de la recommandation du système expert est plein, en bleu roi : c'est le seul bouton plein de la carte.

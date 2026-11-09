@@ -13,11 +13,21 @@ import {
   MapPin,
   Send,
   Scale,
-  TrendingUp,
   Users,
   UserSearch,
 } from "lucide-react";
-import { AvatarInitials, Badge, type Tone } from "@/components/company/ui";
+import {
+  ARROW_NUDGE,
+  AvatarInitials,
+  Badge,
+  EmptyNote,
+  SECTION_LINK,
+  SectionHeader,
+  StatCard,
+  type IconMotion,
+  type Tone,
+} from "@/components/company/ui";
+import { DAY_MS, fmtDate, localIsoDate, relativeDay, shortDay } from "@/lib/dates";
 import { CompanyLogoUploader } from "@/components/company/company-logo";
 import { AnimatedNumber, Reveal } from "@/components/ui/motion";
 import { useCompanyStore } from "@/lib/company-store";
@@ -32,36 +42,7 @@ export const Route = createFileRoute("/entreprise/")({
   component: CompanyDashboard,
 });
 
-const DAY = 86_400_000;
-
-function fmtDate(value: string, withYear = true) {
-  return new Date(`${value}T00:00:00`).toLocaleDateString("fr-FR", {
-    day: "numeric",
-    month: "short",
-    ...(withYear ? { year: "numeric" } : {}),
-  });
-}
-
-function relativeDay(value: string) {
-  const days = Math.round((Date.now() - new Date(`${value}T12:00:00`).getTime()) / DAY);
-  if (days === 0) return "aujourd'hui";
-  if (days === 1) return "hier";
-  if (days === -1) return "demain";
-  if (days < 0) return `dans ${-days} jours`;
-  if (days < 14) return `il y a ${days} jours`;
-  if (days < 60) return `il y a ${Math.round(days / 7)} semaines`;
-  return fmtDate(value, false);
-}
-
-/** Date courte pour une colonne étroite : « auj. », « hier », « 4 j », « 2 sem. ». */
-function shortDay(value: string) {
-  const days = Math.round((Date.now() - new Date(`${value}T12:00:00`).getTime()) / DAY);
-  if (days <= 0) return "auj.";
-  if (days === 1) return "hier";
-  if (days < 14) return `${days} j`;
-  if (days < 60) return `${Math.round(days / 7)} sem.`;
-  return fmtDate(value, false);
-}
+const DAY = DAY_MS;
 
 /** Événement lisible à partir d'un statut d'historique (court pour le badge, long pour l'accessibilité). */
 function activityEvent(
@@ -91,12 +72,6 @@ function activityEvent(
   }
 }
 
-/** Date du jour au format ISO, en heure locale (Kinshasa), et non en UTC. */
-function localIsoDate(date = new Date()) {
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
-}
-
 function initialsOf(value: string) {
   // « Direction Crédit » → « CR », « Communication & Marketing » → « CM ».
   const STOP = new Set(["direction", "service", "de", "des", "du", "et", "la", "le", "les"]);
@@ -114,67 +89,6 @@ function initialsOf(value: string) {
 /* ------------------------------------------------------------------ */
 /* Éléments partagés                                                   */
 /* ------------------------------------------------------------------ */
-
-/** État vide unique pour toutes les cartes : icône nue, titre, phrase courte. */
-function EmptyNote({
-  icon: Icon,
-  title,
-  desc,
-  className,
-}: {
-  icon: React.ComponentType<{ className?: string }>;
-  title: string;
-  desc?: string;
-  className?: string;
-}) {
-  return (
-    <div className={cn("flex flex-col items-center justify-center px-5 py-8 text-center", className)}>
-      <Icon className="size-6 text-muted-foreground" />
-      <p className="mt-2 text-sm font-medium">{title}</p>
-      {desc && <p className="mt-0.5 text-xs text-muted-foreground">{desc}</p>}
-    </div>
-  );
-}
-
-function SectionHeader({
-  title,
-  description,
-  count,
-  to,
-  linkLabel = "Tout voir",
-}: {
-  title: string;
-  description?: string;
-  count?: number;
-  to?: string;
-  linkLabel?: string;
-}) {
-  return (
-    <div className="flex flex-wrap items-center justify-between gap-3">
-      <div className="min-w-0">
-        <h2 className="flex items-center gap-2 text-[15px] font-semibold tracking-tight">
-          {title}
-          {count !== undefined && (
-            <span className="rounded-md bg-muted px-1.5 py-0.5 text-[11px] font-medium tabular-nums text-muted-foreground">
-              {count}
-            </span>
-          )}
-        </h2>
-        {description && <p className="mt-0.5 text-xs text-muted-foreground">{description}</p>}
-      </div>
-      {to && (
-        <Link
-          to={to}
-          aria-label={`${linkLabel} — ${title}`}
-          className="press group inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border bg-card px-3 text-[13px] font-medium text-foreground shadow-sm transition-all duration-200 hover:border-primary hover:bg-primary hover:text-primary-foreground hover:shadow-md"
-        >
-          {linkLabel}
-          <ArrowRight className="size-3.5 transition-transform duration-300 [transition-timing-function:var(--ease-soft)] group-hover:translate-x-1 group-focus-visible:translate-x-1 motion-reduce:transition-none" />
-        </Link>
-      )}
-    </div>
-  );
-}
 
 /** Petite courbe : une vraie série (candidatures par semaine), dessinée sans bibliothèque. */
 function Sparkline({ values, className }: { values: number[]; className?: string }) {
@@ -669,11 +583,10 @@ function CompanyDashboard() {
     label: string;
     value: number;
     icon: React.ComponentType<{ className?: string }>;
-    motion: string;
+    motion: IconMotion;
     foot: string;
     to: string;
-    trend?: boolean;
-    alert?: boolean;
+    tone?: "neutral" | "trend" | "alert";
     spark?: number[];
   }[] = [
     {
@@ -690,7 +603,7 @@ function CompanyDashboard() {
       icon: Send,
       motion: "fly",
       foot: last30 > 0 ? `+${last30} en 30 jours` : "aucune ce mois-ci",
-      trend: last30 > 0,
+      tone: last30 > 0 ? "trend" : "neutral",
       spark: weekly,
       to: "/entreprise/candidatures",
     },
@@ -700,7 +613,7 @@ function CompanyDashboard() {
       icon: UserSearch,
       motion: "pop",
       foot: toExamine.length ? "en attente de votre décision" : "rien en attente",
-      alert: toExamine.length > 0,
+      tone: toExamine.length > 0 ? "alert" : "neutral",
       to: "/entreprise/candidatures",
     },
     {
@@ -719,33 +632,16 @@ function CompanyDashboard() {
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 lg:gap-6">
         {stats.map((stat, index) => (
           <Reveal key={stat.label} delay={index * 60} className="min-w-0">
-            <Link
+            <StatCard
+              label={stat.label}
+              value={stat.value}
+              icon={stat.icon}
+              motion={stat.motion}
+              foot={stat.foot}
+              tone={stat.tone}
               to={stat.to}
-              className="card-surface hover-lift group flex h-full flex-col gap-4 p-4 sm:p-5"
-            >
-              <div className="flex items-start justify-between gap-2.5">
-                <span className="min-w-0 flex-1 text-[13px] font-medium leading-snug text-muted-foreground line-clamp-2 xl:line-clamp-1">{stat.label}</span>
-                <span className="grid size-5 shrink-0 place-items-center text-muted-foreground transition-colors duration-200 group-hover:text-foreground">
-                  <stat.icon className={`nav-icon nav-icon--${stat.motion} size-[18px]`} />
-                </span>
-              </div>
-              <div className="flex items-end justify-between gap-2">
-                <p className="text-[30px] font-semibold leading-none tracking-tight">
-                  <AnimatedNumber value={stat.value} />
-                </p>
-                {stat.spark && <Sparkline values={stat.spark} className="hidden sm:block" />}
-              </div>
-              <p
-                className={cn(
-                  "mt-auto flex items-center gap-1 border-t pt-3 text-xs",
-                  stat.trend ? "font-medium text-success-ink" : stat.alert ? "font-medium text-warning" : "text-muted-foreground"
-                )}
-              >
-                {stat.trend && <TrendingUp className="size-3.5 shrink-0" />}
-                {stat.alert && <Clock className="size-3.5 shrink-0" />}
-                <span className="line-clamp-2 xl:line-clamp-1">{stat.foot}</span>
-              </p>
-            </Link>
+              aside={stat.spark && <Sparkline values={stat.spark} className="hidden sm:block" />}
+            />
           </Reveal>
         ))}
       </div>
@@ -914,7 +810,7 @@ function CompanyDashboard() {
                           )}
                         >
                           <span className="hidden whitespace-nowrap sm:inline">{rec ? "Voir l'explication" : meta.action}</span>
-                          <ArrowRight className="size-3.5 shrink-0 transition-transform duration-300 [transition-timing-function:var(--ease-soft)] group-hover:translate-x-1 group-focus-visible:translate-x-1 motion-reduce:transition-none" />
+                          <ArrowRight className={cn("size-3.5 shrink-0", ARROW_NUDGE)} />
                         </span>
                       </TodoTarget>
                     </Reveal>
@@ -934,7 +830,7 @@ function CompanyDashboard() {
                   <button
                     type="button"
                     onClick={() => setTab("tout")}
-                    className="press inline-flex h-8 items-center gap-1 rounded-lg border bg-card px-3 text-[13px] font-medium shadow-sm transition-colors hover:border-primary hover:bg-primary hover:text-primary-foreground"
+                    className={SECTION_LINK}
                   >
                     Tout afficher
                   </button>

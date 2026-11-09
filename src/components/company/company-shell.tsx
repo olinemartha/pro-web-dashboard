@@ -114,7 +114,7 @@ function LogoMark({ className }: { className?: string }) {
       <path
         className="logo-path"
         d="M21.5 10.5h-7a3.5 3.5 0 0 0 0 7h3a3.5 3.5 0 0 1 0 7h-7"
-        stroke="#fff"
+        stroke="hsl(var(--primary-foreground))"
         strokeWidth="3"
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -499,7 +499,7 @@ function MobileBar({ pathname }: { pathname: string }) {
       {open && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <div
-            className="animate-fade-in absolute inset-0 bg-slate-900/40 backdrop-blur-[2px]"
+            className="animate-fade-in absolute inset-0 bg-overlay/40 backdrop-blur-[2px]"
             onClick={() => setOpen(false)}
           />
           <aside className="animate-slide-in-left absolute left-0 top-0 flex h-full w-[84%] max-w-[300px] flex-col bg-card shadow-2xl">

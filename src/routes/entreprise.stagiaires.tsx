@@ -103,7 +103,7 @@ function CompanyInternsLayout() {
                       <BadgeCheck className="size-4 shrink-0 text-success" />
                     ) : (
                       <span
-                        className="size-2 shrink-0 rounded-full bg-amber-500"
+                        className="size-2 shrink-0 rounded-full bg-warning"
                         title="Affectation à confirmer"
                       />
                     )}

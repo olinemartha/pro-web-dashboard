@@ -56,6 +56,8 @@ const config: Config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        // Voile derrière les fenêtres et tiroirs.
+        overlay: "hsl(var(--overlay))",
         // Fond des panneaux flottants (recherche, notifications, menus).
         popover: {
           DEFAULT: "hsl(var(--popover))",

@@ -4,6 +4,7 @@ import {
   ArrowLeft,
   Award,
   BadgeCheck,
+  Check,
   CalendarDays,
   CheckCircle2,
   ClipboardCheck,
@@ -207,7 +208,7 @@ function InternDossierPage() {
         >
           Évaluation
           <span className="rounded-full bg-muted px-1.5 py-0.5 text-xs font-semibold leading-none tabular-nums text-muted-foreground">
-            {intern.evaluation ? "✓" : "0"}
+            {intern.evaluation ? <Check className="size-3" aria-label="faite" /> : "0"}
           </span>
         </a>
         <a

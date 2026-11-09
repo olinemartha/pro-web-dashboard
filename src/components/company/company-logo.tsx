@@ -76,7 +76,7 @@ export function CompanyLogoUploader({
         type="button"
         onClick={() => inputRef.current?.click()}
         aria-label={profile.logo ? "Changer le logo de l'entreprise" : "Ajouter le logo de l'entreprise"}
-        className={cn("absolute inset-0 grid place-items-center bg-slate-900/0 text-white opacity-0 transition-all duration-200 hover:bg-slate-900/45 hover:opacity-100 focus-visible:bg-slate-900/45 focus-visible:opacity-100 focus-visible:outline-none", radius)}
+        className={cn("absolute inset-0 grid place-items-center bg-overlay/0 text-white opacity-0 transition-all duration-200 hover:bg-overlay/45 hover:opacity-100 focus-visible:bg-overlay/45 focus-visible:opacity-100 focus-visible:outline-none", radius)}
       >
         <Camera className="size-5" />
       </button>
