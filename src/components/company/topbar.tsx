@@ -186,8 +186,9 @@ export function SearchCommand({ compact = false }: { compact?: boolean }) {
                   onMouseEnter={() => setCursor(index)}
                   onMouseDown={(event) => event.preventDefault()}
                   onClick={item.go}
+                  style={{ animationDelay: `${index * 35}ms` }}
                   className={cn(
-                    "flex w-full items-center gap-3 rounded-xl px-2.5 py-2 text-left transition-colors duration-100",
+                    "search-item group flex w-full items-center gap-3 rounded-xl px-2.5 py-2 text-left transition-colors duration-100",
                     active ? "bg-muted" : "hover:bg-muted/60"
                   )}
                 >
@@ -196,7 +197,7 @@ export function SearchCommand({ compact = false }: { compact?: boolean }) {
                       {item.initials}
                     </span>
                   ) : (
-                    <Briefcase className="mx-2 size-4 shrink-0 text-muted-foreground" />
+                    <Briefcase className="nav-icon nav-icon--lift mx-2 size-4 shrink-0 text-muted-foreground" />
                   )}
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-sm font-medium">{item.label}</span>
@@ -342,7 +343,7 @@ export function NotificationBell({ align = "right" }: { align?: "right" | "left"
                     onClick={() => setOpen(false)}
                     className="group flex items-start gap-3 rounded-xl px-2.5 py-2.5 transition-colors hover:bg-muted/60"
                   >
-                    <n.icon className="mt-0.5 size-4 shrink-0 text-muted-foreground group-hover:text-foreground" />
+                    <n.icon className="nav-icon nav-icon--pop mt-0.5 size-4 shrink-0 text-muted-foreground group-hover:text-foreground" />
                     <span className="min-w-0 flex-1">
                       <span className="block text-[13px] font-medium leading-snug">{n.title}</span>
                       <span className="block truncate text-xs text-muted-foreground">{n.meta}</span>

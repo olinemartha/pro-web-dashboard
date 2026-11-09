@@ -257,6 +257,7 @@ Courbe unique « ease-out quint » (`cubic-bezier(0.22, 1, 0.36, 1)`), durées d
 - **Entrée de page** : fondu + glissement de 10 px, en cascade courte (40 à 60 ms entre éléments).
 - **Données** : compteurs qui montent jusqu'à leur valeur, barres qui grandissent, anneau et courbe qui se dessinent. Les lecteurs d'écran lisent directement la valeur finale.
 - **Interactions** : pression à 97 % au clic, soulèvement des cartes cliquables, rotation du « + » du bouton « Publier », pastille de navigation qui glisse. Toutes les flèches « → » glissent de 4 px vers la droite au survol (ou au focus) ; les flèches d'échange de « Espace étudiant » font un demi-tour ; la cloche des notifications se balance comme une cloche qui sonne (750 ms, amorti).
+- **Icônes animées** (survol de leur ligne, bouton ou carte) : chaque icône a un geste propre à son sens — mallette et bâtiment qui se soulèvent, avion en papier qui s'envole puis revient, calendrier et balance qui basculent, personnes et boîte de réception qui rebondissent, couches qui glissent, engrenage qui tourne d'un quart de tour, toque qui s'incline. S'applique au menu, aux cartes KPI, aux lignes de « À traiter », au tableau des offres, à la recherche, aux notifications et au menu du compte. Les résultats de recherche apparaissent en cascade (35 ms d'écart).
 - **Fenêtres** : voile flouté qui apparaît en fondu, fenêtre qui monte légèrement en s'agrandissant ; tiroirs qui glissent depuis le bord.
 
 Tout s'immobilise sous `prefers-reduced-motion`.

@@ -368,3 +368,96 @@
     animation: none;
   }
 }
+
+/* Résultats de recherche : apparition en cascade, glissement léger. */
+@keyframes item-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.search-item {
+  animation: item-in 260ms var(--ease-soft) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .search-item {
+    animation: none;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Icônes du menu : un petit geste propre à chacune, au survol         */
+/* ------------------------------------------------------------------ */
+
+@keyframes icon-pop {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.18) rotate(-6deg); }
+  70% { transform: scale(0.96) rotate(2deg); }
+  100% { transform: scale(1); }
+}
+@keyframes icon-lift {
+  0% { transform: translateY(0); }
+  40% { transform: translateY(-3px); }
+  70% { transform: translateY(1px); }
+  100% { transform: translateY(0); }
+}
+@keyframes icon-fly {
+  0% { transform: translate(0, 0); opacity: 1; }
+  45% { transform: translate(5px, -5px); opacity: 0; }
+  46% { transform: translate(-5px, 5px); opacity: 0; }
+  100% { transform: translate(0, 0); opacity: 1; }
+}
+@keyframes icon-tilt {
+  0% { transform: rotate(0); }
+  25% { transform: rotate(-12deg); }
+  55% { transform: rotate(9deg); }
+  80% { transform: rotate(-4deg); }
+  100% { transform: rotate(0); }
+}
+@keyframes icon-bounce {
+  0% { transform: translateY(0) scaleY(1); }
+  30% { transform: translateY(-3px) scaleY(1.05); }
+  55% { transform: translateY(0) scaleY(0.92); }
+  75% { transform: translateY(-1px) scaleY(1.02); }
+  100% { transform: translateY(0) scaleY(1); }
+}
+@keyframes icon-stack {
+  0% { transform: translateY(0) skewX(0); }
+  35% { transform: translateY(-2px) skewX(-8deg); }
+  70% { transform: translateY(1px) skewX(4deg); }
+  100% { transform: translateY(0) skewX(0); }
+}
+@keyframes icon-spin {
+  from { transform: rotate(0); }
+  to { transform: rotate(90deg); }
+}
+
+.nav-icon {
+  transform-origin: 50% 50%;
+}
+.nav-icon--tilt {
+  transform-origin: 50% 20%;
+}
+.nav-icon--bounce {
+  transform-origin: 50% 100%;
+}
+
+.group:hover .nav-icon--pop { animation: icon-pop 520ms var(--ease-soft); }
+.group:hover .nav-icon--lift { animation: icon-lift 480ms var(--ease-soft); }
+.group:hover .nav-icon--fly { animation: icon-fly 560ms var(--ease-soft); }
+.group:hover .nav-icon--tilt { animation: icon-tilt 600ms var(--ease-soft); }
+.group:hover .nav-icon--bounce { animation: icon-bounce 560ms var(--ease-soft); }
+.group:hover .nav-icon--stack { animation: icon-stack 520ms var(--ease-soft); }
+.group:hover .nav-icon--spin { animation: icon-spin 600ms var(--ease-soft); }
+
+@media (prefers-reduced-motion: reduce) {
+  .group:hover .nav-icon {
+    animation: none;
+  }
+}

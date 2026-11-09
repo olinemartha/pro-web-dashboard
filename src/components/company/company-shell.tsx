@@ -31,34 +31,36 @@ import { useCompanyStore } from "@/lib/company-store";
 
 type NavKey = "candidatures" | "entretiens" | "stagiaires";
 type Icon = React.ComponentType<{ className?: string }>;
-type NavItem = { href: string; label: string; icon: Icon; count?: NavKey };
+/** Petit mouvement propre à chaque icône au survol (à la manière des icônes animées de ChatGPT). */
+type IconMotion = "pop" | "lift" | "fly" | "tilt" | "bounce" | "stack" | "spin";
+type NavItem = { href: string; label: string; icon: Icon; motion: IconMotion; count?: NavKey };
 
 /**
  * Les 8 entrées du Design Brief, regroupées selon la vie d'un dossier :
  * on recrute, on suit le stage, on gère l'entreprise.
  */
 const NAV_GROUPS: { title: string | null; items: NavItem[] }[] = [
-  { title: null, items: [{ href: "/entreprise", label: "Tableau de bord", icon: LayoutDashboard }] },
+  { title: null, items: [{ href: "/entreprise", label: "Tableau de bord", icon: LayoutDashboard, motion: "pop" }] },
   {
     title: "Recrutement",
     items: [
-      { href: "/entreprise/offres", label: "Mes offres", icon: Briefcase },
-      { href: "/entreprise/candidatures", label: "Candidatures", icon: Send, count: "candidatures" },
-      { href: "/entreprise/entretiens", label: "Entretiens", icon: CalendarClock, count: "entretiens" },
+      { href: "/entreprise/offres", label: "Mes offres", icon: Briefcase, motion: "lift" },
+      { href: "/entreprise/candidatures", label: "Candidatures", icon: Send, motion: "fly", count: "candidatures" },
+      { href: "/entreprise/entretiens", label: "Entretiens", icon: CalendarClock, motion: "tilt", count: "entretiens" },
     ],
   },
   {
     title: "Suivi des stages",
     items: [
-      { href: "/entreprise/stagiaires", label: "Mes stagiaires", icon: Users, count: "stagiaires" },
-      { href: "/entreprise/services", label: "Services et besoins", icon: Layers },
+      { href: "/entreprise/stagiaires", label: "Mes stagiaires", icon: Users, motion: "bounce", count: "stagiaires" },
+      { href: "/entreprise/services", label: "Services et besoins", icon: Layers, motion: "stack" },
     ],
   },
   {
     title: "Entreprise",
     items: [
-      { href: "/entreprise/profil", label: "Mon profil entreprise", icon: Building2 },
-      { href: "/entreprise/parametres", label: "Paramètres", icon: Settings },
+      { href: "/entreprise/profil", label: "Mon profil entreprise", icon: Building2, motion: "lift" },
+      { href: "/entreprise/parametres", label: "Paramètres", icon: Settings, motion: "spin" },
     ],
   },
 ];
@@ -166,7 +168,7 @@ function NavLink({
     >
       <Icon
         className={cn(
-          "size-[18px] shrink-0",
+          `nav-icon nav-icon--${item.motion} size-[18px] shrink-0`,
           active ? "text-primary" : "text-muted-foreground/80 group-hover:text-foreground"
         )}
       />
@@ -288,7 +290,7 @@ function SwitchSpaceLink({ collapsed = false, onNavigate }: { collapsed?: boolea
         collapsed && "justify-center px-0"
       )}
     >
-      <GraduationCap className="size-[18px] shrink-0 text-muted-foreground group-hover:text-foreground" />
+      <GraduationCap className="nav-icon nav-icon--tilt size-[18px] shrink-0 text-muted-foreground group-hover:text-foreground" />
       {!collapsed && (
         <>
           <span className="min-w-0 flex-1 truncate">Espace étudiant</span>
@@ -332,7 +334,7 @@ function AccountMenu({ collapsed = false, onNavigate }: { collapsed?: boolean; o
   };
 
   const itemClass =
-    "flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-left text-[13px] text-foreground transition-colors hover:bg-muted";
+    "group flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-left text-[13px] text-foreground transition-colors hover:bg-muted";
 
   return (
     <div ref={ref} className="relative">
@@ -374,10 +376,10 @@ function AccountMenu({ collapsed = false, onNavigate }: { collapsed?: boolean; o
           </div>
           <div className="my-1 h-px bg-border" />
           <Link to="/entreprise/profil" role="menuitem" onClick={close} className={itemClass}>
-            <Building2 className="size-4 text-muted-foreground" /> Profil de l'entreprise
+            <Building2 className="nav-icon nav-icon--lift size-4 text-muted-foreground" /> Profil de l'entreprise
           </Link>
           <Link to="/entreprise/parametres" role="menuitem" onClick={close} className={itemClass}>
-            <Settings className="size-4 text-muted-foreground" /> Paramètres
+            <Settings className="nav-icon nav-icon--spin size-4 text-muted-foreground" /> Paramètres
           </Link>
           <div className="my-1 h-px bg-border" />
           <button
@@ -386,7 +388,7 @@ function AccountMenu({ collapsed = false, onNavigate }: { collapsed?: boolean; o
             onClick={close}
             className={cn(itemClass, "text-destructive-ink hover:bg-destructive-soft")}
           >
-            <LogOut className="size-4" /> Déconnexion
+            <LogOut className="nav-icon nav-icon--fly size-4" /> Déconnexion
           </button>
         </div>
       )}

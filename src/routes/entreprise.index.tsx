@@ -245,13 +245,13 @@ type TodoGroup = "recrutement" | "stagiaires" | "services";
 
 const TODO_META: Record<
   TodoKind,
-  { action: string; icon: React.ComponentType<{ className?: string }>; group: TodoGroup }
+  { action: string; icon: React.ComponentType<{ className?: string }>; group: TodoGroup; motion: string }
 > = {
-  affectation: { action: "Valider", icon: Scale, group: "stagiaires" },
-  candidature: { action: "Examiner", icon: Inbox, group: "recrutement" },
-  rapport: { action: "Relire", icon: FileText, group: "stagiaires" },
-  entretien: { action: "Préparer", icon: CalendarClock, group: "recrutement" },
-  service: { action: "Mettre à jour", icon: Layers, group: "services" },
+  affectation: { action: "Valider", icon: Scale, group: "stagiaires", motion: "tilt" },
+  candidature: { action: "Examiner", icon: Inbox, group: "recrutement", motion: "bounce" },
+  rapport: { action: "Relire", icon: FileText, group: "stagiaires", motion: "lift" },
+  entretien: { action: "Préparer", icon: CalendarClock, group: "recrutement", motion: "tilt" },
+  service: { action: "Mettre à jour", icon: Layers, group: "services", motion: "stack" },
 };
 
 const TODO_GROUPS: { key: TodoGroup | "tout"; label: string }[] = [
@@ -668,6 +668,7 @@ function CompanyDashboard() {
     label: string;
     value: number;
     icon: React.ComponentType<{ className?: string }>;
+    motion: string;
     foot: string;
     to: string;
     trend?: boolean;
@@ -678,6 +679,7 @@ function CompanyDashboard() {
       label: "Offres actives",
       value: activeOffers.length,
       icon: Briefcase,
+      motion: "lift",
       foot: `sur ${offers.length} offre${offers.length > 1 ? "s" : ""} créée${offers.length > 1 ? "s" : ""}`,
       to: "/entreprise/offres",
     },
@@ -685,6 +687,7 @@ function CompanyDashboard() {
       label: "Candidatures reçues",
       value: candidates.length,
       icon: Send,
+      motion: "fly",
       foot: last30 > 0 ? `+${last30} en 30 jours` : "aucune ce mois-ci",
       trend: last30 > 0,
       spark: weekly,
@@ -694,6 +697,7 @@ function CompanyDashboard() {
       label: "À examiner",
       value: toExamine.length,
       icon: UserSearch,
+      motion: "pop",
       foot: toExamine.length ? "en attente de votre décision" : "rien en attente",
       alert: toExamine.length > 0,
       to: "/entreprise/candidatures",
@@ -702,6 +706,7 @@ function CompanyDashboard() {
       label: "Stagiaires accueillis",
       value: interns.length,
       icon: Users,
+      motion: "bounce",
       foot: `${confirmedInterns.length} affectation${confirmedInterns.length > 1 ? "s" : ""} confirmée${confirmedInterns.length > 1 ? "s" : ""}`,
       to: "/entreprise/stagiaires",
     },
@@ -720,7 +725,7 @@ function CompanyDashboard() {
               <div className="flex items-start justify-between gap-2.5">
                 <span className="min-w-0 flex-1 text-[13px] font-medium leading-snug text-muted-foreground line-clamp-2 xl:line-clamp-1">{stat.label}</span>
                 <span className="grid size-5 shrink-0 place-items-center text-muted-foreground transition-colors duration-200 group-hover:text-foreground">
-                  <stat.icon className="size-[18px]" />
+                  <stat.icon className={`nav-icon nav-icon--${stat.motion} size-[18px]`} />
                 </span>
               </div>
               <div className="flex items-end justify-between gap-2">
@@ -843,7 +848,7 @@ function CompanyDashboard() {
                         {/* Icône nue, de sens */}
                         <meta.icon
                           className={cn(
-                            "size-[18px] transition-colors duration-200",
+                            `nav-icon nav-icon--${meta.motion} size-[18px] transition-colors duration-200`,
                             rec ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
                           )}
                         />
@@ -1087,7 +1092,7 @@ function CompanyDashboard() {
                       >
                         <span className="flex min-w-0 items-center gap-3">
                           <span className="grid size-5 shrink-0 place-items-center text-muted-foreground transition-colors duration-200 group-hover:text-foreground">
-                            <Briefcase className="size-[18px]" />
+                            <Briefcase className="nav-icon nav-icon--lift size-[18px]" />
                           </span>
                           <span className="min-w-0">
                             <span className="block truncate text-sm font-medium group-hover:text-primary">{offer.title}</span>
