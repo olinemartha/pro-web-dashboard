@@ -305,11 +305,12 @@ export function NotificationBell({ align = "right" }: { align?: "right" | "left"
         aria-label={count ? `Notifications : ${count} à consulter` : "Notifications"}
         aria-expanded={open}
         className={cn(
-          "press relative grid size-10 shrink-0 place-items-center rounded-full bg-card/60 text-muted-foreground ring-1 ring-inset ring-border/70 backdrop-blur-md transition-all duration-200 hover:bg-card hover:text-foreground",
+          "press group relative grid size-10 shrink-0 place-items-center rounded-full bg-card/60 text-muted-foreground ring-1 ring-inset ring-border/70 backdrop-blur-md transition-all duration-200 hover:bg-card hover:text-foreground hover:ring-accent/40",
           open && "bg-card text-foreground ring-accent/40"
         )}
       >
-        <Bell className="size-[18px]" strokeWidth={1.75} />
+        {/* Au survol, la cloche sonne : un balancement amorti depuis son attache. */}
+        <Bell className="bell-ring size-[18px]" strokeWidth={1.75} />
         {count > 0 && (
           <span className="absolute -right-0.5 -top-0.5 grid h-[18px] min-w-[18px] place-items-center rounded-full bg-primary px-1 text-[10px] font-semibold leading-none tabular-nums text-primary-foreground ring-2 ring-canvas">
             {count}
@@ -358,7 +359,7 @@ export function NotificationBell({ align = "right" }: { align?: "right" | "left"
             className="group flex items-center justify-center gap-1.5 border-t px-4 py-2.5 text-[13px] font-medium transition-colors hover:bg-primary hover:text-primary-foreground"
           >
             Voir toutes les candidatures
-            <ArrowRight className="size-3.5 transition-transform duration-200 group-hover:translate-x-0.5" />
+            <ArrowRight className="size-3.5 transition-transform duration-300 [transition-timing-function:var(--ease-soft)] group-hover:translate-x-1 group-focus-visible:translate-x-1 motion-reduce:transition-none" />
           </Link>
         </div>
       )}

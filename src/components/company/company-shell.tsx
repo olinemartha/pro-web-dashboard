@@ -292,7 +292,7 @@ function SwitchSpaceLink({ collapsed = false, onNavigate }: { collapsed?: boolea
       {!collapsed && (
         <>
           <span className="min-w-0 flex-1 truncate">Espace étudiant</span>
-          <ArrowLeftRight className="size-3.5 shrink-0 text-muted-foreground" />
+          <ArrowLeftRight className="size-3.5 shrink-0 text-muted-foreground transition-transform duration-500 [transition-timing-function:var(--ease-soft)] group-hover:rotate-180 group-hover:text-foreground motion-reduce:transition-none" />
         </>
       )}
       {collapsed && (

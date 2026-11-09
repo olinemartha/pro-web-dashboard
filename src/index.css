@@ -341,3 +341,30 @@
     animation: none;
   }
 }
+
+/* Cloche : balancement amorti au survol du bouton (depuis l'attache, en haut). */
+@keyframes bell-ring {
+  0% { transform: rotate(0); }
+  15% { transform: rotate(14deg); }
+  30% { transform: rotate(-12deg); }
+  45% { transform: rotate(8deg); }
+  60% { transform: rotate(-5deg); }
+  75% { transform: rotate(2deg); }
+  100% { transform: rotate(0); }
+}
+
+.bell-ring {
+  transform-origin: 50% 2px;
+}
+
+.group:hover .bell-ring,
+.group:focus-visible .bell-ring {
+  animation: bell-ring 750ms var(--ease-soft);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .group:hover .bell-ring,
+  .group:focus-visible .bell-ring {
+    animation: none;
+  }
+}

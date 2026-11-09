@@ -256,7 +256,7 @@ L'indicateur actif de la navigation est une pastille bleu glacier qui glisse d'u
 Courbe unique « ease-out quint » (`cubic-bezier(0.22, 1, 0.36, 1)`), durées de 140 à 900 ms.
 - **Entrée de page** : fondu + glissement de 10 px, en cascade courte (40 à 60 ms entre éléments).
 - **Données** : compteurs qui montent jusqu'à leur valeur, barres qui grandissent, anneau et courbe qui se dessinent. Les lecteurs d'écran lisent directement la valeur finale.
-- **Interactions** : pression à 97 % au clic, soulèvement des cartes cliquables, rotation du « + » du bouton « Publier », pastille de navigation qui glisse.
+- **Interactions** : pression à 97 % au clic, soulèvement des cartes cliquables, rotation du « + » du bouton « Publier », pastille de navigation qui glisse. Toutes les flèches « → » glissent de 4 px vers la droite au survol (ou au focus) ; les flèches d'échange de « Espace étudiant » font un demi-tour ; la cloche des notifications se balance comme une cloche qui sonne (750 ms, amorti).
 - **Fenêtres** : voile flouté qui apparaît en fondu, fenêtre qui monte légèrement en s'agrandissant ; tiroirs qui glissent depuis le bord.
 
 Tout s'immobilise sous `prefers-reduced-motion`.
@@ -278,7 +278,7 @@ Tout s'immobilise sous `prefers-reduced-motion`.
 - Les listes dans une carte utilisent des lignes séparées par un filet, pas des cartes imbriquées.
 
 ### KPI Cards
-Quatre cartes séparées et espacées. En haut : icône monochrome nue + libellé 13 px (deux lignes autorisées sur téléphone). Au centre : valeur 30 px, avec une courbe pour les candidatures. En bas, séparée par un filet : une précision de 12 px (tendance verte, alerte ambre ou contexte gris).
+Quatre cartes séparées et espacées. En haut : libellé 13 px à gauche (deux lignes autorisées sur téléphone) et icône monochrome nue à droite. Au centre : valeur 30 px, avec une courbe pour les candidatures. En bas, séparée par un filet : une précision de 12 px (tendance verte, alerte ambre ou contexte gris).
 
 ### File « À traiter »
 Titre « À traiter » avec un compteur, filtres sur la même ligne, filet dessous. Chaque ligne : icône nue de sens · **la personne (ou le service) en gras**, suivie de la tâche en gris (« Rachel Ilunga · Candidature à examiner ») · contexte en dessous · **colonne de délai** alignée à droite (« 14 j d'attente », « demain ») · bouton. Le délai passe en **ambre avec une horloge** quand c'est urgent (attente de 7 jours ou plus, entretien aujourd'hui ou demain). Les rappels de services ont un sujet gris, moins appuyé. La ligne d'affectation est le seul élément teinté : fond glacier plein, liseré bleu roi de 3 px à gauche, icône balance, « Recommandé : **Direction IT** », jauge de critères (pastilles bleu roi) et « 4/4 critères » ; elle mène à l'explication et ne décide jamais à la place de l'entreprise. Tri par urgence réelle ; au-delà de 5 lignes, un bouton déplie la liste sur place. Chaque lien a un nom accessible rédigé en phrase.

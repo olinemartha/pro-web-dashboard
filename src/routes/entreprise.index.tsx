@@ -169,7 +169,7 @@ function SectionHeader({
           className="press group inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border bg-card px-3 text-[13px] font-medium text-foreground shadow-sm transition-all duration-200 hover:border-primary hover:bg-primary hover:text-primary-foreground hover:shadow-md"
         >
           {linkLabel}
-          <ArrowRight className="size-3.5 transition-transform duration-200 group-hover:translate-x-0.5" />
+          <ArrowRight className="size-3.5 transition-transform duration-300 [transition-timing-function:var(--ease-soft)] group-hover:translate-x-1 group-focus-visible:translate-x-1 motion-reduce:transition-none" />
         </Link>
       )}
     </div>
@@ -717,11 +717,11 @@ function CompanyDashboard() {
               to={stat.to}
               className="card-surface hover-lift group flex h-full flex-col gap-4 p-4 sm:p-5"
             >
-              <div className="flex items-center gap-2.5">
+              <div className="flex items-start justify-between gap-2.5">
+                <span className="min-w-0 flex-1 text-[13px] font-medium leading-snug text-muted-foreground line-clamp-2 xl:line-clamp-1">{stat.label}</span>
                 <span className="grid size-5 shrink-0 place-items-center text-muted-foreground transition-colors duration-200 group-hover:text-foreground">
                   <stat.icon className="size-[18px]" />
                 </span>
-                <span className="min-w-0 flex-1 text-[13px] font-medium leading-snug text-muted-foreground line-clamp-2 xl:line-clamp-1">{stat.label}</span>
               </div>
               <div className="flex items-end justify-between gap-2">
                 <p className="text-[30px] font-semibold leading-none tracking-tight">
@@ -908,7 +908,7 @@ function CompanyDashboard() {
                           )}
                         >
                           <span className="hidden whitespace-nowrap sm:inline">{rec ? "Voir l'explication" : meta.action}</span>
-                          <ArrowRight className="size-3.5 shrink-0" />
+                          <ArrowRight className="size-3.5 shrink-0 transition-transform duration-300 [transition-timing-function:var(--ease-soft)] group-hover:translate-x-1 group-focus-visible:translate-x-1 motion-reduce:transition-none" />
                         </span>
                       </TodoTarget>
                     </Reveal>
@@ -952,7 +952,7 @@ function CompanyDashboard() {
           </Reveal>
 
         </div>
-        <aside className="grid gap-6 lg:grid-cols-2 xl:flex xl:flex-col">
+        <aside className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-2 xl:flex xl:flex-col">
           {/* Carte entreprise — version d'origine, conservée telle quelle (logo ajoutable) */}
           <Reveal delay={120} className="card-surface overflow-hidden">
             <div className="relative bg-gradient-to-b from-accent-soft/80 via-accent-soft/30 to-card px-5 pb-5 pt-6 text-center">
