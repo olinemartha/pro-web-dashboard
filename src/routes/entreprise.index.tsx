@@ -320,14 +320,14 @@ function TodoTarget({
 /**
  * Couleurs de sens : jaune pour ce qui attend, violet pour l'examen,
  * bleu pour l'entretien, vert pour l'acceptation, rouge pour le refus.
- * Même clarté et même saturation pour qu'aucune ne crie plus que l'autre.
+ * Teintes adoucies (saturation modérée, clarté égale) : lisibles sans crier.
  */
 const PIPELINE: { status: CandidateStatus; color: string }[] = [
-  { status: "en_attente", color: "hsl(42 92% 54%)" },
-  { status: "examen", color: "hsl(262 66% 64%)" },
-  { status: "entretien", color: "hsl(220 84% 56%)" },
-  { status: "acceptee", color: "hsl(152 55% 40%)" },
-  { status: "refusee", color: "hsl(0 72% 58%)" },
+  { status: "en_attente", color: "hsl(40 80% 60%)" },
+  { status: "examen", color: "hsl(256 48% 66%)" },
+  { status: "entretien", color: "hsl(218 68% 60%)" },
+  { status: "acceptee", color: "hsl(156 42% 48%)" },
+  { status: "refusee", color: "hsl(356 62% 64%)" },
 ];
 
 type PipelineStep = { status: CandidateStatus; color: string; count: number };
@@ -344,7 +344,7 @@ function PipelineChart({
 }) {
   const [hover, setHover] = useState<CandidateStatus | null>(null);
   const size = 136;
-  const stroke = 18;
+  const stroke = 11;
   const r = (size - stroke) / 2;
   const c = 2 * Math.PI * r;
   const gap = total > 0 && steps.filter((s) => s.count > 0).length > 1 ? 3 : 0;
@@ -375,7 +375,7 @@ function PipelineChart({
               r={r}
               fill="none"
               stroke={arc.color}
-              strokeWidth={hover === arc.status ? stroke + 4 : stroke}
+              strokeWidth={hover === arc.status ? stroke + 3 : stroke}
               strokeDasharray={`${arc.dash} ${c}`}
               strokeDashoffset={-arc.offset}
               className="donut-arc transition-[stroke-width,opacity] duration-200"
@@ -418,10 +418,10 @@ function PipelineChart({
               )}
             >
               <span className="flex min-w-0 items-center gap-2 text-[13px]">
-                <span className="size-2.5 shrink-0 rounded-[3px]" style={{ background: step.color }} aria-hidden />
+                <span className="size-2 shrink-0 rounded-full" style={{ background: step.color }} aria-hidden />
                 <span className="truncate">{candidateStatusLabels[step.status].label}</span>
               </span>
-              <span className="h-2 overflow-hidden rounded-full bg-muted">
+              <span className="h-1.5 overflow-hidden rounded-full bg-muted">
                 <span
                   className="animate-grow-x block h-full rounded-full"
                   style={{

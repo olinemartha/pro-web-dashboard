@@ -18,11 +18,11 @@ colors:
   warning-soft: "#FFFBEB"
   destructive-red: "#DC2828"
   destructive-soft: "#FBE9E9"
-  pipeline-waiting: "hsl(42 92% 54%)"
-  pipeline-review: "hsl(262 66% 64%)"
-  pipeline-interview: "#2F6FED"
-  pipeline-accepted: "hsl(152 55% 40%)"
-  pipeline-refused: "hsl(0 72% 58%)"
+  pipeline-waiting: "hsl(40 80% 60%)"
+  pipeline-review: "hsl(256 48% 66%)"
+  pipeline-interview: "hsl(218 68% 60%)"
+  pipeline-accepted: "hsl(156 42% 48%)"
+  pipeline-refused: "hsl(356 62% 64%)"
 typography:
   kpi:
     fontFamily: "Inter, sans-serif"
@@ -169,7 +169,7 @@ La palette est institutionnelle et à faible distraction : trois bleus de marque
 - **Bleu vif** (#2F6FED) : liens, anneau de focus clavier, courbe des candidatures, série « En entretien » du pipeline, indicateurs d'activité. Le texte posé sur le bleu vif est blanc.
 
 ### Pipeline (gamme de données)
-Couleurs de sens (choix du 9 nov. 2026) : En attente jaune `hsl(42 92% 54%)` · En cours d'examen violet `hsl(262 66% 64%)` · En entretien bleu vif #2F6FED · Acceptée vert `hsl(152 55% 40%)` · Refusée rouge `hsl(0 72% 58%)`. Clarté et saturation proches pour qu'aucune série ne domine. Les chiffres restent écrits en texte à côté du graphique.
+Couleurs de sens, adoucies pour rester fines et professionnelles : En attente jaune `hsl(40 80% 60%)` · En cours d'examen violet `hsl(256 48% 66%)` · En entretien bleu `hsl(218 68% 60%)` · Acceptée vert `hsl(156 42% 48%)` · Refusée rouge `hsl(356 62% 64%)`. Saturation modérée et clarté égale. Traits fins : anneau de 11 px, barres de 6 px, pastilles rondes de 8 px. Les chiffres restent écrits en texte à côté du graphique.
 
 ### Tertiary
 - **Vert validation** (#27865A) sur fond **vert très clair** (#E7F8F0) : accepter, valider, réussir, attestation validée, tendance positive.
@@ -294,6 +294,7 @@ Une ligne par candidat, son dernier événement seulement (pas de doublon). Lign
 - **Focus** : bordure bleu vif + anneau de 3 px à 15 %. Survol : bordure légèrement plus sombre.
 - **Erreur** : bordure rouge + anneau rouge léger, message rouge sous le champ (relié par `aria-describedby`, `aria-invalid`). L'astérisque des champs obligatoires reste gris : le rouge est réservé aux erreurs. À l'envoi, le focus va au premier champ en erreur ; chaque erreur disparaît dès qu'elle est corrigée.
 - **Placeholders, jamais de valeur préremplie** : « Ex. Kinshasa, Gombe », « Choisir une durée ». Les listes déroulantes ont un chevron au trait des icônes et un texte gris tant que rien n'est choisi.
+- **Calendrier** (date limite) : bouton au style d'un champ (« Choisir une date », icône calendrier) qui ouvre un panneau blanc de 292 px : mois centré entre deux flèches rondes, jours de la semaine du lundi au dimanche en gras, jours en cercles de 36 px. Jour choisi : cercle bleu roi plein ; aujourd'hui : cercle gris clair avec un point ; jours des mois voisins et jours passés en gris pâle. Survol bleu glacier. Clavier : flèches, Page préc./suiv., Début/Fin, Entrée ; Échap ferme le calendrier sans fermer la fenêtre. S'ouvre vers le haut si la place manque.
 - **Compétences** : saisie en étiquettes (pilules bleu glacier, comme sur les cartes d'offre) ; Entrée ou virgule ajoute, la croix retire, pas de doublon, suggestions tirées des offres existantes.
 - **Recherche** : pilule de 40 px marquée « Rechercher », qui s'élargit doucement au focus ; les résultats n'apparaissent qu'à la saisie.
 

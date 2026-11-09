@@ -27,6 +27,7 @@ import {
   textareaClass,
   type Tone,
 } from "@/components/company/ui";
+import { DatePicker } from "@/components/company/date-picker";
 import { useCompanyStore } from "@/lib/company-store";
 import { cn } from "@/lib/utils";
 import { offerStatusLabels, type CompanyOffer, type OfferStatus } from "@/lib/company-data";
@@ -577,13 +578,11 @@ function CompanyOffersPage() {
                   : undefined
               }
             >
-              <input
+              <DatePicker
                 id="offre-deadline"
-                type="date"
                 min={editingId ? undefined : localIso(new Date(Date.now() + 86_400_000))}
-                className={cn(inputClass, !form.deadline && "text-muted-foreground")}
                 value={form.deadline}
-                onChange={(event) => set({ deadline: event.target.value })}
+                onChange={(deadline) => set({ deadline })}
               />
             </Field>
           </FormSection>

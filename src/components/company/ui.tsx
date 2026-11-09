@@ -125,7 +125,9 @@ export function Field({
   const control =
     htmlFor &&
     React.isValidElement(children) &&
-    (["input", "select", "textarea"].includes(children.type as string) || children.type === Select)
+    (["input", "select", "textarea"].includes(children.type as string) ||
+      children.type === Select ||
+      Boolean((children.type as { acceptsFieldProps?: boolean }).acceptsFieldProps))
       ? React.cloneElement(children as React.ReactElement<Record<string, unknown>>, {
           "aria-invalid": error ? true : undefined,
           "aria-describedby": error || hint ? messageId : undefined,
