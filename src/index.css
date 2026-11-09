@@ -461,3 +461,34 @@
     animation: none;
   }
 }
+
+/* Logo « S parcours » : au survol, le S se redessine et le point de départ pulse. */
+@keyframes logo-draw {
+  0% { stroke-dashoffset: 1; }
+  100% { stroke-dashoffset: 0; }
+}
+@keyframes logo-dot-pulse {
+  0% { transform: scale(1); }
+  35% { transform: scale(1.35); }
+  100% { transform: scale(1); }
+}
+.logo-path {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 0;
+}
+.logo-dot {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.group:hover .logo-path {
+  animation: logo-draw 700ms var(--ease-soft);
+}
+.group:hover .logo-dot {
+  animation: logo-dot-pulse 600ms var(--ease-soft);
+}
+@media (prefers-reduced-motion: reduce) {
+  .group:hover .logo-path,
+  .group:hover .logo-dot {
+    animation: none;
+  }
+}

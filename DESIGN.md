@@ -295,12 +295,13 @@ Une ligne par candidat, son dernier événement seulement (pas de doublon). Lign
 - **Recherche** : pilule de 40 px marquée « Rechercher », qui s'élargit doucement au focus ; les résultats n'apparaissent qu'à la saisie.
 
 ### Navigation
-- Barre latérale blanche, liens groupés par métier (Recrutement, Suivi des stages, Entreprise), compteurs d'actions en attente, lien visible « Espace étudiant » au-dessus de la carte de compte (lien de démonstration).
+- **Logo « S parcours »** : carré bleu roi de 32 px (rayon 9 px) ; un S blanc tracé d'un seul trait part d'un point bleu clair, comme un parcours de stage. Au survol de la marque, le S se redessine (700 ms) et le point pulse.
+- Barre latérale blanche, liens groupés par métier (Recrutement, Suivi des stages, Entreprise), pastille bleue qui glisse sous la page ouverte (et seulement elle), compteurs d'actions en attente, lien visible « Espace étudiant » au-dessus de la carte de compte (lien de démonstration).
 - Mode replié : icônes seules avec info-bulle au survol et au focus.
 - Mobile : tiroir blanc avec voile flouté, fermeture par X, clic extérieur ou Échap.
 
 ### Notifications
-Cloche ronde translucide avec compteur bleu roi ; panneau en verre dépoli listant les événements à traiter, chaque ligne menant à l'objet concerné.
+Cloche ronde translucide avec compteur bleu roi ; panneau blanc opaque listant les événements à traiter, chaque ligne menant à l'objet concerné.
 
 ### Modals
 Rendues au niveau de la page entière (portail) : voile `slate-900/25` flouté de 6 px sur tout l'écran, barre latérale comprise. Panneau blanc de 16 px de rayon, largeur 512 px (720 px pour les formulaires longs), centré à l'écran ; sur mobile, ancré en bas avec une poignée. En-tête avec icône nue, titre et fermeture ; pied d'actions sur fond atténué. Échap ferme, la page derrière ne défile plus. Les formulaires longs sont découpés en sections titrées.

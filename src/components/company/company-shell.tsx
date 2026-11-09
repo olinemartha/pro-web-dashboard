@@ -109,18 +109,26 @@ function LogoMark({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 32 32" className={cn("size-8 shrink-0", className)} aria-hidden>
       <rect width="32" height="32" rx="9" fill="hsl(var(--primary))" />
-      {/* Deux parcours qui se rejoignent : le stagiaire et le service. */}
-      <path d="M9 12.5a3.5 3.5 0 0 1 3.5-3.5H19" stroke="hsl(var(--accent))" strokeWidth="3" strokeLinecap="round" fill="none" />
-      <path d="M23 19.5a3.5 3.5 0 0 1-3.5 3.5H13" stroke="#fff" strokeWidth="3" strokeLinecap="round" fill="none" />
-      <circle cx="21.5" cy="12.5" r="2.25" fill="#fff" />
-      <circle cx="10.5" cy="19.5" r="2.25" fill="hsl(var(--accent))" />
+      {/* Le « S » parcours : un S tracé comme un chemin ; le point marque le départ,
+          le stagiaire guidé jusqu'au bon service. Au survol, le S se redessine. */}
+      <path
+        className="logo-path"
+        d="M21.5 10.5h-7a3.5 3.5 0 0 0 0 7h3a3.5 3.5 0 0 1 0 7h-7"
+        stroke="#fff"
+        strokeWidth="3"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        fill="none"
+        pathLength={1}
+      />
+      <circle className="logo-dot" cx="22.5" cy="10.5" r="2.4" fill="hsl(218 85% 73%)" />
     </svg>
   );
 }
 
 function Brand({ collapsed }: { collapsed?: boolean }) {
   return (
-    <Link to="/entreprise" className="flex min-w-0 items-center gap-2.5" aria-label="StageManager — tableau de bord">
+    <Link to="/entreprise" className="group flex min-w-0 items-center gap-2.5" aria-label="StageManager — tableau de bord">
       <LogoMark />
       <span
         className={cn(
@@ -156,10 +164,12 @@ function NavLink({
   return (
     <Link
       to={item.href}
+      activeOptions={{ exact: item.href === "/entreprise" }}
       onClick={onNavigate}
       aria-current={active ? "page" : undefined}
       aria-label={collapsed ? item.label : undefined}
       data-nav-link
+      data-nav-active={active ? "true" : undefined}
       className={cn(
         "group relative z-10 flex h-9 items-center gap-3 rounded-lg px-2.5 text-[13.5px] transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30",
         collapsed && "justify-center px-0",
@@ -221,7 +231,7 @@ function SidebarNav({
   const [pill, setPill] = useState<{ top: number; height: number } | null>(null);
 
   const measure = useCallback(() => {
-    const active = navRef.current?.querySelector<HTMLElement>("[data-nav-link][aria-current=page]");
+    const active = navRef.current?.querySelector<HTMLElement>("[data-nav-link][data-nav-active=true]");
     setPill(active ? { top: active.offsetTop, height: active.offsetHeight } : null);
   }, []);
 
