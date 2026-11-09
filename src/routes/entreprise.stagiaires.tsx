@@ -1,6 +1,6 @@
 import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { useState } from "react";
-import { ClipboardCheck, FileText, UserCheck, Users } from "lucide-react";
+import { ArrowLeft, ClipboardCheck, FileText, UserCheck, Users } from "lucide-react";
 import { Reveal } from "@/components/ui/motion";
 import { AvatarInitials, EmptyNote, PageIntro, SECTION_LINK, StatCard } from "@/components/company/ui";
 import { useCompanyStore } from "@/lib/company-store";
@@ -47,12 +47,61 @@ function CompanyInternsLayout() {
 
   const toggle = (value: Filter) => setFilter((current) => (current === value ? "tous" : value));
 
+  if (dossierOpen) {
+    return (
+      <div className="space-y-6">
+        <Reveal as="section" className="card-surface flex flex-wrap items-center gap-x-4 gap-y-2.5 px-4 py-3" aria-label="Changer de dossier">
+          <Link
+            to="/entreprise/stagiaires"
+            className="group inline-flex shrink-0 items-center gap-1.5 text-[13px] font-medium text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <ArrowLeft className="size-4 transition-transform duration-300 [transition-timing-function:var(--ease-soft)] group-hover:-translate-x-1 motion-reduce:transition-none" />
+            Tous les dossiers
+          </Link>
+          <span className="hidden h-5 w-px bg-border sm:block" aria-hidden />
+          <nav aria-label="Dossiers stagiaires" className="flex min-w-0 flex-wrap gap-1">
+            {interns.map((intern) => {
+              const active = pathname === `/entreprise/stagiaires/${intern.id}`;
+              const reports = pendingReports(intern);
+              return (
+                <Link
+                  key={intern.id}
+                  to="/entreprise/stagiaires/$internId"
+                  params={{ internId: intern.id }}
+                  aria-current={active ? "page" : undefined}
+                  className={cn(
+                    "press inline-flex h-9 items-center gap-2 rounded-lg pl-1.5 pr-3 text-[13px] transition-colors duration-200",
+                    active ? "bg-primary-soft font-semibold text-primary" : "font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
+                  )}
+                >
+                  <AvatarInitials initials={intern.initials} className="size-6 text-[10px]" />
+                  {intern.name}
+                  {!intern.confirmed && (
+                    <span className="size-1.5 rounded-full bg-warning" aria-label="affectation à confirmer" />
+                  )}
+                  {reports > 0 && (
+                    <span
+                      className="grid h-4 min-w-4 place-items-center rounded-full bg-primary px-1 text-[10px] font-semibold tabular-nums text-primary-foreground"
+                      aria-label={`${reports} rapport${reports > 1 ? "s" : ""} à relire`}
+                    >
+                      {reports}
+                    </span>
+                  )}
+                </Link>
+              );
+            })}
+          </nav>
+        </Reveal>
+        <Outlet />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <PageIntro desc="Un dossier par stagiaire : affectation recommandée par le système expert, suivi des rapports, évaluation et attestation." />
 
-      {/* Les indicateurs s'effacent quand un dossier est ouvert : le rapport d'expertise tient dans le premier écran. */}
-      {!dossierOpen && (
+      {(
         <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 lg:gap-6">
           {[
             <StatCard
@@ -105,11 +154,10 @@ function CompanyInternsLayout() {
       )}
 
       <div className="grid gap-6 lg:grid-cols-[280px_minmax(0,1fr)] xl:grid-cols-[320px_minmax(0,1fr)]">
-        {/* Sur téléphone et tablette, un dossier ouvert remplace la liste. */}
         <Reveal
           as="aside"
-          delay={dossierOpen ? 0 : 120}
-          className={cn("card-surface self-start overflow-hidden", dossierOpen && "hidden lg:block")}
+          delay={120}
+          className="card-surface overflow-hidden"
           aria-labelledby="dossiers-titre"
         >
           <div className="flex items-center justify-between gap-3 border-b px-5 pb-3.5 pt-4">

@@ -276,6 +276,7 @@ Chaque motif ci-dessous existe en code ; les pages l'importent au lieu de le ré
 3. La liste : une carte avec en-tête (titre 15 px + compteur gris, `FilterChips`, recherche), lignes séparées par un filet, `Reveal` en cascade de 40 ms ; un seul bouton de ligne `rowActionClass()` et le reste dans `ActionMenu`.
 4. État vide : `EmptyNote` + « Tout afficher ».
 5. Détail : `Modal` (offre) ou `Drawer` (candidat) ; repères en bande bordée, sections titrées en 13 px semibold, statuts aux couleurs du pipeline.
+7. Mes stagiaires : sans dossier ouvert, la liste et le volet « Sélectionnez un dossier » ont la même hauteur ; dossier ouvert, la liste devient un sélecteur compact en haut et le dossier prend toute la largeur. Dans le rapport d’expertise, les deux colonnes finissent au même niveau : la carte « Votre décision » ne change pas, la carte « Trace de l’analyse » sous elle comble la hauteur (le détail s’ouvre dans une fenêtre) et la dernière proposition s’étire si besoin ; une fois l’affectation confirmée, les propositions non retenues se replient sur une ligne.
 6. Les offres restent des cartes (grille de 2 colonnes) avec leur mini-pipeline ; les candidatures et les entretiens sont des lignes. Les entretiens à venir passent avant l'historique, le prochain est mis en avant en bleu glacier, l'imminent (aujourd'hui, demain) en ambre.
 - `src/components/ui/motion.tsx` : `Reveal`, `AnimatedNumber`.
 - `src/lib/dates.ts` : formats de date français.

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { CheckCircle2, Info, RefreshCw, Scale, ShieldAlert, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Badge, Field, SectionLabel, inputClass, textareaClass } from "@/components/company/ui";
+import { Badge, Field, Modal, SECTION_LINK, SectionLabel, inputClass, textareaClass } from "@/components/company/ui";
 import { Stamp, stampDate } from "@/components/company/stamp";
 import { useCompanyStore } from "@/lib/company-store";
 import type { ExpertProposal, Intern } from "@/lib/company-data";
@@ -27,7 +27,11 @@ function fmtDate(value: string) {
   });
 }
 
-function ProposalCard({ proposal }: { proposal: ExpertProposal }) {
+/**
+ * `compact` : une fois l'affectation confirmée, les propositions non retenues
+ * se replient sur une ligne ; leurs critères restent consultables.
+ */
+function ProposalCard({ proposal, compact = false }: { proposal: ExpertProposal; compact?: boolean }) {
   const satisfied = proposal.satisfied.filter((criterion) => criterion.satisfied);
   const missing = proposal.satisfied.filter((criterion) => !criterion.satisfied);
   const recommended = proposal.rank === 1;
@@ -35,7 +39,8 @@ function ProposalCard({ proposal }: { proposal: ExpertProposal }) {
   return (
     <article
       className={cn(
-        "rounded-lg border p-4",
+        "rounded-lg border",
+        compact ? "px-4 py-3" : "p-4",
         recommended
           ? "border-accent/50 bg-accent-soft/40"
           : "border border-border bg-card"
@@ -66,60 +71,127 @@ function ProposalCard({ proposal }: { proposal: ExpertProposal }) {
         />
       </div>
 
-      <div className="mt-3 flex flex-wrap gap-1.5">
-        {satisfied.map((criterion) => (
-          <span
-            key={criterion.ruleId}
-            className="inline-flex items-center gap-1 rounded-full border border-success/30 bg-success-soft px-2 py-0.5 text-xs font-medium text-success"
-          >
-            <CheckCircle2 className="size-3" /> {criterion.label}
-          </span>
-        ))}
-        {missing.map((criterion) => (
-          <span
-            key={criterion.ruleId}
-            className="inline-flex items-center gap-1 rounded-full border border-warning/30 bg-warning-soft px-2 py-0.5 text-xs font-medium text-warning"
-          >
-            <ShieldAlert className="size-3" /> {criterion.label}
-          </span>
-        ))}
-      </div>
-
-      {proposal.limits.length > 0 && (
-        <ul className="mt-2 space-y-0.5 text-xs leading-relaxed text-warning">
-          {proposal.limits.map((limit) => (
-            <li key={limit}>• {limit}</li>
+      {compact ? (
+        <details className="group/criteres mt-2">
+          <summary className="cursor-pointer list-none text-xs font-medium text-primary [&::-webkit-details-marker]:hidden">
+            <span className="group-open/criteres:hidden">Voir les critères</span>
+            <span className="hidden group-open/criteres:inline">Masquer les critères</span>
+          </summary>
+          <>
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            {satisfied.map((criterion) => (
+              <span
+                key={criterion.ruleId}
+                className="inline-flex items-center gap-1 rounded-full border border-success/30 bg-success-soft px-2 py-0.5 text-xs font-medium text-success"
+              >
+                <CheckCircle2 className="size-3" /> {criterion.label}
+              </span>
+            ))}
+            {missing.map((criterion) => (
+              <span
+                key={criterion.ruleId}
+                className="inline-flex items-center gap-1 rounded-full border border-warning/30 bg-warning-soft px-2 py-0.5 text-xs font-medium text-warning"
+              >
+                <ShieldAlert className="size-3" /> {criterion.label}
+              </span>
+            ))}
+          </div>
+    
+          {proposal.limits.length > 0 && (
+            <ul className="mt-2 space-y-0.5 text-xs leading-relaxed text-warning">
+              {proposal.limits.map((limit) => (
+                <li key={limit}>• {limit}</li>
+              ))}
+            </ul>
+          )}
+    
+          <details className="mt-3 border-t pt-2">
+            <summary className="cursor-pointer text-xs font-medium text-primary">
+              Voir le raisonnement
+            </summary>
+            <div className="mt-2 space-y-2">
+              <ul className="space-y-1 text-xs leading-relaxed">
+                {proposal.satisfied.map((criterion) => (
+                  <li key={criterion.ruleId} className="flex gap-2">
+                    <span
+                      className={
+                        criterion.satisfied
+                          ? "mt-1 size-1.5 shrink-0 rounded-full bg-success"
+                          : "mt-1 size-1.5 shrink-0 rounded-full bg-warning"
+                      }
+                    />
+                    <span>
+                      <span className="font-medium">{criterion.label}</span> — {criterion.detail}{" "}
+                      <span className="text-muted-foreground">({criterion.ruleId})</span>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              <p className="text-xs leading-relaxed text-muted-foreground">
+                Règles appliquées : {proposal.ruleIds.join(", ")}
+              </p>
+            </div>
+          </details>
+          </>
+        </details>
+      ) : (
+        <>
+        <div className="mt-3 flex flex-wrap gap-1.5">
+          {satisfied.map((criterion) => (
+            <span
+              key={criterion.ruleId}
+              className="inline-flex items-center gap-1 rounded-full border border-success/30 bg-success-soft px-2 py-0.5 text-xs font-medium text-success"
+            >
+              <CheckCircle2 className="size-3" /> {criterion.label}
+            </span>
           ))}
-        </ul>
-      )}
-
-      <details className="mt-3 border-t pt-2">
-        <summary className="cursor-pointer text-xs font-medium text-primary">
-          Voir le raisonnement
-        </summary>
-        <div className="mt-2 space-y-2">
-          <ul className="space-y-1 text-xs leading-relaxed">
-            {proposal.satisfied.map((criterion) => (
-              <li key={criterion.ruleId} className="flex gap-2">
-                <span
-                  className={
-                    criterion.satisfied
-                      ? "mt-1 size-1.5 shrink-0 rounded-full bg-success"
-                      : "mt-1 size-1.5 shrink-0 rounded-full bg-warning"
-                  }
-                />
-                <span>
-                  <span className="font-medium">{criterion.label}</span> — {criterion.detail}{" "}
-                  <span className="text-muted-foreground">({criterion.ruleId})</span>
-                </span>
-              </li>
+          {missing.map((criterion) => (
+            <span
+              key={criterion.ruleId}
+              className="inline-flex items-center gap-1 rounded-full border border-warning/30 bg-warning-soft px-2 py-0.5 text-xs font-medium text-warning"
+            >
+              <ShieldAlert className="size-3" /> {criterion.label}
+            </span>
+          ))}
+        </div>
+  
+        {proposal.limits.length > 0 && (
+          <ul className="mt-2 space-y-0.5 text-xs leading-relaxed text-warning">
+            {proposal.limits.map((limit) => (
+              <li key={limit}>• {limit}</li>
             ))}
           </ul>
-          <p className="text-xs leading-relaxed text-muted-foreground">
-            Règles appliquées : {proposal.ruleIds.join(", ")}
-          </p>
-        </div>
-      </details>
+        )}
+  
+        <details className="mt-3 border-t pt-2">
+          <summary className="cursor-pointer text-xs font-medium text-primary">
+            Voir le raisonnement
+          </summary>
+          <div className="mt-2 space-y-2">
+            <ul className="space-y-1 text-xs leading-relaxed">
+              {proposal.satisfied.map((criterion) => (
+                <li key={criterion.ruleId} className="flex gap-2">
+                  <span
+                    className={
+                      criterion.satisfied
+                        ? "mt-1 size-1.5 shrink-0 rounded-full bg-success"
+                        : "mt-1 size-1.5 shrink-0 rounded-full bg-warning"
+                    }
+                  />
+                  <span>
+                    <span className="font-medium">{criterion.label}</span> — {criterion.detail}{" "}
+                    <span className="text-muted-foreground">({criterion.ruleId})</span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+            <p className="text-xs leading-relaxed text-muted-foreground">
+              Règles appliquées : {proposal.ruleIds.join(", ")}
+            </p>
+          </div>
+        </details>
+        </>
+      )}
     </article>
   );
 }
@@ -144,7 +216,7 @@ export function ExpertPanel({ intern }: { intern: Intern }) {
   const [custom, setCustom] = useState(false);
   const [reason, setReason] = useState("");
   const [error, setError] = useState("");
-  const [reasoningOpen, setReasoningOpen] = useState(true);
+  const [reasoningOpen, setReasoningOpen] = useState(false);
 
   const targetServiceId = custom ? otherServiceId : selected;
   const targetIsRecommended = isRecommendedService(latestRun, targetServiceId);
@@ -273,7 +345,7 @@ export function ExpertPanel({ intern }: { intern: Intern }) {
               dossier déjà encadré par la liste des stagiaires, une grille à lg
               laisse la largeur des propositions s'effondrer. */}
           <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
-            <div className="space-y-3">
+            <div className="flex flex-col gap-3 [&>*:last-child]:flex-1">
               {latestRun.proposals.length === 0 ? (
                 <div className="card-surface p-5 text-sm leading-relaxed text-muted-foreground">
                   Aucune proposition classée. Vous pouvez choisir un service manuellement, avec un
@@ -281,13 +353,17 @@ export function ExpertPanel({ intern }: { intern: Intern }) {
                 </div>
               ) : (
                 latestRun.proposals.map((proposal) => (
-                  <ProposalCard key={proposal.serviceId} proposal={proposal} />
+                  <ProposalCard
+                    key={proposal.serviceId}
+                    proposal={proposal}
+                    compact={intern.confirmed && proposal.serviceId !== (decision?.serviceId ?? intern.serviceId)}
+                  />
                 ))
               )}
             </div>
 
             {/* Carte fixe en haut de sa colonne, alignée sur la première proposition : elle ne suit plus le défilement. */}
-            <aside className="self-start">
+            <aside className="flex flex-col gap-4">
               <div className="card-surface p-5">
                 <div className="flex items-center gap-2">
                   <Scale className="size-4 text-primary" />
@@ -428,56 +504,67 @@ export function ExpertPanel({ intern }: { intern: Intern }) {
                   </div>
                 )}
               </div>
+
+              {/* Trace de l'analyse : carte compacte qui comble la colonne ; le détail s'ouvre dans une fenêtre. */}
+              <div className="card-surface flex min-h-[64px] flex-1 flex-col justify-center gap-2 px-5 py-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <h3 className="text-[13px] font-semibold">Trace de l'analyse</h3>
+                    <p className="truncate text-xs tabular-nums text-muted-foreground">
+                      {latestRun.facts.length} faits · {latestRun.rules.length} règles · {fmtDateTime(latestRun.createdAt)}
+                    </p>
+                  </div>
+                  <button type="button" onClick={() => setReasoningOpen(true)} className={SECTION_LINK}>
+                    Consulter
+                  </button>
+                </div>
+              </div>
             </aside>
           </div>
 
-          <div className="card-surface p-5">
-            <button
-              type="button"
-              onClick={() => setReasoningOpen((open) => !open)}
-              className="flex w-full items-center justify-between gap-2 text-left"
-              aria-expanded={reasoningOpen}
-            >
-              <span className="text-sm font-semibold leading-snug">Trace de l'analyse</span>
-              <span className="text-xs leading-relaxed tabular-nums text-muted-foreground">
-                {fmtDateTime(latestRun.createdAt)} · {latestRun.id}
-              </span>
-            </button>
-
-            {reasoningOpen && (
-              <div className="mt-4 grid gap-4 border-t pt-4 sm:grid-cols-2">
-                <div>
-                  <SectionLabel as="h4">Faits utilisés</SectionLabel>
-                  <dl className="mt-2 space-y-1.5 text-sm leading-relaxed">
-                    {latestRun.facts.map((fact) => (
-                      <div key={fact.label} className="flex gap-2">
-                        <dt className="w-28 shrink-0 text-xs leading-relaxed text-muted-foreground">
-                          {fact.label}
-                        </dt>
-                        <dd className="min-w-0">{fact.value}</dd>
-                      </div>
-                    ))}
-                  </dl>
-                </div>
-                <div>
-                  <SectionLabel as="h4">Règles appliquées</SectionLabel>
-                  <ul className="mt-2 space-y-2 text-sm leading-relaxed">
-                    {latestRun.rules.map((rule) => (
-                      <li key={rule.id}>
-                        <span className="font-medium">
-                          {rule.id} — {rule.label}
-                        </span>
-                        <p className="text-xs leading-relaxed text-muted-foreground">
-                          {rule.description}
-                        </p>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            )}
-          </div>
         </>
+      )}
+
+      {latestRun && (
+        <Modal
+          open={reasoningOpen}
+          onClose={() => setReasoningOpen(false)}
+          icon={Scale}
+          title="Trace de l'analyse"
+          description={`${fmtDateTime(latestRun.createdAt)} · ${latestRun.id} · moteur ${latestRun.engineVersion}`}
+          wide
+        >
+          <div className="grid gap-6 sm:grid-cols-2">
+          <div>
+            <SectionLabel as="h4">Faits utilisés</SectionLabel>
+            <dl className="mt-2 space-y-1.5 text-sm leading-relaxed">
+              {latestRun.facts.map((fact) => (
+                <div key={fact.label} className="flex gap-2">
+                  <dt className="w-28 shrink-0 text-xs leading-relaxed text-muted-foreground">
+                    {fact.label}
+                  </dt>
+                  <dd className="min-w-0">{fact.value}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+          <div>
+            <SectionLabel as="h4">Règles appliquées</SectionLabel>
+            <ul className="mt-2 space-y-2 text-sm leading-relaxed">
+              {latestRun.rules.map((rule) => (
+                <li key={rule.id}>
+                  <span className="font-medium">
+                    {rule.id} — {rule.label}
+                  </span>
+                  <p className="text-xs leading-relaxed text-muted-foreground">
+                    {rule.description}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+        </Modal>
       )}
     </section>
   );

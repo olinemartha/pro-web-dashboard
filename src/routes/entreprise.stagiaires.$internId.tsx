@@ -1,7 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import {
-  ArrowLeft,
   Award,
   BadgeCheck,
   Check,
@@ -127,14 +126,6 @@ function InternDossierPage() {
 
   return (
     <div className="space-y-6">
-      <Link
-        to="/entreprise/stagiaires"
-        className="group inline-flex items-center gap-1.5 text-[13px] font-medium text-muted-foreground transition-colors hover:text-foreground lg:hidden"
-      >
-        <ArrowLeft className="size-4 transition-transform duration-300 [transition-timing-function:var(--ease-soft)] group-hover:-translate-x-1 motion-reduce:transition-none" />
-        Tous les stagiaires
-      </Link>
-
       {/* En-tête du dossier */}
       <Reveal as="section" className="card-surface overflow-hidden">
         <div className="p-5">
@@ -155,7 +146,7 @@ function InternDossierPage() {
           </div>
 
           {/* Repères en bande, comme dans le détail d'une offre */}
-          <dl className="mt-5 grid grid-cols-2 gap-y-4 rounded-xl border py-3.5 2xl:grid-cols-4 2xl:divide-x">
+          <dl className="mt-5 grid grid-cols-2 gap-y-4 rounded-xl border py-3.5 lg:grid-cols-4 lg:divide-x">
             <div className="min-w-0 px-4">
               <dt className="text-xs text-muted-foreground">Période</dt>
               <dd className="mt-0.5 truncate text-[13px] font-medium tabular-nums">
