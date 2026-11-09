@@ -10,6 +10,7 @@ target_fingerprint: "sha256:b5a28a9ad0e681c660c22cff3dbcb053790d5fada71499b027a3
 target_path: "C:\\Users\\Martha\\Documents\\Stage Manager app web\\src\\routes\\entreprise.index.tsx"
 timestamp: 2026-11-08T17-42-06Z
 slug: src-routes-entreprise-index-tsx
+closed: true
 ---
 Method: dual-agent (A: revue de design · B: détecteur + navigateur)
 

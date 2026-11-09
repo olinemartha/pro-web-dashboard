@@ -12,7 +12,7 @@ import {
   Layers,
   MapPin,
   Send,
-  Sparkles,
+  Scale,
   TrendingUp,
   Users,
   UserSearch,
@@ -181,10 +181,20 @@ type TodoKind = "affectation" | "candidature" | "rapport" | "entretien" | "servi
 type Todo = {
   kind: TodoKind;
   id: string;
-  label: string;
-  meta: string;
-  /** Délai lisible : « en attente depuis 12 j », « dans 6 j »… */
+  /** Qui ou quoi : la personne concernée, ou le service. C'est ce qu'on lit en premier. */
+  subject: string;
+  /** La tâche, formulée sans verbe en tête : « Candidature à examiner ». */
+  task: string;
+  /** Contexte secondaire : offre, période, heure et lieu. */
+  context: string;
+  /** Délai court pour la colonne de droite : « 14 j d'attente », « demain ». */
   when: string;
+  /** Délai complet, pour les lecteurs d'écran. */
+  whenLong: string;
+  /** Urgent : délai en ambre (attente de 7 jours ou plus, entretien aujourd'hui ou demain). */
+  urgent: boolean;
+  /** Rappel de fond (besoins des services) : moins appuyé qu'une personne qui attend. */
+  reminder?: boolean;
   /** Urgence réelle : plus le score est élevé, plus l'action remonte. */
   score: number;
   q?: string;
@@ -199,9 +209,9 @@ const TODO_META: Record<
   TodoKind,
   { action: string; icon: React.ComponentType<{ className?: string }>; group: TodoGroup }
 > = {
-  affectation: { action: "Valider", icon: Sparkles, group: "stagiaires" },
+  affectation: { action: "Valider", icon: Scale, group: "stagiaires" },
   candidature: { action: "Examiner", icon: Inbox, group: "recrutement" },
-  rapport: { action: "Examiner", icon: FileText, group: "stagiaires" },
+  rapport: { action: "Relire", icon: FileText, group: "stagiaires" },
   entretien: { action: "Préparer", icon: CalendarClock, group: "recrutement" },
   service: { action: "Mettre à jour", icon: Layers, group: "services" },
 };
@@ -220,36 +230,45 @@ function daysBetween(from: string, to: string) {
   );
 }
 
-function waitedLabel(days: number, verb = "en attente depuis") {
-  if (days <= 0) return "aujourd'hui";
-  if (days === 1) return `${verb} 1 jour`;
-  return `${verb} ${days} jours`;
-}
-
-function TodoTarget({ todo, className, children }: { todo: Todo; className: string; children: React.ReactNode }) {
+function TodoTarget({
+  todo,
+  label,
+  className,
+  children,
+}: {
+  todo: Todo;
+  label: string;
+  className: string;
+  children: React.ReactNode;
+}) {
   switch (todo.kind) {
     case "candidature":
       return (
-        <Link to="/entreprise/candidatures" search={{ q: todo.q }} className={className}>
+        <Link to="/entreprise/candidatures" search={{ q: todo.q }} aria-label={label} className={className}>
           {children}
         </Link>
       );
     case "affectation":
     case "rapport":
       return (
-        <Link to="/entreprise/stagiaires/$internId" params={{ internId: todo.internId! }} className={className}>
+        <Link
+          to="/entreprise/stagiaires/$internId"
+          params={{ internId: todo.internId! }}
+          aria-label={label}
+          className={className}
+        >
           {children}
         </Link>
       );
     case "entretien":
       return (
-        <Link to="/entreprise/entretiens" className={className}>
+        <Link to="/entreprise/entretiens" aria-label={label} className={className}>
           {children}
         </Link>
       );
     default:
       return (
-        <Link to="/entreprise/services" className={className}>
+        <Link to="/entreprise/services" aria-label={label} className={className}>
           {children}
         </Link>
       );
@@ -462,13 +481,19 @@ function CompanyDashboard() {
    */
   const todos: Todo[] = [];
   pendingAssignments.forEach((intern) => {
-    const proposal = latestRunFor(expertRuns, intern.id)?.proposals[0];
+    const run = latestRunFor(expertRuns, intern.id);
+    const proposal = run?.proposals[0];
+    const age = run ? Math.max(0, daysBetween(run.createdAt.slice(0, 10), todayIso)) : null;
     todos.push({
       kind: "affectation",
       id: `affectation-${intern.id}`,
-      label: `Valider l'affectation de ${intern.name}`,
-      meta: offerTitle(intern.offerId),
-      when: "décision attendue",
+      subject: intern.name,
+      task: "Affectation à valider",
+      context: offerTitle(intern.offerId),
+      when: age === null ? "à décider" : age === 0 ? "aujourd'hui" : `depuis ${age} j`,
+      whenLong:
+        age === null ? "décision attendue" : age === 0 ? "recommandation du jour" : `décision attendue depuis ${age} jours`,
+      urgent: age !== null && age >= 7,
       score: 85,
       internId: intern.id,
       recommendation: proposal
@@ -483,28 +508,34 @@ function CompanyDashboard() {
   toExamine.forEach((candidate) => {
     // Un entretien est déjà programmé : la candidature est suivie dans l'agenda, pas en double ici.
     if (upcomingInterviews.some((interview) => interview.candidateId === candidate.id)) return;
-    const waited = daysBetween(candidate.appliedAt, todayIso);
+    const waited = Math.max(0, daysBetween(candidate.appliedAt, todayIso));
     todos.push({
       kind: "candidature",
       id: `candidature-${candidate.id}`,
-      label: `Examiner la candidature de ${candidate.name}`,
-      meta: offerTitle(candidate.offerId),
-      when: waitedLabel(waited),
-      score: 40 + Math.min(Math.max(waited, 0), 30) * 1.5,
+      subject: candidate.name,
+      task: "Candidature à examiner",
+      context: offerTitle(candidate.offerId),
+      when: waited === 0 ? "reçue aujourd'hui" : `${waited} j d'attente`,
+      whenLong: waited === 0 ? "reçue aujourd'hui" : `en attente depuis ${waited} jours`,
+      urgent: waited >= 7,
+      score: 40 + Math.min(waited, 30) * 1.5,
       q: candidate.name,
     });
   });
   interns.forEach((intern) => {
     const pending = intern.reports.find((report) => report.status === "soumis");
     if (!pending) return;
-    const waited = daysBetween(pending.date, todayIso);
+    const waited = Math.max(0, daysBetween(pending.date, todayIso));
     todos.push({
       kind: "rapport",
       id: `rapport-${intern.id}`,
-      label: `Examiner le rapport de ${intern.name}`,
-      meta: pending.period,
-      when: waitedLabel(waited, "déposé il y a"),
-      score: 50 + Math.min(Math.max(waited, 0), 20) * 2,
+      subject: intern.name,
+      task: "Rapport à relire",
+      context: pending.period,
+      when: waited === 0 ? "aujourd'hui" : `il y a ${waited} j`,
+      whenLong: waited === 0 ? "déposé aujourd'hui" : `déposé il y a ${waited} jours`,
+      urgent: waited >= 7,
+      score: 50 + Math.min(waited, 20) * 2,
       internId: intern.id,
     });
   });
@@ -512,12 +543,16 @@ function CompanyDashboard() {
     .filter((interview) => interview.date >= todayIso && interview.date <= horizonIso)
     .forEach((interview) => {
       const inDays = daysBetween(todayIso, interview.date);
+      const day = inDays === 0 ? "aujourd'hui" : inDays === 1 ? "demain" : `dans ${inDays} j`;
       todos.push({
         kind: "entretien",
         id: `entretien-${interview.id}`,
-        label: `Préparer l'entretien de ${candidateName(interview.candidateId)}`,
-        meta: `${fmtDate(interview.date, false)} à ${interview.time} · ${interview.location}`,
-        when: inDays === 0 ? "aujourd'hui" : inDays === 1 ? "demain" : `dans ${inDays} jours`,
+        subject: candidateName(interview.candidateId),
+        task: "Entretien à préparer",
+        context: `${interview.time} · ${interview.location}`,
+        when: day,
+        whenLong: `entretien ${inDays <= 1 ? day : `dans ${inDays} jours`} à ${interview.time}`,
+        urgent: inDays <= 1,
         score: 90 - inDays * 6,
       });
     });
@@ -528,9 +563,13 @@ function CompanyDashboard() {
       todos.push({
         kind: "service",
         id: `service-${service.id}`,
-        label: `Mettre à jour les besoins — ${service.name}`,
-        meta: incomplete ? "Besoins incomplets" : "Besoins à revoir",
-        when: incomplete ? "à compléter" : `mis à jour il y a ${staleDays} jours`,
+        subject: service.name,
+        task: incomplete ? "Besoins à compléter" : "Besoins à revoir",
+        context: "Alimente les recommandations du système expert",
+        when: incomplete ? "à compléter" : `il y a ${staleDays} j`,
+        whenLong: incomplete ? "besoins incomplets" : `besoins mis à jour il y a ${staleDays} jours`,
+        urgent: false,
+        reminder: true,
         score: incomplete ? 30 : 20,
       });
     }
@@ -669,17 +708,22 @@ function CompanyDashboard() {
             <PipelineChart steps={pipelineCounts} total={inPipeline.length} acceptanceRate={acceptanceRate} />
           </Reveal>
 
-          {/* À traiter : triée par urgence réelle */}
-          <Reveal as="section" delay={140} className="card-surface flex flex-col overflow-hidden xl:flex-1" aria-labelledby="todo-title">
-            <div className="space-y-4 px-5 pt-5">
-                  <h2 id="todo-title" className="flex items-center gap-2 text-[15px] font-semibold tracking-tight">
-                    À traiter
-                    <span className="rounded-md bg-muted px-1.5 py-0.5 text-[11px] font-medium tabular-nums text-muted-foreground">
-                      {todos.length}
-                    </span>
-                  </h2>
+          {/* À traiter : la personne d'abord, l'urgence visible, un seul élément teinté (la recommandation) */}
+          <Reveal
+            as="section"
+            delay={140}
+            className="card-surface flex flex-col overflow-hidden xl:flex-1"
+            aria-labelledby="todo-title"
+          >
+            <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2.5 border-b px-5 py-3.5">
+              <h2 id="todo-title" className="flex items-center gap-2 text-[15px] font-semibold tracking-tight">
+                À traiter
+                <span className="rounded-md bg-muted px-1.5 py-0.5 text-[11px] font-medium tabular-nums text-muted-foreground">
+                  {todos.length}
+                </span>
+              </h2>
               {todos.length > 0 && (
-                <div role="group" aria-label="Filtrer les décisions" className="flex flex-wrap gap-1.5">
+                <div role="group" aria-label="Filtrer les décisions" className="flex flex-wrap gap-1">
                   {tabs.map((entry) => {
                     const active = currentTab === entry.key;
                     return (
@@ -692,27 +736,27 @@ function CompanyDashboard() {
                           setExpanded(false);
                         }}
                         className={cn(
-                          "press inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg px-3 text-[13px] font-medium transition-colors duration-200",
+                          "press inline-flex h-7 items-center gap-1.5 rounded-md px-2.5 text-[13px] transition-colors duration-200",
                           active
-                            ? "bg-primary text-primary-foreground shadow-sm"
-                            : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                            ? "bg-primary-soft font-semibold text-primary"
+                            : "font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
                         )}
                       >
                         {entry.label}
-                        <span
-                          className={cn(
-                            "rounded px-1 text-xs tabular-nums",
-                            active ? "bg-white/15 text-primary-foreground" : "bg-muted text-muted-foreground"
-                          )}
-                        >
-                          {entry.count}
-                        </span>
+                        {entry.key !== "tout" && (
+                          <span className={cn("text-xs tabular-nums", active ? "text-primary/70" : "text-muted-foreground/80")}>
+                            {entry.count}
+                          </span>
+                        )}
                       </button>
                     );
                   })}
                 </div>
               )}
             </div>
+            <p className="sr-only" aria-live="polite">
+              {`${filtered.length} action${filtered.length > 1 ? "s" : ""} affichée${filtered.length > 1 ? "s" : ""}`}
+            </p>
 
             {visibleTodos.length === 0 ? (
               <div className="m-5 flex flex-col items-center justify-center rounded-lg border border-dashed p-8 text-center xl:flex-1">
@@ -721,41 +765,98 @@ function CompanyDashboard() {
                 <p className="text-xs text-muted-foreground">Aucune décision ne vous attend pour le moment.</p>
               </div>
             ) : (
-              <ul key={tab} id="todo-list" className="mt-4 flex flex-1 flex-col divide-y border-t">
+              <ul id="todo-list" className="flex flex-1 flex-col divide-y">
                 {visibleTodos.map((todo, index) => {
                   const meta = TODO_META[todo.kind];
                   const rec = todo.recommendation;
+                  const label =
+                    `${todo.subject} — ${todo.task}. ${todo.context}. ${todo.whenLong}.` +
+                    (rec
+                      ? ` Recommandé : ${rec.service}, ${rec.met} critères satisfaits sur ${rec.total}. Ouvrir l'explication.`
+                      : ` ${meta.action}.`);
                   return (
-                    <Reveal as="li" key={todo.id} delay={index < 5 ? index * 40 : 0} className={cn("flex", visibleTodos.length >= 4 && "xl:flex-1")}>
+                    <Reveal
+                      as="li"
+                      key={todo.id}
+                      delay={index < 5 ? index * 40 : 0}
+                      className={cn("flex", visibleTodos.length >= 4 && "xl:flex-1")}
+                    >
                       <TodoTarget
                         todo={todo}
+                        label={label}
                         className={cn(
-                          "group flex w-full items-center gap-3.5 px-5 py-3 transition-colors duration-150 hover:bg-muted/50",
-                          rec && "bg-primary-soft/40 hover:bg-primary-soft/70"
+                          "group grid w-full grid-cols-[20px_minmax(0,1fr)_auto] items-center gap-x-3.5 px-5 py-3 transition-colors duration-150 focus-visible:outline-offset-[-3px] sm:grid-cols-[20px_minmax(0,1fr)_auto_auto]",
+                          rec
+                            ? "bg-primary-soft shadow-[inset_3px_0_0_hsl(var(--primary))] hover:bg-[hsl(218_92%_92%)]"
+                            : "hover:bg-muted/50"
                         )}
                       >
-                        <span className="grid size-5 shrink-0 place-items-center text-muted-foreground transition-colors duration-200 group-hover:text-foreground">
-                          <meta.icon className={cn("size-[18px]", rec && "text-primary")} />
-                        </span>
-                        <span className="min-w-0 flex-1">
-                          <span className="line-clamp-2 text-sm font-medium text-foreground sm:line-clamp-1">{todo.label}</span>
-                          <span className="flex flex-wrap items-center gap-x-1.5 text-xs text-muted-foreground">
-                            <span className="truncate">{todo.meta}</span>
-                            <span aria-hidden>·</span>
-                            <span className="whitespace-nowrap">{todo.when}</span>
+                        {/* Icône nue, de sens */}
+                        <meta.icon
+                          className={cn(
+                            "size-[18px] transition-colors duration-200",
+                            rec ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
+                          )}
+                        />
+
+                        {/* Qui, puis quoi ; le contexte dessous */}
+                        <span className="min-w-0">
+                          <span className="block truncate text-sm leading-5">
+                            <span className={cn("font-semibold", todo.reminder ? "text-muted-foreground" : "text-foreground")}>
+                              {todo.subject}
+                            </span>
+                            <span className="text-muted-foreground"> · {todo.task}</span>
                           </span>
-                          {rec && (
-                            <span className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
-                              <span className="font-medium text-primary">Recommandé : {rec.service}</span>
-                              <span className="text-muted-foreground">
-                                {rec.met}/{rec.total} critères satisfaits
+                          {rec ? (
+                            <span className="mt-1 flex items-center gap-2 text-xs">
+                              <span className="truncate text-primary">
+                                Recommandé : <span className="font-semibold">{rec.service}</span>
+                              </span>
+                              <span className="flex shrink-0 items-center gap-0.5" aria-hidden="true">
+                                {Array.from({ length: rec.total }, (_, i) => (
+                                  <span
+                                    key={i}
+                                    className={cn("size-1.5 rounded-[2px]", i < rec.met ? "bg-primary" : "bg-border")}
+                                  />
+                                ))}
+                              </span>
+                              <span className="shrink-0 tabular-nums text-muted-foreground">
+                                {rec.met}/{rec.total} critères
+                              </span>
+                            </span>
+                          ) : (
+                            <span className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
+                              <span className="truncate">{todo.context}</span>
+                              <span className={cn("shrink-0 whitespace-nowrap sm:hidden", todo.urgent && "font-medium text-warning")}>
+                                · {todo.when}
                               </span>
                             </span>
                           )}
                         </span>
-                        <span aria-hidden="true" className="inline-flex h-8 shrink-0 items-center gap-1 rounded-lg border bg-card px-2.5 text-[13px] font-medium text-foreground shadow-sm transition-colors group-hover:border-primary group-hover:bg-primary group-hover:text-primary-foreground">
+
+                        {/* Délai : la colonne qui rend l'urgence visible */}
+                        <span
+                          className={cn(
+                            "hidden items-center justify-end gap-1 whitespace-nowrap text-right text-xs tabular-nums sm:flex",
+                            todo.urgent ? "font-semibold text-warning" : "font-medium text-muted-foreground"
+                          )}
+                        >
+                          {todo.urgent && <Clock className="size-3" />}
+                          {todo.when}
+                        </span>
+
+                        {/* Bouton : discret et de largeur fixe ; seul celui de la recommandation est plein */}
+                        <span
+                          aria-hidden="true"
+                          className={cn(
+                            "inline-flex h-8 w-8 items-center justify-center gap-1 rounded-lg text-xs transition-colors duration-200 sm:w-[8.5rem] sm:px-3",
+                            rec
+                              ? "bg-primary font-semibold text-primary-foreground shadow-sm group-hover:bg-primary-hover"
+                              : "bg-muted/70 font-medium text-muted-foreground group-hover:bg-primary-soft group-hover:text-primary"
+                          )}
+                        >
                           <span className="hidden sm:inline">{rec ? "Voir l'explication" : meta.action}</span>
-                          <ArrowRight className="size-3.5" />
+                          <ArrowRight className="size-3.5 shrink-0" />
                         </span>
                       </TodoTarget>
                     </Reveal>

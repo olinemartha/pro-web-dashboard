@@ -265,12 +265,12 @@ Tout s'immobilise sous `prefers-reduced-motion`.
 
 ### Buttons
 - **Primary** : fond bleu roi, texte blanc, rayon 8 px, hauteur 40 px (36 px dans les barres), légère ombre teintée. Une seule action principale par zone.
-- **Ligne d'action** (« Examiner », « Valider ») : contour blanc, bordure 1 px ; au survol de la ligne entière, le bouton passe en bleu roi plein.
+- **Bouton de ligne** (« Examiner », « Relire », « Mettre à jour ») : discret, fond gris atténué, texte gris, largeur fixe (136 px) pour un bord droit régulier ; au survol de la ligne, fond glacier et texte bleu roi. Sur téléphone, flèche seule. **Exception :** le bouton « Voir l'explication » de la recommandation du système expert est plein, en bleu roi : c'est le seul bouton plein de la carte.
 - **Lien de section** (« Tout voir », « Gérer les offres ») : bouton compact à contour ; au survol, fond encre bleu nuit et texte blanc. Son nom accessible précise la section (« Tout voir — Pipeline de recrutement »).
 - **Focus** : anneau bleu vif de 2 px avec décalage de 2 px sur tout élément interactif.
 
 ### Chips & filtres
-- **Filtres de la file « À traiter »** : 4 au maximum (Tout, Recrutement, Stagiaires, Services), boutons à bascule (`aria-pressed`) avec compteur ; actif en bleu roi plein.
+- **Filtres de la file « À traiter »** : 4 au maximum (Tout, Recrutement, Stagiaires, Services), alignés à droite du titre, boutons à bascule (`aria-pressed`) de 28 px ; actif en bleu glacier avec texte bleu roi, inactifs en texte gris. Le compteur n'apparaît que sur les groupes (le titre porte le total).
 - **Badges de statut** : pilule, fond très clair de la teinte, bordure à 30 %, texte 12 px (11 px dans les listes compactes).
 
 ### Cards / Containers
@@ -281,7 +281,7 @@ Tout s'immobilise sous `prefers-reduced-motion`.
 Quatre cartes séparées et espacées. En haut : icône monochrome nue + libellé 13 px (deux lignes autorisées sur téléphone). Au centre : valeur 30 px, avec une courbe pour les candidatures. En bas, séparée par un filet : une précision de 12 px (tendance verte, alerte ambre ou contexte gris).
 
 ### File « À traiter »
-Titre « À traiter » avec un compteur, sans phrase d'explication. Lignes triées par urgence réelle (proximité de l'entretien, ancienneté de la candidature ou du rapport), chacune avec un verbe d'action, l'objet, et un délai lisible (« en attente depuis 12 jours », « dans 6 jours »). La ligne d'affectation affiche la recommandation du système expert (« Recommandé : Direction IT · 4/4 critères satisfaits ») sur fond bleu glacier, et mène à l'explication ; elle ne décide jamais à la place de l'entreprise. Au-delà de 5 lignes, un bouton déplie la liste sur place.
+Titre « À traiter » avec un compteur, filtres sur la même ligne, filet dessous. Chaque ligne : icône nue de sens · **la personne (ou le service) en gras**, suivie de la tâche en gris (« Rachel Ilunga · Candidature à examiner ») · contexte en dessous · **colonne de délai** alignée à droite (« 14 j d'attente », « demain ») · bouton. Le délai passe en **ambre avec une horloge** quand c'est urgent (attente de 7 jours ou plus, entretien aujourd'hui ou demain). Les rappels de services ont un sujet gris, moins appuyé. La ligne d'affectation est le seul élément teinté : fond glacier plein, liseré bleu roi de 3 px à gauche, icône balance, « Recommandé : **Direction IT** », jauge de critères (pastilles bleu roi) et « 4/4 critères » ; elle mène à l'explication et ne décide jamais à la place de l'entreprise. Tri par urgence réelle ; au-delà de 5 lignes, un bouton déplie la liste sur place. Chaque lien a un nom accessible rédigé en phrase.
 
 ### Inputs / Fields
 - Fond blanc, bordure 1 px, rayon 6 px, hauteur 40 px, texte 14 px (16 px sur téléphone pour éviter le zoom iOS).
