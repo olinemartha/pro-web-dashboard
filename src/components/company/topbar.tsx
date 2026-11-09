@@ -169,7 +169,7 @@ export function SearchCommand({ compact = false }: { compact?: boolean }) {
         <div
           id="search-results"
           role="listbox"
-          className="animate-scale-in absolute left-0 right-0 top-full z-50 mt-2 origin-top overflow-hidden rounded-2xl border bg-popover/95 p-1.5 shadow-[0_16px_40px_-12px_rgba(15,23,42,0.22)] backdrop-blur-xl"
+          className="animate-scale-in absolute left-0 right-0 top-full z-50 mt-2 origin-top overflow-hidden rounded-2xl border bg-popover p-1.5 shadow-[0_16px_40px_-12px_rgba(15,23,42,0.22)]"
         >
           {results.length === 0 ? (
             <p className="px-3 py-6 text-center text-sm text-muted-foreground">Aucun résultat</p>
@@ -322,7 +322,7 @@ export function NotificationBell({ align = "right" }: { align?: "right" | "left"
       {open && (
         <div
           className={cn(
-            "animate-scale-in absolute top-full z-50 mt-2 w-[min(360px,calc(100vw-24px))] overflow-hidden rounded-2xl border bg-popover/90 shadow-[0_16px_40px_-12px_rgba(15,23,42,0.22)] backdrop-blur-xl",
+            "animate-scale-in absolute top-full z-50 mt-2 w-[min(360px,calc(100vw-24px))] overflow-hidden rounded-2xl border bg-popover shadow-[0_16px_40px_-12px_rgba(15,23,42,0.22)]",
             align === "right" ? "right-0 origin-top-right" : "left-0 origin-top-left"
           )}
         >
