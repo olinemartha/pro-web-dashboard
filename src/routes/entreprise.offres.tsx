@@ -340,11 +340,18 @@ function CompanyOffersPage() {
           {filtered.map((offer) => {
             const flow = pipeline(offer.id);
             return (
-              <article key={offer.id} className="card-surface flex flex-col p-5">
+              <article key={offer.id} className="card-surface hover-lift group relative flex cursor-pointer flex-col p-5">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <h2 className="text-pretty text-lg font-semibold leading-snug tracking-tight">
-                      {offer.title}
+                      {/* Toute la carte ouvre le détail : le bouton du titre la recouvre. */}
+                      <button
+                        type="button"
+                        onClick={() => setDetailId(offer.id)}
+                        className="text-left transition-colors after:absolute after:inset-0 after:rounded-xl after:content-[''] group-hover:text-primary focus-visible:outline-none focus-visible:after:outline focus-visible:after:outline-2 focus-visible:after:outline-offset-2 focus-visible:after:outline-accent"
+                      >
+                        {offer.title}
+                      </button>
                     </h2>
                     <p className="mt-0.5 text-xs leading-4 text-muted-foreground">
                       {offer.department}
@@ -391,7 +398,7 @@ function CompanyOffersPage() {
                   <span className="font-medium text-foreground">{flow.interview}</span> en entretien
                 </p>
 
-                <div className="mt-auto flex flex-wrap items-center gap-2 border-t pt-3">
+                <div className="relative z-10 mt-auto flex flex-wrap items-center gap-2 border-t pt-3">
                   {offer.status === "brouillon" && (
                     <Button size="sm" onClick={() => changeStatus(offer, "publiee")}>
                       <Send className="mr-1.5 size-3.5" /> Publier

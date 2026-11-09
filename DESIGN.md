@@ -277,6 +277,7 @@ Tout s'immobilise sous `prefers-reduced-motion`.
 ### Cards / Containers
 - **Corner Style** : 12 px. **Background** : blanc sur canevas #F5F7FA. **Border** : 1 px #DDE1E9. **Padding** : 20 px.
 - Les listes dans une carte utilisent des lignes séparées par un filet, pas des cartes imbriquées.
+- **Cartes cliquables** : seulement les cartes qui mènent à une seule destination (indicateurs KPI, cartes d'offre → détail, lignes d'entretiens, d'activité et de dossiers). Au survol : la carte se soulève de 2 px, bordure bleue légère, curseur main, titre en bleu roi ; au clavier, contour bleu vif autour de la carte. Les boutons à l'intérieur restent cliquables séparément. Jamais pour les cartes à plusieurs actions ou filtres (« À traiter », Pipeline, carte entreprise).
 
 ### KPI Cards
 Quatre cartes séparées et espacées. En haut : libellé 13 px à gauche (deux lignes autorisées sur téléphone) et icône monochrome nue à droite. Au centre : valeur 30 px, avec une courbe pour les candidatures. En bas, séparée par un filet : une précision de 12 px (tendance verte, alerte ambre ou contexte gris).
