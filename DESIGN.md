@@ -104,7 +104,7 @@ components:
     padding: "0 12px"
     height: "32px"
   section-link-hover:
-    backgroundColor: "{colors.ink}"
+    backgroundColor: "{colors.royal-blue}"
     textColor: "{colors.paper-white}"
     rounded: "{rounded.lg}"
   input:
@@ -179,7 +179,7 @@ Une seule famille de bleus, du plus clair au plus foncé, le refus restant en gr
 ### Neutral
 - **Blanc papier** (#FFFFFF) : cartes, barre latérale, champs, fenêtres.
 - **Canevas** (#F5F7FA) : fond de la zone de travail, derrière les cartes.
-- **Encre bleu nuit** (#191F2E) : texte principal ; aussi le fond « inversé » au survol des liens de section.
+- **Encre bleu nuit** (#191F2E) : texte principal.
 - **Gris texte secondaire** (#616B7F) : descriptions, métadonnées, libellés secondaires, icônes au repos.
 - **Surface atténuée** (#F1F4F8) : en-têtes de tableaux, pistes de barres, survol des lignes.
 - **Ligne discrète** (#DDE1E9) : bordures de cartes, champs, tableaux et séparateurs.
@@ -266,7 +266,7 @@ Tout s'immobilise sous `prefers-reduced-motion`.
 ### Buttons
 - **Primary** : fond bleu roi, texte blanc, rayon 8 px, hauteur 40 px (36 px dans les barres), légère ombre teintée. Une seule action principale par zone.
 - **Bouton de ligne** (« Examiner », « Relire », « Mettre à jour ») : discret, fond gris atténué, texte gris, largeur fixe (136 px) pour un bord droit régulier ; au survol de la ligne, fond glacier et texte bleu roi. Sur téléphone, flèche seule. **Exception :** le bouton « Voir l'explication » de la recommandation du système expert est plein, en bleu roi : c'est le seul bouton plein de la carte.
-- **Lien de section** (« Tout voir », « Gérer les offres ») : bouton compact à contour ; au survol, fond encre bleu nuit et texte blanc. Son nom accessible précise la section (« Tout voir — Pipeline de recrutement »).
+- **Lien de section** (« Tout voir », « Gérer les offres ») : bouton compact à contour ; au survol, fond bleu roi et texte blanc (même chose pour « Tout afficher » et le lien du panneau de notifications). Son nom accessible précise la section (« Tout voir — Pipeline de recrutement »).
 - **Focus** : anneau bleu vif de 2 px avec décalage de 2 px sur tout élément interactif.
 
 ### Chips & filtres

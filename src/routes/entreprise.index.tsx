@@ -166,7 +166,7 @@ function SectionHeader({
         <Link
           to={to}
           aria-label={`${linkLabel} — ${title}`}
-          className="press group inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border bg-card px-3 text-[13px] font-medium text-foreground shadow-sm transition-all duration-200 hover:border-foreground hover:bg-foreground hover:text-background hover:shadow-md"
+          className="press group inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border bg-card px-3 text-[13px] font-medium text-foreground shadow-sm transition-all duration-200 hover:border-primary hover:bg-primary hover:text-primary-foreground hover:shadow-md"
         >
           {linkLabel}
           <ArrowRight className="size-3.5 transition-transform duration-200 group-hover:translate-x-0.5" />
@@ -928,7 +928,7 @@ function CompanyDashboard() {
                   <button
                     type="button"
                     onClick={() => setTab("tout")}
-                    className="press inline-flex h-8 items-center gap-1 rounded-lg border bg-card px-3 text-[13px] font-medium shadow-sm transition-colors hover:border-foreground hover:bg-foreground hover:text-background"
+                    className="press inline-flex h-8 items-center gap-1 rounded-lg border bg-card px-3 text-[13px] font-medium shadow-sm transition-colors hover:border-primary hover:bg-primary hover:text-primary-foreground"
                   >
                     Tout afficher
                   </button>

@@ -355,7 +355,7 @@ export function NotificationBell({ align = "right" }: { align?: "right" | "left"
           <Link
             to="/entreprise/candidatures"
             onClick={() => setOpen(false)}
-            className="group flex items-center justify-center gap-1.5 border-t px-4 py-2.5 text-[13px] font-medium transition-colors hover:bg-foreground hover:text-background"
+            className="group flex items-center justify-center gap-1.5 border-t px-4 py-2.5 text-[13px] font-medium transition-colors hover:bg-primary hover:text-primary-foreground"
           >
             Voir toutes les candidatures
             <ArrowRight className="size-3.5 transition-transform duration-200 group-hover:translate-x-0.5" />
