@@ -286,7 +286,8 @@ export function ExpertPanel({ intern }: { intern: Intern }) {
               )}
             </div>
 
-            <aside className="self-start xl:sticky xl:top-4">
+            {/* Carte fixe en haut de sa colonne, alignée sur la première proposition : elle ne suit plus le défilement. */}
+            <aside className="self-start">
               <div className="card-surface p-5">
                 <div className="flex items-center gap-2">
                   <Scale className="size-4 text-primary" />
