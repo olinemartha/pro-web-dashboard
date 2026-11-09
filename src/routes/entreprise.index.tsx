@@ -53,6 +53,44 @@ function relativeDay(value: string) {
   return fmtDate(value, false);
 }
 
+/** Date courte pour une colonne étroite : « auj. », « hier », « 4 j », « 2 sem. ». */
+function shortDay(value: string) {
+  const days = Math.round((Date.now() - new Date(`${value}T12:00:00`).getTime()) / DAY);
+  if (days <= 0) return "auj.";
+  if (days === 1) return "hier";
+  if (days < 14) return `${days} j`;
+  if (days < 60) return `${Math.round(days / 7)} sem.`;
+  return fmtDate(value, false);
+}
+
+/** Événement lisible à partir d'un statut d'historique (court pour le badge, long pour l'accessibilité). */
+function activityEvent(
+  status: CandidateStatus,
+  interviewDate?: string
+): { short: string; long: string; tone: Tone } {
+  switch (status) {
+    case "en_attente":
+      return { short: "Nouvelle", long: "nouvelle candidature", tone: "primary" };
+    case "examen":
+      return { short: "En examen", long: "profil en cours d'examen", tone: "muted" };
+    case "entretien": {
+      const when = interviewDate ? fmtDate(interviewDate, false) : null;
+      return {
+        short: when ? `Entretien ${when}` : "Entretien",
+        long: when ? `entretien programmé le ${when}` : "entretien programmé",
+        tone: "primary",
+      };
+    }
+    case "acceptee":
+      return { short: "Acceptée", long: "candidature acceptée", tone: "success" };
+    case "refusee":
+      return { short: "Non retenu", long: "profil non retenu", tone: "destructive" };
+    case "retiree":
+    default:
+      return { short: "Retirée", long: "candidature retirée", tone: "muted" };
+  }
+}
+
 /** Date du jour au format ISO, en heure locale (Kinshasa), et non en UTC. */
 function localIsoDate(date = new Date()) {
   const pad = (n: number) => String(n).padStart(2, "0");
@@ -514,7 +552,7 @@ function CompanyDashboard() {
       id: `candidature-${candidate.id}`,
       subject: candidate.name,
       task: "Candidature à examiner",
-      context: offerTitle(candidate.offerId),
+      context: offerTitle(candidate.offerId).replace(/^Stagiaire\s+/i, ""),
       when: waited === 0 ? "reçue aujourd'hui" : `${waited} j d'attente`,
       whenLong: waited === 0 ? "reçue aujourd'hui" : `en attente depuis ${waited} jours`,
       urgent: waited >= 7,
@@ -588,18 +626,29 @@ function CompanyDashboard() {
   const visibleTodos = expanded ? filtered : filtered.slice(0, COLLAPSED);
   const hiddenCount = filtered.length - Math.min(filtered.length, COLLAPSED);
 
-  /* ---- Activité récente (historique des candidatures) ---- */
+  /* ---- Activité récente : le dernier événement de chaque candidat ----
+   * On montre un événement (« Acceptée », « Entretien 18 nov. »), pas un statut brut,
+   * et une seule ligne par candidat pour éviter les doublons contradictoires.
+   */
   const activity = candidates
-    .flatMap((candidate) =>
-      candidate.history.map((entry) => ({
-        id: `${candidate.id}-${entry.status}-${entry.date}`,
+    .map((candidate) => {
+      const last = [...candidate.history].sort((a, b) => b.date.localeCompare(a.date))[0];
+      if (!last) return null;
+      const interview =
+        last.status === "entretien"
+          ? interviews.find((i) => i.candidateId === candidate.id && i.status === "programme")
+          : undefined;
+      const event = activityEvent(last.status, interview?.date);
+      return {
+        id: candidate.id,
         name: candidate.name,
         initials: candidate.initials,
-        status: entry.status,
-        date: entry.date,
-        offer: offerTitle(candidate.offerId),
-      }))
-    )
+        date: last.date,
+        offer: offerTitle(candidate.offerId).replace(/^Stagiaire\s+/i, ""),
+        ...event,
+      };
+    })
+    .filter((item): item is NonNullable<typeof item> => item !== null)
     .sort((a, b) => b.date.localeCompare(a.date))
     .slice(0, 4);
 
@@ -715,7 +764,7 @@ function CompanyDashboard() {
             className="card-surface flex flex-col overflow-hidden xl:flex-1"
             aria-labelledby="todo-title"
           >
-            <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2.5 border-b px-5 py-3.5">
+            <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2.5 border-b px-5 pb-3.5 pt-4">
               <h2 id="todo-title" className="flex items-center gap-2 text-[15px] font-semibold tracking-tight">
                 À traiter
                 <span className="rounded-md bg-muted px-1.5 py-0.5 text-[11px] font-medium tabular-nums text-muted-foreground">
@@ -723,7 +772,7 @@ function CompanyDashboard() {
                 </span>
               </h2>
               {todos.length > 0 && (
-                <div role="group" aria-label="Filtrer les décisions" className="flex flex-wrap gap-1">
+                <div role="group" aria-label="Filtrer les décisions" className="flex flex-wrap gap-0.5 sm:gap-1">
                   {tabs.map((entry) => {
                     const active = currentTab === entry.key;
                     return (
@@ -736,7 +785,7 @@ function CompanyDashboard() {
                           setExpanded(false);
                         }}
                         className={cn(
-                          "press inline-flex h-7 items-center gap-1.5 rounded-md px-2.5 text-[13px] transition-colors duration-200",
+                          "press inline-flex h-7 items-center gap-1.5 rounded-lg px-2 text-[13px] transition-colors duration-200 sm:px-2.5",
                           active
                             ? "bg-primary-soft font-semibold text-primary"
                             : "font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -744,7 +793,7 @@ function CompanyDashboard() {
                       >
                         {entry.label}
                         {entry.key !== "tout" && (
-                          <span className={cn("text-xs tabular-nums", active ? "text-primary/70" : "text-muted-foreground/80")}>
+                          <span className={cn("hidden text-xs tabular-nums sm:inline", active ? "text-primary/70" : "text-muted-foreground/80")}>
                             {entry.count}
                           </span>
                         )}
@@ -765,7 +814,7 @@ function CompanyDashboard() {
                 <p className="text-xs text-muted-foreground">Aucune décision ne vous attend pour le moment.</p>
               </div>
             ) : (
-              <ul id="todo-list" className="flex flex-1 flex-col divide-y">
+              <ul id="todo-list" className={cn("flex flex-col divide-y", visibleTodos.length >= 4 ? "flex-1" : "xl:border-b")}>
                 {visibleTodos.map((todo, index) => {
                   const meta = TODO_META[todo.kind];
                   const rec = todo.recommendation;
@@ -779,7 +828,7 @@ function CompanyDashboard() {
                       as="li"
                       key={todo.id}
                       delay={index < 5 ? index * 40 : 0}
-                      className={cn("flex", visibleTodos.length >= 4 && "xl:flex-1")}
+                      className={cn("flex", visibleTodos.length >= 4 ? "xl:flex-1" : "xl:min-h-[5.5rem]")}
                     >
                       <TodoTarget
                         todo={todo}
@@ -801,14 +850,14 @@ function CompanyDashboard() {
 
                         {/* Qui, puis quoi ; le contexte dessous */}
                         <span className="min-w-0">
-                          <span className="block truncate text-sm leading-5">
+                          <span className="line-clamp-2 text-sm leading-5 sm:line-clamp-1 xl:line-clamp-2">
                             <span className={cn("font-semibold", todo.reminder ? "text-muted-foreground" : "text-foreground")}>
                               {todo.subject}
                             </span>
                             <span className="text-muted-foreground"> · {todo.task}</span>
                           </span>
                           {rec ? (
-                            <span className="mt-1 flex items-center gap-2 text-xs">
+                            <span className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs">
                               <span className="truncate text-primary">
                                 Recommandé : <span className="font-semibold">{rec.service}</span>
                               </span>
@@ -820,12 +869,15 @@ function CompanyDashboard() {
                                   />
                                 ))}
                               </span>
-                              <span className="shrink-0 tabular-nums text-muted-foreground">
+                              <span className="hidden shrink-0 tabular-nums text-muted-foreground sm:inline">
                                 {rec.met}/{rec.total} critères
+                              </span>
+                              <span className={cn("shrink-0 whitespace-nowrap sm:hidden", todo.urgent ? "font-medium text-warning" : "text-muted-foreground")}>
+                                · {todo.when}
                               </span>
                             </span>
                           ) : (
-                            <span className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
+                            <span className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
                               <span className="truncate">{todo.context}</span>
                               <span className={cn("shrink-0 whitespace-nowrap sm:hidden", todo.urgent && "font-medium text-warning")}>
                                 · {todo.when}
@@ -849,13 +901,13 @@ function CompanyDashboard() {
                         <span
                           aria-hidden="true"
                           className={cn(
-                            "inline-flex h-8 w-8 items-center justify-center gap-1 rounded-lg text-xs transition-colors duration-200 sm:w-[8.5rem] sm:px-3",
+                            "inline-flex h-8 w-8 items-center justify-center gap-1 rounded-lg text-xs transition-colors duration-200 sm:w-36 sm:px-3",
                             rec
                               ? "bg-primary font-semibold text-primary-foreground shadow-sm group-hover:bg-primary-hover"
                               : "bg-muted/70 font-medium text-muted-foreground group-hover:bg-primary-soft group-hover:text-primary"
                           )}
                         >
-                          <span className="hidden sm:inline">{rec ? "Voir l'explication" : meta.action}</span>
+                          <span className="hidden whitespace-nowrap sm:inline">{rec ? "Voir l'explication" : meta.action}</span>
                           <ArrowRight className="size-3.5 shrink-0" />
                         </span>
                       </TodoTarget>
@@ -864,13 +916,32 @@ function CompanyDashboard() {
                 })}
               </ul>
             )}
+            {visibleTodos.length > 0 && visibleTodos.length < 4 && (
+              <div className="hidden flex-1 flex-col items-center justify-center gap-2 px-5 py-6 text-center xl:flex">
+                <CheckCircle2 className="size-5 text-muted-foreground" />
+                <p className="text-xs text-muted-foreground">
+                  {currentTab === "tout"
+                    ? "Rien d'autre à traiter pour le moment."
+                    : `Rien d'autre côté ${TODO_GROUPS.find((g) => g.key === currentTab)?.label.toLowerCase()}.`}
+                </p>
+                {currentTab !== "tout" && (
+                  <button
+                    type="button"
+                    onClick={() => setTab("tout")}
+                    className="press inline-flex h-8 items-center gap-1 rounded-lg border bg-card px-3 text-[13px] font-medium shadow-sm transition-colors hover:border-foreground hover:bg-foreground hover:text-background"
+                  >
+                    Tout afficher
+                  </button>
+                )}
+              </div>
+            )}
             {hiddenCount > 0 && (
               <button
                 type="button"
                 onClick={() => setExpanded((value) => !value)}
                 aria-expanded={expanded}
                 aria-controls="todo-list"
-                className="group flex w-full items-center justify-center gap-1.5 border-t px-5 py-2.5 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
+                className="group flex w-full items-center justify-center gap-1.5 border-t px-5 py-2.5 text-[13px] focus-visible:outline-offset-[-3px] font-medium text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
               >
                 {expanded
                   ? "Réduire la liste"
@@ -1053,36 +1124,49 @@ function CompanyDashboard() {
 
         </div>
         <div className="min-w-0 self-start">
-          {/* Activité récente : fil chronologique */}
+          {/* Activité récente : colonne d'événements alignée, avatar, nom et offre, date courte */}
           <Reveal delay={240} className="card-surface p-5">
             <SectionHeader title="Activité récente" to="/entreprise/candidatures" />
             {activity.length === 0 ? (
-              <EmptyNote icon={Inbox} title="Aucune activité pour le moment" desc="Les nouvelles candidatures apparaîtront ici." className="mt-4 rounded-lg border border-dashed" />
+              <EmptyNote
+                icon={Inbox}
+                title="Aucune activité pour le moment"
+                desc="Les nouvelles candidatures apparaîtront ici."
+                className="mt-4 rounded-lg border border-dashed"
+              />
             ) : (
-              <ol className="relative mt-4 space-y-4 before:absolute before:bottom-3 before:left-[15px] before:top-3 before:w-px before:bg-border">
+              <ul className="mt-3 divide-y">
                 {activity.map((item) => (
                   <li key={item.id}>
-                    <Link to="/entreprise/candidatures" search={{ q: item.name }} className="group relative flex gap-3 rounded-lg">
-                    <span className="relative z-10 grid size-8 shrink-0 place-items-center rounded-full bg-card text-[11px] font-semibold text-primary ring-1 ring-border">
-                      {item.initials}
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <p className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[13px] leading-snug">
-                        <span className="font-medium transition-colors group-hover:text-primary">{item.name}</span>
-                        <Badge
-                          label={candidateStatusLabels[item.status].label}
-                          tone={candidateStatusLabels[item.status].tone}
-                          className="px-1.5 py-0 text-[11px]"
-                        />
-                      </p>
-                      <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                        {relativeDay(item.date)} · {item.offer}
-                      </p>
-                    </div>
+                    <Link
+                      to="/entreprise/candidatures"
+                      search={{ q: item.name }}
+                      aria-label={`${item.name} — ${item.long}, ${relativeDay(item.date)}, ${item.offer}`}
+                      className="group -mx-2 grid grid-cols-[6.5rem_28px_minmax(0,1fr)_auto] items-center gap-x-2.5 rounded-lg px-2 py-2.5 transition-colors duration-150 hover:bg-muted/50 focus-visible:outline-offset-0"
+                    >
+                      {/* 1. L'événement, dans une colonne alignée */}
+                      <Badge label={item.short} tone={item.tone} className="justify-self-start whitespace-nowrap px-1.5 py-0 text-[11px]" />
+                      {/* 2. L'avatar */}
+                      <AvatarInitials initials={item.initials} className="size-7 text-[11px]" />
+                      {/* 3. Qui, pour quelle offre */}
+                      <span className="min-w-0" aria-hidden="true">
+                        <span className="block truncate text-[13px] font-medium leading-5 transition-colors group-hover:text-primary">
+                          {item.name}
+                        </span>
+                        <span className="block truncate text-xs text-muted-foreground">{item.offer}</span>
+                      </span>
+                      {/* 4. Quand */}
+                      <time
+                        dateTime={item.date}
+                        title={relativeDay(item.date)}
+                        className="whitespace-nowrap text-right text-xs tabular-nums text-muted-foreground"
+                      >
+                        {shortDay(item.date)}
+                      </time>
                     </Link>
                   </li>
                 ))}
-              </ol>
+              </ul>
             )}
           </Reveal>
         </div>
