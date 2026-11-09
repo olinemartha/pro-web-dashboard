@@ -1,10 +1,24 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, type ComponentType } from "react";
-import { Download, FileText, Globe, Lock, Plus, Save, Trash2, Upload } from "lucide-react";
+import { useMemo, useState } from "react";
+import { CheckCircle2, Clock, Download, FileText, Globe, Lock, MapPin, Plus, Save, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Field, PageIntro, inputClass, textareaClass } from "@/components/company/ui";
+import { Reveal } from "@/components/ui/motion";
+import {
+  ActionMenu,
+  EmptyNote,
+  Field,
+  MenuItem,
+  PageIntro,
+  SECTION_LINK,
+  iconMotion,
+  inputClass,
+  textareaClass,
+} from "@/components/company/ui";
+import { CompanyLogoUploader } from "@/components/company/company-logo";
 import { useCompanyStore } from "@/lib/company-store";
+import { fmtDate, localIsoDate } from "@/lib/dates";
+import { cn } from "@/lib/utils";
 import type { CompanyProfile } from "@/lib/company-data";
 
 export const Route = createFileRoute("/entreprise/profil")({
@@ -14,46 +28,56 @@ export const Route = createFileRoute("/entreprise/profil")({
   component: CompanyProfilePage,
 });
 
-function fmtDate(value: string) {
-  return new Date(`${value}T00:00:00`).toLocaleDateString("fr-FR", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
-}
+/** Champs obligatoires, dans l'ordre de la page : le focus va au premier manquant. */
+const REQUIRED: { key: keyof CompanyProfile; id: string; message: string }[] = [
+  { key: "name", id: "company-name", message: "Le nom de l'entreprise est obligatoire." },
+  { key: "sector", id: "company-sector", message: "Précisez le secteur d'activité." },
+  { key: "email", id: "company-email", message: "L'e-mail professionnel est obligatoire." },
+  { key: "registration", id: "company-registration", message: "Le numéro RCCM est obligatoire." },
+  { key: "representativeName", id: "rep-name", message: "Indiquez le nom du responsable." },
+];
 
-function SectionTitle({ step, title, desc }: { step: number; title: string; desc: string }) {
+/** Une section de formulaire : titre et phrase d'aide au-dessus, champs sur deux colonnes. */
+function FormSection({ title, desc, children }: { title: string; desc: string; children: React.ReactNode }) {
   return (
-    <div className="mb-5 flex items-start gap-3">
-      <span className="grid size-7 shrink-0 place-items-center rounded-full bg-primary-soft text-xs font-semibold leading-none tabular-nums text-primary">
-        {step}
-      </span>
-      <div>
-        <h2 className="text-sm font-semibold leading-snug">{title}</h2>
-        <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">{desc}</p>
-      </div>
-    </div>
+    <section className="px-5 py-6 sm:px-6">
+      <h3 className="text-[15px] font-semibold tracking-tight">{title}</h3>
+      <p className="mt-0.5 text-pretty text-[13px] text-muted-foreground">{desc}</p>
+      <div className="mt-4 grid gap-4 sm:grid-cols-2">{children}</div>
+    </section>
   );
 }
 
+/** En-tête d'un groupe : titre de carte et pastille de visibilité. */
 function GroupHeader({
-  icon: Icon,
+  id,
   title,
   desc,
+  visibility,
 }: {
-  icon: ComponentType<{ className?: string }>;
+  id: string;
   title: string;
   desc: string;
+  visibility: "public" | "confidentiel";
 }) {
+  const Icon = visibility === "public" ? Globe : Lock;
   return (
-    <div className="flex items-start gap-3 border-b pb-2">
-      <span className="grid size-9 shrink-0 place-items-center rounded-md bg-accent-soft text-primary">
-        <Icon className="size-4" />
-      </span>
+    <div className="flex flex-wrap items-start justify-between gap-3 border-b px-5 pb-4 pt-5 sm:px-6">
       <div className="min-w-0">
-        <h2 className="text-lg font-semibold leading-snug tracking-tight">{title}</h2>
-        <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">{desc}</p>
+        <h2 id={id} className="text-lg font-semibold tracking-tight">
+          {title}
+        </h2>
+        <p className="mt-0.5 text-pretty text-[13px] text-muted-foreground">{desc}</p>
       </div>
+      <span
+        className={cn(
+          "inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium",
+          visibility === "public" ? "bg-primary-soft text-primary" : "bg-muted text-muted-foreground"
+        )}
+      >
+        <Icon className="size-3.5" />
+        {visibility === "public" ? "Visible par les étudiants" : "Confidentiel"}
+      </span>
     </div>
   );
 }
@@ -61,322 +85,268 @@ function GroupHeader({
 function CompanyProfilePage() {
   const { profile, updateProfile } = useCompanyStore();
   const [draft, setDraft] = useState<CompanyProfile>(profile);
+  const [errors, setErrors] = useState<Partial<Record<keyof CompanyProfile, string>>>({});
 
-  const set = (patch: Partial<CompanyProfile>) => setDraft((current) => ({ ...current, ...patch }));
+  // Le logo s'enregistre à part (immédiatement) : il n'entre pas dans la comparaison.
+  const dirty = useMemo(() => {
+    const { logo: _a, ...current } = profile;
+    const { logo: _b, ...edited } = draft;
+    return JSON.stringify(current) !== JSON.stringify(edited);
+  }, [profile, draft]);
+
+  const set = (patch: Partial<CompanyProfile>) => {
+    setDraft((current) => ({ ...current, ...patch }));
+    setErrors((current) => {
+      const next = { ...current };
+      (Object.keys(patch) as (keyof CompanyProfile)[]).forEach((key) => delete next[key]);
+      return next;
+    });
+  };
 
   const save = () => {
-    updateProfile(draft);
+    const next: typeof errors = {};
+    REQUIRED.forEach((field) => {
+      if (!String(draft[field.key] ?? "").trim()) next[field.key] = field.message;
+    });
+    if (draft.email.trim() && !/^\S+@\S+\.\S+$/.test(draft.email.trim())) next.email = "Saisissez une adresse e-mail valide.";
+    setErrors(next);
+    const first = REQUIRED.find((field) => next[field.key]);
+    if (first) {
+      const element = document.getElementById(first.id);
+      element?.focus({ preventScroll: true });
+      element?.scrollIntoView({ behavior: "smooth", block: "center" });
+      toast.error("Profil incomplet", { description: "Complétez les champs signalés en rouge." });
+      return;
+    }
+    updateProfile({ ...draft, logo: profile.logo });
     toast.success("Profil entreprise enregistré", {
-      description: "Le profil public est mis à jour ; le dossier administratif reste confidentiel.",
+      description: "Le profil public est à jour ; le dossier administratif reste confidentiel.",
     });
   };
 
   const addDocument = () => {
-    const document = {
-      id: `cd-${Date.now()}`,
-      name: `Document_${draft.documents.length + 1}.pdf`,
-      date: new Date().toISOString().split("T")[0],
-    };
+    const document = { id: `cd-${Date.now()}`, name: `Document_${draft.documents.length + 1}.pdf`, date: localIsoDate() };
     set({ documents: [...draft.documents, document] });
-    toast.success("Document ajouté", { description: document.name });
+    toast.success("Document ajouté", { description: `${document.name} — pensez à enregistrer.` });
   };
+
+  const input = (key: keyof CompanyProfile, id: string, placeholder: string, extra?: React.InputHTMLAttributes<HTMLInputElement>) => (
+    <input
+      id={id}
+      className={inputClass}
+      placeholder={placeholder}
+      value={String(draft[key] ?? "")}
+      onChange={(event) => set({ [key]: event.target.value } as Partial<CompanyProfile>)}
+      {...extra}
+    />
+  );
+
+  const saveButton = (
+    <Button onClick={save} disabled={!dirty} className="group">
+      <Save className="mr-2 size-4" /> Enregistrer
+    </Button>
+  );
 
   return (
     <div className="space-y-6">
       <PageIntro
-        desc="Le profil public est visible par les étudiants ; le dossier administratif reste confidentiel."
-        action={
-          <Button onClick={save}>
-            <Save className="mr-2 size-4" /> Enregistrer
-          </Button>
-        }
+        desc="Le profil public accompagne vos offres auprès des étudiants ; le dossier administratif sert à la vérification et reste confidentiel."
+        action={saveButton}
       />
 
       {/* Profil public */}
-      <GroupHeader
-        icon={Globe}
-        title="Profil public"
-        desc="Visible par les étudiants sur vos offres publiées."
-      />
-
-      <section className="card-surface p-5 sm:p-6">
-        <SectionTitle
-          step={1}
-          title="Informations générales"
-          desc="Nom, logo facultatif, secteur et description de l'entreprise."
+      <Reveal as="section" className="card-surface overflow-hidden" aria-labelledby="profil-public">
+        <GroupHeader
+          id="profil-public"
+          title="Profil public"
+          desc="Ce que les étudiants voient sur chacune de vos offres."
+          visibility="public"
         />
-        <div className="flex flex-col gap-5 sm:flex-row sm:items-start">
-          <div className="flex flex-col items-center gap-2">
-            <span className="grid size-20 place-items-center rounded-xl bg-primary text-2xl font-semibold text-primary-foreground">
-              {draft.initials || "E"}
-            </span>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() =>
-                toast.info("Téléversement de logo", { description: "Fonction de démonstration." })
-              }
-            >
-              <Upload className="mr-2 size-3.5" /> Logo
-            </Button>
-            <p className="max-w-[22ch] text-center text-xs leading-relaxed text-muted-foreground">
-              Facultatif — les initiales s'affichent par défaut.
-            </p>
-          </div>
 
-          <div className="grid flex-1 gap-4 sm:grid-cols-2">
-            <Field label="Nom de l'entreprise" htmlFor="company-name" required>
-              <input
-                id="company-name"
-                className={inputClass}
-                value={draft.name}
-                onChange={(event) => set({ name: event.target.value })}
-              />
+        <div className="divide-y">
+          {/* Identité : le logo (enregistré aussitôt) et l'aperçu de la carte entreprise */}
+          <section className="flex flex-col gap-5 px-5 py-6 sm:flex-row sm:items-center sm:px-6">
+            <CompanyLogoUploader className="size-20 shrink-0 rounded-2xl shadow-sm ring-4 ring-primary-soft" radius="rounded-2xl" />
+            <div className="min-w-0">
+              <p className="truncate text-lg font-semibold tracking-tight">{draft.name || "Nom de l'entreprise"}</p>
+              <p className="text-[13px] text-muted-foreground">{draft.sector || "Secteur d'activité"}</p>
+              <p className="mt-1 inline-flex items-center gap-1 text-xs text-muted-foreground">
+                <MapPin className="size-3" /> {draft.city || "Ville"}
+              </p>
+              <p className="mt-2 text-pretty text-xs text-muted-foreground">
+                Logo facultatif (PNG, JPG, WebP ou SVG, 2 Mo maximum) ; à défaut, les initiales s'affichent.
+              </p>
+            </div>
+          </section>
+
+          <FormSection title="Informations générales" desc="Le nom, le secteur et la présentation de l'entreprise.">
+            <Field label="Nom de l'entreprise" htmlFor="company-name" required error={errors.name}>
+              {input("name", "company-name", "Ex. FINCA RDC")}
             </Field>
-            <Field
-              label="Initiales"
-              htmlFor="company-initials"
-              hint="2 caractères, utilisés en l'absence de logo."
-            >
+            <Field label="Secteur d'activité" htmlFor="company-sector" required error={errors.sector}>
+              {input("sector", "company-sector", "Ex. Microfinance")}
+            </Field>
+            <Field label="Initiales" htmlFor="company-initials" hint="2 lettres, affichées en l'absence de logo.">
               <input
                 id="company-initials"
-                className={inputClass}
+                className={cn(inputClass, "uppercase")}
                 maxLength={2}
+                placeholder="Ex. FR"
                 value={draft.initials}
                 onChange={(event) => set({ initials: event.target.value.toUpperCase() })}
               />
             </Field>
-            <Field label="Secteur d'activité" htmlFor="company-sector" required>
-              <input
-                id="company-sector"
-                className={inputClass}
-                value={draft.sector}
-                onChange={(event) => set({ sector: event.target.value })}
-              />
+            <Field label="Site web" htmlFor="company-website" hint="Adresse complète, par exemple https://exemple.cd.">
+              {input("website", "company-website", "https://", { type: "url", inputMode: "url" })}
             </Field>
             <Field label="Description" htmlFor="company-description" className="sm:col-span-2">
               <textarea
                 id="company-description"
                 className={textareaClass}
+                placeholder="Ex. Institution de microfinance qui accompagne les entrepreneurs congolais."
                 value={draft.description}
                 onChange={(event) => set({ description: event.target.value })}
               />
             </Field>
-          </div>
-        </div>
-      </section>
+          </FormSection>
 
-      <section className="card-surface p-5 sm:p-6">
-        <SectionTitle
-          step={2}
-          title="Coordonnées"
-          desc="Adresse, ville, téléphone et e-mail professionnel."
-        />
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Adresse" htmlFor="company-address">
-            <input
-              id="company-address"
-              className={inputClass}
-              value={draft.address}
-              onChange={(event) => set({ address: event.target.value })}
-            />
-          </Field>
-          <Field label="Ville" htmlFor="company-city">
-            <input
-              id="company-city"
-              className={inputClass}
-              value={draft.city}
-              onChange={(event) => set({ city: event.target.value })}
-            />
-          </Field>
-          <Field label="Téléphone" htmlFor="company-phone">
-            <input
-              id="company-phone"
-              className={inputClass}
-              value={draft.phone}
-              onChange={(event) => set({ phone: event.target.value })}
-            />
-          </Field>
-          <Field label="E-mail professionnel" htmlFor="company-email" required>
-            <input
-              id="company-email"
-              type="email"
-              className={inputClass}
-              value={draft.email}
-              onChange={(event) => set({ email: event.target.value })}
-            />
-          </Field>
-        </div>
-      </section>
+          <FormSection title="Activités" desc="Ce que fait l'entreprise : utile aux étudiants pour choisir une offre.">
+            <Field label="Activités principales" htmlFor="company-activities" className="sm:col-span-2">
+              <textarea
+                id="company-activities"
+                className={textareaClass}
+                placeholder="Ex. Crédit aux micro-entrepreneurs, épargne, éducation financière"
+                value={draft.activities}
+                onChange={(event) => set({ activities: event.target.value })}
+              />
+            </Field>
+            <Field label="Domaines d'intervention" htmlFor="company-domains" className="sm:col-span-2">
+              {input("domains", "company-domains", "Ex. Finance inclusive, agriculture, commerce")}
+            </Field>
+          </FormSection>
 
-      <section className="card-surface p-5 sm:p-6">
-        <SectionTitle
-          step={3}
-          title="Présentation"
-          desc="Activités principales, domaines d'intervention et site web."
-        />
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Activités principales" htmlFor="company-activities" className="sm:col-span-2">
-            <textarea
-              id="company-activities"
-              className={textareaClass}
-              value={draft.activities}
-              onChange={(event) => set({ activities: event.target.value })}
-            />
-          </Field>
-          <Field label="Domaines d'intervention" htmlFor="company-domains">
-            <input
-              id="company-domains"
-              className={inputClass}
-              value={draft.domains}
-              onChange={(event) => set({ domains: event.target.value })}
-            />
-          </Field>
-          <Field
-            label="Site web"
-            htmlFor="company-website"
-            hint="Adresse complète, par exemple https://exemple.cd."
-          >
-            <input
-              id="company-website"
-              className={inputClass}
-              value={draft.website}
-              onChange={(event) => set({ website: event.target.value })}
-            />
-          </Field>
+          <FormSection title="Coordonnées" desc="Où et comment joindre l'entreprise.">
+            <Field label="Adresse" htmlFor="company-address">
+              {input("address", "company-address", "Ex. 25, avenue de la Justice, Gombe")}
+            </Field>
+            <Field label="Ville" htmlFor="company-city">
+              {input("city", "company-city", "Ex. Kinshasa")}
+            </Field>
+            <Field label="Téléphone" htmlFor="company-phone">
+              {input("phone", "company-phone", "Ex. +243 81 000 0000", { type: "tel", inputMode: "tel" })}
+            </Field>
+            <Field label="E-mail professionnel" htmlFor="company-email" required error={errors.email}>
+              {input("email", "company-email", "Ex. stages@finca.cd", { type: "email", inputMode: "email" })}
+            </Field>
+          </FormSection>
         </div>
-      </section>
+      </Reveal>
 
       {/* Dossier administratif */}
-      <GroupHeader
-        icon={Lock}
-        title="Dossier administratif"
-        desc="Utilisé pour la vérification interne. Non exposé aux étudiants."
-      />
-
-      <section className="card-surface p-5 sm:p-6">
-        <SectionTitle
-          step={4}
-          title="Informations légales"
-          desc="Numéro d'enregistrement et références officielles de l'entreprise."
+      <Reveal as="section" delay={80} className="card-surface overflow-hidden" aria-labelledby="dossier-admin">
+        <GroupHeader
+          id="dossier-admin"
+          title="Dossier administratif"
+          desc="Utilisé pour vérifier l'entreprise. Jamais montré aux étudiants."
+          visibility="confidentiel"
         />
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Numéro d'enregistrement (RCCM)" htmlFor="company-registration" required>
-            <input
-              id="company-registration"
-              className={inputClass}
-              value={draft.registration}
-              onChange={(event) => set({ registration: event.target.value })}
-            />
-          </Field>
-          <Field label="Références officielles" htmlFor="company-legal">
-            <input
-              id="company-legal"
-              className={inputClass}
-              value={draft.legalRefs}
-              onChange={(event) => set({ legalRefs: event.target.value })}
-            />
-          </Field>
+
+        <div className="divide-y">
+          <FormSection title="Informations légales" desc="L'enregistrement officiel de l'entreprise.">
+            <Field label="Numéro d'enregistrement (RCCM)" htmlFor="company-registration" required error={errors.registration}>
+              {input("registration", "company-registration", "Ex. CD/KIN/RCCM/14-B-0000")}
+            </Field>
+            <Field label="Références officielles" htmlFor="company-legal">
+              {input("legalRefs", "company-legal", "Ex. Agrément BCC n° 000")}
+            </Field>
+          </FormSection>
+
+          <FormSection title="Responsable" desc="La personne qui représente l'entreprise sur StageManager.">
+            <Field label="Nom du responsable" htmlFor="rep-name" required error={errors.representativeName}>
+              {input("representativeName", "rep-name", "Ex. Marie Lukusa")}
+            </Field>
+            <Field label="Fonction" htmlFor="rep-role">
+              {input("representativeRole", "rep-role", "Ex. Responsable des ressources humaines")}
+            </Field>
+            <Field label="E-mail" htmlFor="rep-email">
+              {input("representativeEmail", "rep-email", "Ex. m.lukusa@finca.cd", { type: "email", inputMode: "email" })}
+            </Field>
+            <Field label="Téléphone" htmlFor="rep-phone">
+              {input("representativePhone", "rep-phone", "Ex. +243 81 000 0000", { type: "tel", inputMode: "tel" })}
+            </Field>
+          </FormSection>
+
+          {/* Documents officiels : des lignes séparées par un filet */}
+          <section className="py-6">
+            <div className="flex flex-wrap items-end justify-between gap-3 px-5 sm:px-6">
+              <div>
+                <h3 className="flex items-center gap-2 text-[15px] font-semibold tracking-tight">
+                  Documents officiels
+                  <span className="rounded-md bg-muted px-1.5 py-0.5 text-[11px] font-medium tabular-nums text-muted-foreground">
+                    {draft.documents.length}
+                  </span>
+                </h3>
+                <p className="mt-0.5 text-[13px] text-muted-foreground">Les pièces qui attestent l'existence de l'entreprise.</p>
+              </div>
+              <button type="button" onClick={addDocument} className={SECTION_LINK}>
+                <Plus className="size-3.5" /> Ajouter un document
+              </button>
+            </div>
+            {draft.documents.length === 0 ? (
+              <EmptyNote icon={FileText} title="Aucun document" desc="Ajoutez le RCCM ou l'agrément de l'entreprise." />
+            ) : (
+              <ul className="mt-4 divide-y border-y">
+                {draft.documents.map((document) => (
+                  <li
+                    key={document.id}
+                    className="group grid grid-cols-[20px_minmax(0,1fr)_auto] items-center gap-x-3.5 px-5 py-3 transition-colors duration-150 hover:bg-muted/50 sm:px-6"
+                  >
+                    <FileText className={iconMotion("lift", "size-[18px] text-muted-foreground group-hover:text-foreground")} />
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold">{document.name}</p>
+                      <p className="text-xs tabular-nums text-muted-foreground">Ajouté le {fmtDate(document.date)}</p>
+                    </div>
+                    <ActionMenu>
+                      <MenuItem onSelect={() => toast.success("Téléchargement démarré", { description: document.name })}>
+                        <Download className="size-3.5" /> Télécharger
+                      </MenuItem>
+                      <MenuItem
+                        onSelect={() => {
+                          set({ documents: draft.documents.filter((entry) => entry.id !== document.id) });
+                          toast.success("Document retiré", { description: `${document.name} — pensez à enregistrer.` });
+                        }}
+                      >
+                        <Trash2 className="size-3.5" /> Retirer
+                      </MenuItem>
+                    </ActionMenu>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
         </div>
-      </section>
+      </Reveal>
 
-      <section className="card-surface p-5 sm:p-6">
-        <SectionTitle
-          step={5}
-          title="Responsable"
-          desc="Identité et coordonnées du représentant principal. Non exposé aux étudiants."
-        />
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Nom du responsable" htmlFor="rep-name" required>
-            <input
-              id="rep-name"
-              className={inputClass}
-              value={draft.representativeName}
-              onChange={(event) => set({ representativeName: event.target.value })}
-            />
-          </Field>
-          <Field label="Fonction" htmlFor="rep-role">
-            <input
-              id="rep-role"
-              className={inputClass}
-              value={draft.representativeRole}
-              onChange={(event) => set({ representativeRole: event.target.value })}
-            />
-          </Field>
-          <Field label="E-mail" htmlFor="rep-email">
-            <input
-              id="rep-email"
-              type="email"
-              className={inputClass}
-              value={draft.representativeEmail}
-              onChange={(event) => set({ representativeEmail: event.target.value })}
-            />
-          </Field>
-          <Field label="Téléphone" htmlFor="rep-phone">
-            <input
-              id="rep-phone"
-              className={inputClass}
-              value={draft.representativePhone}
-              onChange={(event) => set({ representativePhone: event.target.value })}
-            />
-          </Field>
+      {/* Barre d'enregistrement */}
+      <div className="card-surface flex flex-wrap items-center justify-between gap-3 px-5 py-3.5 sm:px-6">
+        <p className={cn("inline-flex items-center gap-1.5 text-[13px]", dirty ? "font-medium text-warning" : "text-muted-foreground")} aria-live="polite">
+          {dirty ? <Clock className="size-3.5" /> : <CheckCircle2 className="size-3.5 text-success" />}
+          {dirty ? "Modifications non enregistrées" : "Tout est enregistré"}
+        </p>
+        <div className="flex gap-2">
+          {dirty && (
+            <Button
+              variant="outline"
+              onClick={() => {
+                setDraft(profile);
+                setErrors({});
+              }}
+            >
+              Annuler
+            </Button>
+          )}
+          {saveButton}
         </div>
-      </section>
-
-      <section className="card-surface p-5 sm:p-6">
-        <SectionTitle
-          step={6}
-          title="Documents officiels"
-          desc="Pièces justificatives de l'existence de l'entreprise. Non exposées aux étudiants."
-        />
-        {draft.documents.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Aucun document enregistré.</p>
-        ) : (
-          <ul className="divide-y rounded-lg border">
-            {draft.documents.map((document) => (
-              <li key={document.id} className="flex items-center gap-3 px-3 py-2.5">
-                <span className="grid size-8 shrink-0 place-items-center rounded-md bg-accent-soft text-primary">
-                  <FileText className="size-4" />
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium leading-snug">{document.name}</p>
-                  <p className="text-xs leading-4 tabular-nums text-muted-foreground">
-                    Ajouté le {fmtDate(document.date)}
-                  </p>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  aria-label={`Télécharger ${document.name}`}
-                  onClick={() => toast.success("Téléchargement démarré", { description: document.name })}
-                >
-                  <Download className="size-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  aria-label={`Supprimer ${document.name}`}
-                  onClick={() => {
-                    set({ documents: draft.documents.filter((entry) => entry.id !== document.id) });
-                    toast.success("Document supprimé");
-                  }}
-                >
-                  <Trash2 className="size-4 text-destructive" />
-                </Button>
-              </li>
-            ))}
-          </ul>
-        )}
-        <Button variant="outline" size="sm" className="mt-3" onClick={addDocument}>
-          <Plus className="mr-2 size-4" /> Ajouter un document
-        </Button>
-      </section>
-
-      <div className="flex justify-end">
-        <Button onClick={save}>
-          <Save className="mr-2 size-4" /> Enregistrer les modifications
-        </Button>
       </div>
     </div>
   );

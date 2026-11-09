@@ -322,10 +322,22 @@ function InternDossierPage() {
             )}
           </div>
           <div className="flex flex-wrap gap-2">
-            {intern.certificate === "non_generee" && (
+            {/* L'attestation suit l'évaluation finale : tant qu'elle manque, le bouton mène au champ à remplir. */}
+            {intern.certificate === "non_generee" && !intern.evaluation && (
+              <button
+                type="button"
+                onClick={() => {
+                  document.getElementById("evaluation")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                  document.getElementById(`intern-score-${intern.id}`)?.focus({ preventScroll: true });
+                }}
+                className={SECTION_LINK}
+              >
+                <ClipboardCheck className="size-3.5" /> Saisir l'évaluation finale
+              </button>
+            )}
+            {intern.certificate === "non_generee" && intern.evaluation && (
               <Button
                 size="sm"
-                disabled={!intern.evaluation}
                 onClick={() => {
                   generateCertificate(intern.id);
                   toast.success("Attestation générée", { description: `${intern.name} — à valider avant remise au stagiaire.` });
@@ -357,8 +369,8 @@ function InternDossierPage() {
           </div>
         </div>
         {!intern.evaluation && intern.certificate === "non_generee" && (
-          <p className="mt-3 flex items-center gap-1.5 text-xs text-muted-foreground">
-            <Clock className="size-3" /> Enregistrez d'abord l'évaluation finale.
+          <p className="mt-3 flex items-center gap-1.5 text-xs font-medium text-warning">
+            <Clock className="size-3" /> L'attestation se génère une fois l'évaluation finale enregistrée.
           </p>
         )}
       </Reveal>
