@@ -26,6 +26,7 @@ import {
   SECTION_LINK,
   SectionHeader,
   StatCard,
+  rowActionClass,
   type IconMotion,
   type Tone,
 } from "@/components/company/ui";
@@ -638,7 +639,6 @@ function CompanyDashboard() {
               motion={stat.motion}
               foot={stat.foot}
               tone={stat.tone}
-              to={stat.to}
               aside={stat.spark && <Sparkline values={stat.spark} className="hidden sm:block" />}
             />
           </Reveal>
@@ -731,21 +731,17 @@ function CompanyDashboard() {
                       delay={index < 5 ? index * 40 : 0}
                       className={cn("flex", visibleTodos.length >= 4 ? "xl:flex-1" : "xl:min-h-[5.5rem]")}
                     >
-                      <TodoTarget
-                        todo={todo}
-                        label={label}
+                      <div
                         className={cn(
-                          "group grid w-full grid-cols-[20px_minmax(0,1fr)_auto] items-center gap-x-3.5 px-5 py-3 transition-colors duration-150 focus-visible:outline-offset-[-3px] sm:grid-cols-[20px_minmax(0,1fr)_auto_auto]",
-                          rec
-                            ? "bg-primary-soft shadow-[inset_3px_0_0_hsl(var(--primary))] hover:bg-[hsl(218_92%_92%)]"
-                            : "hover:bg-muted/50"
+                          "grid w-full grid-cols-[20px_minmax(0,1fr)_auto] items-center gap-x-3.5 px-5 py-3 sm:grid-cols-[20px_minmax(0,1fr)_auto_auto]",
+                          rec && "bg-primary-soft shadow-[inset_3px_0_0_hsl(var(--primary))]"
                         )}
                       >
                         {/* Icône nue, de sens */}
                         <meta.icon
                           className={cn(
                             `nav-icon nav-icon--${meta.motion} size-[18px] transition-colors duration-200`,
-                            rec ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
+                            rec ? "text-primary" : "text-muted-foreground"
                           )}
                         />
 
@@ -799,19 +795,11 @@ function CompanyDashboard() {
                         </span>
 
                         {/* Bouton : discret et de largeur fixe ; seul celui de la recommandation est plein */}
-                        <span
-                          aria-hidden="true"
-                          className={cn(
-                            "inline-flex h-8 w-8 items-center justify-center gap-1 rounded-lg text-xs transition-colors duration-200 sm:w-36 sm:px-3",
-                            rec
-                              ? "bg-primary font-semibold text-primary-foreground shadow-sm group-hover:bg-primary-hover"
-                              : "bg-muted/70 font-medium text-muted-foreground group-hover:bg-primary-soft group-hover:text-primary"
-                          )}
-                        >
+                        <TodoTarget todo={todo} label={label} className={cn(rowActionClass(Boolean(rec)), "group")}>
                           <span className="hidden whitespace-nowrap sm:inline">{rec ? "Voir l'explication" : meta.action}</span>
                           <ArrowRight className={cn("size-3.5 shrink-0", ARROW_NUDGE)} />
-                        </span>
-                      </TodoTarget>
+                        </TodoTarget>
+                      </div>
                     </Reveal>
                   );
                 })}
@@ -876,11 +864,7 @@ function CompanyDashboard() {
               {serviceCapacity.slice(0, 4).map(({ service, filled, left }) => {
                 const pct = service.internsNeeded ? Math.round((filled / service.internsNeeded) * 100) : 0;
                 return (
-                  <Link
-                    key={service.id}
-                    to="/entreprise/services"
-                    className="flex items-center gap-3 rounded-xl border bg-card p-3 transition-colors hover:border-accent/50 hover:bg-muted/40"
-                  >
+                  <div key={service.id} className="flex items-center gap-3 rounded-xl border bg-card p-3">
                     <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-primary-soft text-[11px] font-semibold text-primary">
                       {initialsOf(service.name)}
                     </span>
@@ -898,7 +882,7 @@ function CompanyDashboard() {
                     >
                       {left > 0 ? `${left} libre${left > 1 ? "s" : ""}` : `${pct}%`}
                     </span>
-                  </Link>
+                  </div>
                 );
               })}
             </div>
@@ -916,13 +900,7 @@ function CompanyDashboard() {
                   const first = index === 0;
                   return (
                     <li key={interview.id}>
-                      <Link
-                        to="/entreprise/entretiens"
-                        className={cn(
-                          "group flex items-center gap-3 rounded-xl p-2.5 transition-colors duration-150",
-                          first ? "bg-primary-soft/70 hover:bg-primary-soft" : "hover:bg-muted/60"
-                        )}
-                      >
+                      <div className={cn("flex items-center gap-3 rounded-xl p-2.5", first && "bg-primary-soft/70")}>
                       <span
                         className={cn(
                           "flex w-11 shrink-0 flex-col items-center rounded-lg py-1.5 leading-none",
@@ -935,13 +913,13 @@ function CompanyDashboard() {
                         <span className="mt-0.5 text-base font-semibold tabular-nums">{date.getDate()}</span>
                       </span>
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium transition-colors group-hover:text-primary">{candidateName(interview.candidateId)}</p>
+                        <p className="truncate text-sm font-medium">{candidateName(interview.candidateId)}</p>
                         <p className="truncate text-xs text-muted-foreground">{candidateOffer(interview.candidateId)}</p>
                       </div>
                       <span className="shrink-0 rounded-md bg-card px-1.5 py-0.5 text-xs font-medium tabular-nums ring-1 ring-border">
                         {interview.time}
                       </span>
-                      </Link>
+                      </div>
                     </li>
                   );
                 })}
@@ -982,16 +960,13 @@ function CompanyDashboard() {
                   const urgent = daysLeft >= 0 && daysLeft <= 7;
                   return (
                     <li key={offer.id}>
-                      <Link
-                        to="/entreprise/offres"
-                        className="group grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-3 px-5 py-3.5 transition-colors hover:bg-muted/40 md:grid-cols-[minmax(0,2fr)_60px_76px_minmax(0,1.2fr)_52px]"
-                      >
+                      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-3 px-5 py-3.5 md:grid-cols-[minmax(0,2fr)_60px_76px_minmax(0,1.2fr)_52px]">
                         <span className="flex min-w-0 items-center gap-3">
-                          <span className="grid size-5 shrink-0 place-items-center text-muted-foreground transition-colors duration-200 group-hover:text-foreground">
-                            <Briefcase className="nav-icon nav-icon--lift size-[18px]" />
+                          <span className="grid size-5 shrink-0 place-items-center text-muted-foreground">
+                            <Briefcase className="size-[18px]" />
                           </span>
                           <span className="min-w-0">
-                            <span className="block truncate text-sm font-medium group-hover:text-primary">{offer.title}</span>
+                            <span className="block truncate text-sm font-medium">{offer.title}</span>
                             <span className="block truncate text-xs text-muted-foreground">{offer.department}</span>
                           </span>
                         </span>
@@ -1015,7 +990,7 @@ function CompanyDashboard() {
                         <span className={cn("hidden text-right text-sm tabular-nums md:block", urgent ? "font-medium text-destructive-ink" : "text-muted-foreground")}>
                           {daysLeft < 0 ? "Échue" : `J-${daysLeft}`}
                         </span>
-                      </Link>
+                      </div>
                     </li>
                   );
                 })}
@@ -1039,19 +1014,14 @@ function CompanyDashboard() {
               <ul className="mt-3 divide-y">
                 {activity.map((item) => (
                   <li key={item.id}>
-                    <Link
-                      to="/entreprise/candidatures"
-                      search={{ q: item.name }}
-                      aria-label={`${item.name} — ${item.long}, ${relativeDay(item.date)}, ${item.offer}`}
-                      className="group -mx-2 grid grid-cols-[6.5rem_28px_minmax(0,1fr)_auto] items-center gap-x-2.5 rounded-lg px-2 py-2.5 transition-colors duration-150 hover:bg-muted/50 focus-visible:outline-offset-0"
-                    >
+                    <div className="-mx-2 grid grid-cols-[6.5rem_28px_minmax(0,1fr)_auto] items-center gap-x-2.5 px-2 py-2.5">
                       {/* 1. L'événement, dans une colonne alignée */}
                       <Badge label={item.short} tone={item.tone} className="justify-self-start whitespace-nowrap px-1.5 py-0 text-[11px]" />
                       {/* 2. L'avatar */}
                       <AvatarInitials initials={item.initials} className="size-7 text-[11px]" />
                       {/* 3. Qui, pour quelle offre */}
-                      <span className="min-w-0" aria-hidden="true">
-                        <span className="block truncate text-[13px] font-medium leading-5 transition-colors group-hover:text-primary">
+                      <span className="min-w-0">
+                        <span className="block truncate text-[13px] font-medium leading-5">
                           {item.name}
                         </span>
                         <span className="block truncate text-xs text-muted-foreground">{item.offer}</span>
@@ -1064,7 +1034,7 @@ function CompanyDashboard() {
                       >
                         {shortDay(item.date)}
                       </time>
-                    </Link>
+                    </div>
                   </li>
                 ))}
               </ul>
@@ -1096,15 +1066,21 @@ function CompanyDashboard() {
                     {interns.slice(0, 5).map((intern) => {
                       const step = nextStep(intern.id);
                       return (
-                        <tr key={intern.id} className="group relative transition-colors hover:bg-muted/40">
+                        <tr key={intern.id}>
                           <td className="px-5 py-3">
-                            <Link to="/entreprise/stagiaires/$internId" params={{ internId: intern.id }} className="flex items-center gap-3 after:absolute after:inset-0">
+                            <div className="flex items-center gap-3">
                               <AvatarInitials initials={intern.initials} className="size-8 text-xs" />
                               <span className="min-w-0">
-                                <span className="block truncate font-medium group-hover:text-primary">{intern.name}</span>
+                                <Link
+                                  to="/entreprise/stagiaires/$internId"
+                                  params={{ internId: intern.id }}
+                                  className="block truncate font-medium text-primary underline-offset-4 hover:underline"
+                                >
+                                  {intern.name}
+                                </Link>
                                 <span className="block truncate text-xs text-muted-foreground">{offerTitle(intern.offerId)}</span>
                               </span>
-                            </Link>
+                            </div>
                           </td>
                           <td className="truncate px-3 py-3 text-muted-foreground">{intern.service || "—"}</td>
                           <td className="whitespace-nowrap px-3 py-3 text-muted-foreground">
@@ -1123,14 +1099,20 @@ function CompanyDashboard() {
                     const step = nextStep(intern.id);
                     return (
                       <li key={intern.id}>
-                        <Link to="/entreprise/stagiaires/$internId" params={{ internId: intern.id }} className="flex items-center gap-3 px-5 py-3">
+                        <div className="flex items-center gap-3 px-5 py-3">
                           <AvatarInitials initials={intern.initials} className="size-8 text-xs" />
                           <div className="min-w-0 flex-1">
-                            <p className="truncate text-sm font-medium">{intern.name}</p>
+                            <Link
+                              to="/entreprise/stagiaires/$internId"
+                              params={{ internId: intern.id }}
+                              className="block truncate text-sm font-medium text-primary underline-offset-4 hover:underline"
+                            >
+                              {intern.name}
+                            </Link>
                             <p className="truncate text-xs text-muted-foreground">{intern.service || "Service à définir"}</p>
                           </div>
                           <Badge label={step.label} tone={step.tone} className="shrink-0" />
-                        </Link>
+                        </div>
                       </li>
                     );
                   })}
