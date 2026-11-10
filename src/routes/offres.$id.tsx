@@ -238,6 +238,28 @@ function OfferDetail() {
         </aside>
       </div>
 
+      {/* Téléphone et tablette : l'action reste à portée de pouce pendant la lecture de l'offre */}
+      {!application && !deadline.closed && (
+        <div className="sticky bottom-3 z-20 xl:hidden">
+          <div className="flex items-center gap-3 rounded-xl border bg-popover px-4 py-3 shadow-lg">
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-[13px] font-semibold">{can.ok ? "Cette offre vous intéresse ?" : "Profil à compléter"}</p>
+              <p className={cn("truncate text-xs", deadline.urgent ? "font-medium text-warning" : "text-muted-foreground")}>{deadline.label}</p>
+            </div>
+            {can.ok ? (
+              <Button size="sm" className="group shrink-0" onClick={() => setConfirming(true)}>
+                <Send className={iconMotion("fly", "mr-1.5 size-4")} />
+                Postuler
+              </Button>
+            ) : (
+              <Button asChild size="sm" className="shrink-0">
+                <Link to="/profil">Compléter</Link>
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
+
       <Modal
         open={confirming}
         onClose={() => setConfirming(false)}

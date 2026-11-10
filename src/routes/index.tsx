@@ -206,13 +206,13 @@ function Dashboard() {
                       className={cn(
                         "group grid grid-cols-[20px_minmax(0,1fr)_auto] items-center gap-x-3.5 px-5 py-3 transition-colors duration-200 sm:grid-cols-[20px_minmax(0,1fr)_auto_auto]",
                         todo.primary ? "" : "hover:bg-muted/40",
-                        todo.primary && "bg-primary-soft shadow-[inset_3px_0_0_hsl(var(--primary))]"
+                        todo.primary && "bg-success-soft/50 shadow-[inset_3px_0_0_hsl(var(--success))]"
                       )}
                     >
                       <todo.icon
                         className={cn(
                           `nav-icon nav-icon--${todo.motion} size-[18px]`,
-                          todo.primary ? "text-primary" : "text-muted-foreground"
+                          todo.primary ? "text-success" : "text-muted-foreground"
                         )}
                       />
                       <span className="min-w-0">

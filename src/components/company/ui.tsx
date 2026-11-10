@@ -24,20 +24,24 @@ const TONE_CLASSES: Record<Tone, string> = {
 export function Badge({
   label,
   tone = "muted",
+  dot,
   className,
 }: {
   label: string;
   tone?: Tone;
+  /** Pastille de couleur du pipeline, devant le libellé (distingue les statuts de même ton). */
+  dot?: CandidateStatus;
   className?: string;
 }) {
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold",
+        "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-semibold",
         TONE_CLASSES[tone],
         className
       )}
     >
+      {dot && <StatusDot status={dot} className="size-1.5" />}
       {label}
     </span>
   );

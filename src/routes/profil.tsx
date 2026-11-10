@@ -268,7 +268,7 @@ function ProfilePage() {
         </Reveal>
 
         {/* ============================ Colonne latérale ============================ */}
-        <aside className="grid min-w-0 grid-cols-[minmax(0,1fr)] content-start gap-6 lg:grid-cols-2 xl:flex xl:flex-col">
+        <aside className="order-first grid min-w-0 grid-cols-[minmax(0,1fr)] content-start gap-6 lg:grid-cols-2 xl:order-none xl:flex xl:flex-col">
           <Reveal delay={80} className="card-surface p-5">
             <SectionHeader title="Profil complété" />
             <p className="mt-3 text-[30px] font-semibold leading-none tracking-tight">

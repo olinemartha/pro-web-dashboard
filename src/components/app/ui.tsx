@@ -43,7 +43,7 @@ export const STUDENT_STATUS: Record<AppStatus, { label: string; tone: Tone; dot:
 
 export function StatusBadge({ status, className }: { status: AppStatus; className?: string }) {
   const meta = STUDENT_STATUS[status];
-  return <Badge label={meta.label} tone={meta.tone} className={cn("whitespace-nowrap", className)} />;
+  return <Badge label={meta.label} tone={meta.tone} dot={meta.dot} className={cn("whitespace-nowrap", className)} />;
 }
 
 /* ------------------------------------------------------------------ */

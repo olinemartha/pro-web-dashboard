@@ -9,7 +9,6 @@ import {
   GraduationCap,
   LayoutDashboard,
   LifeBuoy,
-  Search,
   Send,
   Settings,
   Sparkles,
@@ -190,7 +189,7 @@ const studentConfig: SpaceConfig = {
   primaryAction: {
     to: "/offres",
     label: "Trouver un stage",
-    icon: Search,
+    icon: Briefcase,
     hideOn: (pathname) => pathname.startsWith("/offres"),
   },
   collapseKey: "sm.etudiant.sidebar-collapsed",
