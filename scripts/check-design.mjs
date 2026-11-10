@@ -25,20 +25,7 @@ const includeLegacy = process.argv.includes("--all");
  * design system lors de leur redesign. Retirez une ligne dès qu'une page est
  * refaite ; ne rajoutez jamais de nouvelle page ici.
  */
-const LEGACY = new Set([
-  "src/routes/index.tsx",
-  "src/routes/aide.tsx",
-  "src/routes/candidatures.tsx",
-  "src/routes/documents.tsx",
-  "src/routes/notifications.tsx",
-  "src/routes/offres.$id.tsx",
-  "src/routes/offres.index.tsx",
-  "src/routes/parametres.tsx",
-  "src/routes/profil.tsx",
-  "src/routes/stage.tsx",
-  "src/components/app",
-  "src/components/ui/kpi-card.tsx",
-]);
+const LEGACY = new Set([]);
 
 const PALETTE =
   "slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose";
@@ -83,8 +70,8 @@ const RULES = [
 /** Exceptions documentées du système lui-même. */
 const ALLOW = [
   { file: "src/components/company/ui.tsx", rule: "flou-decoratif" }, // voile des fenêtres
-  { file: "src/components/company/topbar.tsx", rule: "flou-decoratif" }, // cloche translucide choisie
-  { file: "src/components/company/company-shell.tsx", rule: "flou-decoratif" }, // voile du tiroir mobile
+  { file: "src/components/shell/topbar-widgets.tsx", rule: "flou-decoratif" }, // cloche translucide choisie
+  { file: "src/components/shell/space-shell.tsx", rule: "flou-decoratif" }, // barres collantes et voile du tiroir mobile
 ];
 
 function walk(dir, files = []) {

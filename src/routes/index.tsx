@@ -1,12 +1,31 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, Bookmark, CalendarCheck, CheckCircle2, Eye, Send, UserCheck, XCircle } from "lucide-react";
-import { CompanyLogo, OfferCard, SectionCard, StatusBadge } from "@/components/app/ui";
-import { Button } from "@/components/ui/button";
-import { KpiCard, type KpiTone } from "@/components/ui/kpi-card";
-import { Progress } from "@/components/ui/progress";
-import { offerOf, offers } from "@/lib/mock-data";
+import {
+  ArrowRight,
+  Bookmark,
+  CalendarClock,
+  CheckCircle2,
+  Clock,
+  Eye,
+  GraduationCap,
+  Send,
+  UserRound,
+  XCircle,
+} from "lucide-react";
+import { CompanyMark, StatusBadge, deadlineLabel } from "@/components/app/ui";
+import {
+  ARROW_NUDGE,
+  EmptyNote,
+  SECTION_LINK,
+  SectionHeader,
+  StatCard,
+  rowActionClass,
+  type IconMotion,
+} from "@/components/company/ui";
+import { AnimatedNumber, Reveal } from "@/components/ui/motion";
+import { daysFromToday, fmtDate, relativeDay } from "@/lib/dates";
+import { companyOf, internshipExtras, offerOf, offers } from "@/lib/mock-data";
 import { missingFields } from "@/lib/rules";
-import { fmtDate, fmtRel, useStore } from "@/lib/store";
+import { useStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/")({
@@ -19,90 +38,373 @@ export const Route = createFileRoute("/")({
   component: Dashboard,
 });
 
-const ACT_ICON = { envoi: Send, vue: Eye, entretien: CalendarCheck, acceptee: CheckCircle2, refusee: XCircle };
+const plural = (n: number, word: string) => `${n} ${word}${n > 1 ? "s" : ""}`;
+
+const ACTIVITY_ICON: Record<string, { icon: React.ComponentType<{ className?: string }>; motion: IconMotion }> = {
+  envoi: { icon: Send, motion: "fly" },
+  vue: { icon: Eye, motion: "pop" },
+  entretien: { icon: CalendarClock, motion: "tilt" },
+  acceptee: { icon: CheckCircle2, motion: "pop" },
+  refusee: { icon: XCircle, motion: "pop" },
+};
+
+type Todo = {
+  id: string;
+  icon: React.ComponentType<{ className?: string }>;
+  motion: IconMotion;
+  subject: string;
+  task: string;
+  context: string;
+  when: string;
+  urgent: boolean;
+  action: string;
+  primary?: boolean;
+  to: string;
+  params?: Record<string, string>;
+};
 
 function Dashboard() {
-  const { profile, applications, saved, activity, completion } = useStore();
-  const interviews = applications.filter((a) => a.status === "entretien").length;
-  const accepted = applications.filter((a) => a.status === "acceptee").length;
-  const appliedIds = applications.map((a) => a.offerId);
-  const recommended = [...offers]
-    .filter((o) => !appliedIds.includes(o.id))
-    .sort((a, b) => b.skills.filter((s) => profile.competences.includes(s)).length - a.skills.filter((s) => profile.competences.includes(s)).length)
-    .slice(0, 3);
+  const { profile, applications, saved, activity, completion, confirmed } = useStore();
   const missing = missingFields(profile);
+  const accepted = applications.filter((a) => a.status === "acceptee");
+  const interviews = applications.filter((a) => a.status === "entretien");
+  const inProgress = applications.filter((a) => ["envoyee", "examen", "preselectionnee", "entretien"].includes(a.status));
+  const confirmedApp = applications.find((a) => a.status === "confirmee");
 
-  const kpis: {
+  /* ---- À faire : ce qui attend l'étudiant ---- */
+  const todos: Todo[] = [];
+  if (!confirmed && accepted.length > 0) {
+    todos.push({
+      id: "choix",
+      icon: CheckCircle2,
+      motion: "pop",
+      subject: accepted.length > 1 ? `${accepted.length} propositions acceptées` : "Proposition acceptée",
+      task: accepted.length > 1 ? "Choisissez votre stage" : "Confirmez votre stage",
+      context: accepted.map((a) => offerOf(a.offerId).title.replace(/^Stagiaire\s+/i, "")).join(" · "),
+      when: "à décider",
+      urgent: true,
+      action: "Choisir",
+      primary: true,
+      to: "/candidatures",
+    });
+  }
+  if (confirmedApp) {
+    const start = daysFromToday(internshipExtras.start);
+    todos.push({
+      id: "stage",
+      icon: GraduationCap,
+      motion: "tilt",
+      subject: offerOf(confirmedApp.offerId).title,
+      task: start > 0 ? "Stage confirmé" : "Stage en cours",
+      context: `Encadreur : ${internshipExtras.supervisor.name}`,
+      when: start > 0 ? `début dans ${start} j` : "en cours",
+      urgent: false,
+      action: "Mon stage",
+      to: "/stage",
+    });
+  }
+  interviews.forEach((a) => {
+    const offer = offerOf(a.offerId);
+    const inDays = a.interview ? daysFromToday(a.interview.date) : null;
+    todos.push({
+      id: `entretien-${a.id}`,
+      icon: CalendarClock,
+      motion: "tilt",
+      subject: offer.title,
+      task: "Entretien à préparer",
+      context: a.interview ? `${fmtDate(a.interview.date, false)} à ${a.interview.time} · ${a.interview.place}` : companyOf(offer.companyId).name,
+      when: inDays === null ? "à venir" : inDays <= 0 ? "aujourd'hui" : inDays === 1 ? "demain" : `dans ${inDays} j`,
+      urgent: inDays !== null && inDays <= 2,
+      action: "Revoir l'offre",
+      to: "/offres/$id",
+      params: { id: offer.id },
+    });
+  });
+
+  /* ---- Offres recommandées : le plus de compétences en commun, encore ouvertes ---- */
+  const mine = new Set(profile.competences.map((skill) => skill.toLowerCase()));
+  const appliedIds = new Set(applications.map((a) => a.offerId));
+  const recommended = offers
+    .filter((o) => !appliedIds.has(o.id) && daysFromToday(o.deadline) >= 0)
+    .map((o) => ({ offer: o, match: o.skills.filter((skill) => mine.has(skill.toLowerCase())).length }))
+    .sort((a, b) => b.match - a.match || a.offer.deadline.localeCompare(b.offer.deadline))
+    .slice(0, 3);
+
+  const recent = [...applications].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 4);
+
+  const stats: {
     label: string;
-    value: React.ReactNode;
-    hint: string;
+    value: number;
+    suffix?: string;
     icon: React.ComponentType<{ className?: string }>;
-    tone: KpiTone;
+    motion: IconMotion;
+    foot: string;
+    tone?: "neutral" | "trend" | "alert";
   }[] = [
-    { label: "Candidatures envoyées", value: applications.length, hint: `${accepted} acceptée${accepted > 1 ? "s" : ""}`, icon: Send, tone: "accent" },
-    { label: "Entretiens programmés", value: interviews, hint: interviews ? "Consultez vos notifications" : "Aucun pour le moment", icon: CalendarCheck, tone: interviews ? "warning" : "muted" },
-    { label: "Offres enregistrées", value: saved.length, hint: `Sur ${offers.length} offres disponibles`, icon: Bookmark, tone: "primary" },
-    { label: "Profil complété", value: `${completion}%`, hint: missing.length ? `${missing.length} élément${missing.length > 1 ? "s" : ""} manquant${missing.length > 1 ? "s" : ""}` : "Profil complet", icon: UserCheck, tone: missing.length ? "warning" : "success" },
+    {
+      label: "Candidatures envoyées",
+      value: applications.length,
+      icon: Send,
+      motion: "fly",
+      foot: `${inProgress.length} en cours d'examen`,
+    },
+    {
+      label: "Propositions acceptées",
+      value: accepted.length + (confirmedApp ? 1 : 0),
+      icon: CheckCircle2,
+      motion: "pop",
+      foot: confirmedApp ? "stage confirmé" : accepted.length ? "en attente de votre choix" : "aucune pour le moment",
+      tone: !confirmedApp && accepted.length ? "alert" : "neutral",
+    },
+    {
+      label: "Entretiens programmés",
+      value: interviews.length,
+      icon: CalendarClock,
+      motion: "tilt",
+      foot: interviews[0]?.interview ? `prochain le ${fmtDate(interviews[0].interview.date, false)}` : "aucun à venir",
+    },
+    {
+      label: "Offres enregistrées",
+      value: saved.length,
+      icon: Bookmark,
+      motion: "lift",
+      foot: `sur ${plural(offers.length, "offre")} disponible${offers.length > 1 ? "s" : ""}`,
+    },
   ];
 
   return (
     <div className="space-y-6">
-      <div className="card-surface relative overflow-hidden p-6 sm:p-7">
-        <div className="absolute -right-10 -top-10 size-44 rounded-full bg-accent-soft" />
-        <div className="absolute -right-2 top-12 size-20 rounded-full border-8 border-accent/30" />
-        <div className="relative max-w-xl">
-          <h2 className="text-2xl font-semibold tracking-tight">Bonjour, {profile.prenom} 👋</h2>
-          <p className="mt-1.5 text-sm text-muted-foreground">Retrouvez ici toutes les informations concernant vos opportunités de stage et votre parcours professionnel.</p>
-          {accepted > 0 && (
-            <Link to="/candidatures" className="mt-4 inline-flex items-center gap-2 rounded-full bg-success-soft px-3 py-1.5 text-xs font-medium text-success-ink hover:underline">
-              <CheckCircle2 className="size-3.5" />{accepted} proposition{accepted > 1 ? "s" : ""} en attente de votre choix <ArrowRight className="size-3.5" />
-            </Link>
-          )}
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
-        {kpis.map((k) => (
-          <KpiCard key={k.label} label={k.label} value={k.value} hint={k.hint} icon={k.icon} tone={k.tone} />
+      {/* ============================ Indicateurs ============================ */}
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 lg:gap-6">
+        {stats.map((stat, index) => (
+          <Reveal key={stat.label} delay={index * 60} className="min-w-0">
+            <StatCard {...stat} />
+          </Reveal>
         ))}
       </div>
 
-      {missing.length > 0 && (
-        <div className="card-surface flex flex-col gap-4 border-warning/30 bg-warning-soft/60 p-5 sm:flex-row sm:items-center">
-          <div className="flex-1">
-            <p className="font-semibold">Votre profil n'est pas encore complet</p>
-            <p className="mt-1 text-sm text-muted-foreground">Complétez vos informations pour améliorer vos chances de trouver un stage correspondant à vos compétences. Manquant : {missing.map((m) => m.label).join(", ")}.</p>
-            <div className="mt-3 flex items-center gap-3"><Progress value={completion} tone="warning" className="h-2 max-w-xs" /><span className="text-xs font-medium tabular-nums">{completion}%</span></div>
-          </div>
-          <Button asChild><Link to="/profil">Compléter mon profil</Link></Button>
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
+        {/* Colonne principale : les deux colonnes finissent au même niveau */}
+        <div className="flex min-w-0 flex-col gap-6">
+          {/* À faire */}
+          <Reveal as="section" delay={80} className="card-surface overflow-hidden" aria-labelledby="todo-title">
+            <div className="border-b px-5 pb-3.5 pt-4">
+              <h2 id="todo-title" className="flex items-center gap-2 text-[15px] font-semibold tracking-tight">
+                À faire
+                <span className="rounded-md bg-muted px-1.5 py-0.5 text-[11px] font-medium tabular-nums text-muted-foreground">
+                  {todos.length}
+                </span>
+              </h2>
+            </div>
+            {todos.length === 0 ? (
+              <EmptyNote icon={CheckCircle2} title="Tout est à jour" desc="Aucune action ne vous attend pour le moment." />
+            ) : (
+              <ul className="divide-y">
+                {todos.map((todo, index) => (
+                  <Reveal as="li" key={todo.id} delay={120 + index * 40}>
+                    <div
+                      className={cn(
+                        "group grid grid-cols-[20px_minmax(0,1fr)_auto] items-center gap-x-3.5 px-5 py-3 transition-colors duration-200 sm:grid-cols-[20px_minmax(0,1fr)_auto_auto]",
+                        todo.primary ? "" : "hover:bg-muted/40",
+                        todo.primary && "bg-primary-soft shadow-[inset_3px_0_0_hsl(var(--primary))]"
+                      )}
+                    >
+                      <todo.icon
+                        className={cn(
+                          `nav-icon nav-icon--${todo.motion} size-[18px]`,
+                          todo.primary ? "text-primary" : "text-muted-foreground"
+                        )}
+                      />
+                      <span className="min-w-0">
+                        <span className="line-clamp-2 text-sm leading-5 sm:line-clamp-1 xl:line-clamp-2">
+                          <span className="font-semibold">{todo.subject}</span>
+                          <span className="text-muted-foreground"> · {todo.task}</span>
+                        </span>
+                        <span className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
+                          <span className="truncate">{todo.context}</span>
+                          <span className={cn("shrink-0 whitespace-nowrap sm:hidden", todo.urgent && "font-medium text-warning")}>
+                            · {todo.when}
+                          </span>
+                        </span>
+                      </span>
+                      <span
+                        className={cn(
+                          "hidden items-center justify-end gap-1 whitespace-nowrap text-xs tabular-nums sm:flex",
+                          todo.urgent ? "font-semibold text-warning" : "font-medium text-muted-foreground"
+                        )}
+                      >
+                        {todo.urgent && <Clock className="size-3" />}
+                        {todo.when}
+                      </span>
+                      <Link
+                        to={todo.to}
+                        params={todo.params}
+                        aria-label={`${todo.action} — ${todo.subject}`}
+                        className={cn(rowActionClass(todo.primary), "group")}
+                      >
+                        <span className="hidden whitespace-nowrap sm:inline">{todo.action}</span>
+                        <ArrowRight className={cn("size-3.5 shrink-0", ARROW_NUDGE)} />
+                      </Link>
+                    </div>
+                  </Reveal>
+                ))}
+              </ul>
+            )}
+          </Reveal>
+
+          {/* Offres recommandées */}
+          <Reveal as="section" delay={140} className="card-surface p-5">
+            <SectionHeader
+              title="Offres recommandées"
+              description="Les offres ouvertes qui partagent le plus de compétences avec votre profil"
+              to="/offres"
+              linkLabel="Toutes les offres"
+            />
+            {recommended.length === 0 ? (
+              <EmptyNote icon={Send} title="Aucune nouvelle offre" desc="Vous avez déjà postulé à toutes les offres ouvertes." className="mt-4 rounded-lg border border-dashed" />
+            ) : (
+              <ul className="-mx-5 mt-4 divide-y border-t">
+                {recommended.map(({ offer, match }) => {
+                  const deadline = deadlineLabel(offer.deadline);
+                  return (
+                    <li key={offer.id} className="group flex items-center gap-3.5 px-5 py-3 transition-colors duration-200 [transition-timing-function:var(--ease-soft)] hover:bg-muted/40">
+                      <CompanyMark id={offer.companyId} className="size-9" />
+                      <div className="min-w-0 flex-1">
+                        <p className="line-clamp-2 text-[13px] font-semibold sm:line-clamp-1">{offer.title}</p>
+                        <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                          {offer.department}
+                          <span className="hidden tabular-nums sm:inline"> · {match}/{offer.skills.length} compétences en commun</span>
+                        </p>
+                        <p className="mt-0.5 truncate text-xs tabular-nums text-muted-foreground sm:hidden">
+                          {match}/{offer.skills.length} en commun ·{" "}
+                          <span className={cn(deadline.urgent && "font-medium text-warning")}>{deadline.label}</span>
+                        </p>
+                      </div>
+                      <span
+                        className={cn(
+                          "hidden whitespace-nowrap text-xs tabular-nums sm:block",
+                          deadline.urgent ? "font-semibold text-warning" : "text-muted-foreground"
+                        )}
+                      >
+                        {deadline.label}
+                      </span>
+                      <Link
+                        to="/offres/$id"
+                        params={{ id: offer.id }}
+                        aria-label={`Voir l'offre ${offer.title}`}
+                        className={cn(rowActionClass(), "group")}
+                      >
+                        <span className="hidden whitespace-nowrap sm:inline">Voir l'offre</span>
+                        <ArrowRight className={cn("size-3.5 shrink-0", ARROW_NUDGE)} />
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </Reveal>
+
+          {/* Candidatures récentes */}
+          <Reveal as="section" delay={200} className="card-surface flex flex-col p-5 xl:flex-1">
+            <SectionHeader title="Mes candidatures" count={applications.length} to="/candidatures" />
+            {recent.length === 0 ? (
+              <EmptyNote icon={Send} title="Aucune candidature" desc="Vos candidatures apparaîtront ici." className="mt-4 rounded-lg border border-dashed" />
+            ) : (
+              <ul className="-mx-5 mt-4 divide-y border-t">
+                {recent.map((a) => {
+                  const offer = offerOf(a.offerId);
+                  return (
+                    <li key={a.id} className="group flex items-center gap-3.5 px-5 py-3 transition-colors duration-200 [transition-timing-function:var(--ease-soft)] hover:bg-muted/40">
+                      <CompanyMark id={offer.companyId} className="size-9" />
+                      <div className="min-w-0 flex-1">
+                        <p className="line-clamp-2 text-[13px] font-semibold sm:line-clamp-1">{offer.title}</p>
+                        <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                          {companyOf(offer.companyId).name} · envoyée le {fmtDate(a.date, false)}
+                        </p>
+                      </div>
+                      <StatusBadge status={a.status} />
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </Reveal>
         </div>
-      )}
 
-      <section>
-        <div className="mb-3 flex items-center justify-between"><h2 className="font-semibold">Offres recommandées</h2><Button asChild variant="ghost" size="sm"><Link to="/offres">Voir toutes les offres <ArrowRight className="size-4" /></Link></Button></div>
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{recommended.map((o) => <OfferCard key={o.id} offer={o} />)}</div>
-      </section>
+        {/* Colonne latérale */}
+        <aside className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-2 xl:flex xl:flex-col">
+          {/* Mon profil */}
+          <Reveal delay={120} className="card-surface p-5">
+            <SectionHeader title="Mon profil" to="/profil" linkLabel="Modifier" />
+            <div className="mt-4 flex items-center gap-3.5">
+              {profile.photo ? (
+                <img src={profile.photo} alt="" className="size-12 shrink-0 rounded-full object-cover" />
+              ) : (
+                <span className="grid size-12 shrink-0 place-items-center rounded-full bg-primary text-sm font-semibold text-primary-foreground" aria-hidden>
+                  {`${profile.prenom[0] ?? ""}${profile.nom[0] ?? ""}`.toUpperCase()}
+                </span>
+              )}
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold">
+                  {profile.prenom} {profile.nom}
+                </p>
+                <p className="truncate text-xs text-muted-foreground">
+                  {profile.filiere} · {profile.niveau}
+                </p>
+                <p className="truncate text-xs text-muted-foreground">{profile.universite}</p>
+              </div>
+            </div>
+            <div className="mt-5">
+              <div className="flex items-baseline justify-between text-xs">
+                <span className="font-medium text-muted-foreground">Profil complété</span>
+                <span className="text-sm font-semibold tabular-nums">
+                  <AnimatedNumber value={completion} suffix="%" />
+                </span>
+              </div>
+              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted" aria-hidden>
+                <div
+                  className={cn("animate-grow-x h-full rounded-full", missing.length ? "bg-warning" : "bg-success")}
+                  style={{ width: `${completion}%`, ["--delay" as string]: "200ms" }}
+                />
+              </div>
+              <p className="mt-2.5 text-pretty text-xs text-muted-foreground">
+                {missing.length
+                  ? `À compléter : ${missing.map((field) => field.label.toLowerCase()).join(", ")}.`
+                  : "Votre profil est complet : les entreprises voient toutes vos informations."}
+              </p>
+            </div>
+          </Reveal>
 
-      <div className="grid gap-6 lg:grid-cols-5">
-        <SectionCard title="Mes candidatures récentes" className="lg:col-span-3" action={<Link to="/candidatures" className="text-sm font-medium text-primary hover:underline">Tout voir</Link>}>
-          <ul className="divide-y">
-            {applications.slice(0, 4).map((a) => { const o = offerOf(a.offerId); return (
-              <li key={a.id} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
-                <CompanyLogo id={o.companyId} size="sm" />
-                <div className="min-w-0 flex-1"><p className="truncate text-sm font-medium">{o.title}</p><p className="text-xs text-muted-foreground">FINCA RDC · {fmtDate(a.date)}</p></div>
-                <StatusBadge status={a.status} />
-              </li>); })}
-          </ul>
-        </SectionCard>
-        <SectionCard title="Activité récente" className="lg:col-span-2">
-          <ol className="relative space-y-4 before:absolute before:inset-y-1 before:left-[15px] before:w-px before:bg-border">
-            {activity.slice(0, 5).map((a) => { const I = ACT_ICON[a.kind]; return (
-              <li key={a.id} className="relative flex gap-3">
-                <span className={cn("relative grid size-8 shrink-0 place-items-center rounded-full border bg-card", a.kind === "acceptee" && "text-success", a.kind === "refusee" && "text-destructive", a.kind === "entretien" && "text-primary")}><I className="size-3.5" /></span>
-                <div className="min-w-0"><p className="text-sm font-medium">{a.label}</p><p className="truncate text-xs text-muted-foreground">{a.detail}</p><p className="text-[11px] text-muted-foreground">{fmtRel(a.date)}</p></div>
-              </li>); })}
-          </ol>
-        </SectionCard>
+          {/* Activité récente */}
+          <Reveal delay={180} className="card-surface p-5 xl:flex-1">
+            <SectionHeader title="Activité récente" />
+            {activity.length === 0 ? (
+              <EmptyNote icon={UserRound} title="Aucune activité" className="mt-4 rounded-lg border border-dashed" />
+            ) : (
+              <ul className="-mx-5 mt-4 divide-y border-t">
+                {activity.slice(0, 5).map((item) => {
+                  const meta = ACTIVITY_ICON[item.kind] ?? ACTIVITY_ICON.envoi;
+                  return (
+                    <li key={item.id} className="group flex items-start gap-3 px-5 py-3 transition-colors duration-200 [transition-timing-function:var(--ease-soft)] hover:bg-muted/40">
+                      <meta.icon className={`nav-icon nav-icon--${meta.motion} mt-0.5 size-4 shrink-0 text-muted-foreground transition-colors group-hover:text-foreground`} />
+                      <div className="min-w-0 flex-1">
+                        <p className="flex items-baseline justify-between gap-2 text-[13px]">
+                          <span className="truncate font-medium">{item.label}</span>
+                          <span className="shrink-0 text-[11px] text-muted-foreground">{relativeDay(item.date.slice(0, 10))}</span>
+                        </p>
+                        <p className="mt-0.5 truncate text-xs text-muted-foreground">{item.detail}</p>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+            <Link to="/notifications" className={cn(SECTION_LINK, "mt-4 w-full justify-center")}>
+              Voir les notifications
+              <ArrowRight className={cn("size-3.5", ARROW_NUDGE)} />
+            </Link>
+          </Reveal>
+        </aside>
       </div>
     </div>
   );

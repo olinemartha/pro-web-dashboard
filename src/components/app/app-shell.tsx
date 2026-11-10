@@ -1,38 +1,31 @@
-import { Link, useRouter, useRouterState } from "@tanstack/react-router";
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useMemo } from "react";
 import {
   Bell,
   Briefcase,
   Building2,
+  CalendarClock,
+  CheckCircle2,
   FileText,
-  HelpCircle,
+  GraduationCap,
   LayoutDashboard,
-  LogOut,
-  Menu,
+  LifeBuoy,
   Search,
   Send,
   Settings,
-  User,
-  X,
+  Sparkles,
+  UserRound,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { ShellPageTitleProvider } from "@/components/app/ui";
-import { cn } from "@/lib/utils";
+import { AvatarInitials } from "@/components/company/ui";
+import { SpaceShell, type SpaceConfig } from "@/components/shell/space-shell";
+import { NoticeBell, SearchBox, type Notice, type SearchTarget } from "@/components/shell/topbar-widgets";
+import { offerOf, offers } from "@/lib/mock-data";
+import { STATUS_LABELS } from "@/lib/rules";
 import { useStore } from "@/lib/store";
 
-const NAV_ITEMS = [
-  { href: "/", label: "Tableau de bord", icon: LayoutDashboard },
-  { href: "/offres", label: "Offres de stage", icon: Briefcase },
-  { href: "/candidatures", label: "Mes candidatures", icon: Send },
-  { href: "/stage", label: "Mon stage", icon: FileText },
-  { href: "/documents", label: "Mes documents", icon: FileText },
-  { href: "/profil", label: "Mon profil", icon: User },
-];
-
-const NAV_FOOTER_ITEMS = [
-  { href: "/parametres", label: "Paramètres", icon: Settings },
-  { href: "/aide", label: "Aide et assistance", icon: HelpCircle },
-];
+/**
+ * Espace étudiant : la même coque que l'espace entreprise.
+ * Le menu suit le parcours : on cherche un stage, on le suit, on gère son compte.
+ */
 
 const PAGE_TITLES: Record<string, string> = {
   "/": "Tableau de bord",
@@ -43,232 +36,167 @@ const PAGE_TITLES: Record<string, string> = {
   "/profil": "Mon profil",
   "/notifications": "Notifications",
   "/parametres": "Paramètres",
-  "/aide": "Aide et assistance",
+  "/aide": "Aide",
 };
 
-function SidebarNav({ pathname, onNavigate }: { pathname: string; onNavigate?: () => void }) {
+/** « aujourd'hui », « hier », « il y a 3 j » : format compact du panneau. */
+function relativeTime(iso: string) {
+  const days = Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000);
+  if (days <= 0) return "aujourd'hui";
+  if (days === 1) return "hier";
+  if (days < 7) return `il y a ${days} j`;
+  return new Date(iso).toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
+}
+
+const initialsOf = (prenom: string, nom: string) => `${prenom[0] ?? ""}${nom[0] ?? ""}`.toUpperCase() || "É";
+
+/* ------------------------------------------------------------------ */
+/* Recherche : offres et candidatures                                  */
+/* ------------------------------------------------------------------ */
+
+function useStudentResults(query: string): SearchTarget[] {
+  const { applications } = useStore();
+  return useMemo(() => {
+    if (!query) return [];
+    const jobs: SearchTarget[] = offers
+      .filter((o) => `${o.title} ${o.department} ${o.location} ${o.skills.join(" ")}`.toLowerCase().includes(query))
+      .slice(0, 5)
+      .map((o) => ({ id: `o-${o.id}`, label: o.title, meta: `${o.department} · ${o.location}`, to: "/offres/$id", params: { id: o.id } }));
+    const mine: SearchTarget[] = applications
+      .filter((a) => offerOf(a.offerId).title.toLowerCase().includes(query))
+      .slice(0, 3)
+      .map((a) => ({
+        id: `a-${a.id}`,
+        label: `Candidature · ${offerOf(a.offerId).title}`,
+        meta: STATUS_LABELS[a.status].label,
+        icon: Send,
+        to: "/candidatures",
+      }));
+    return [...jobs, ...mine];
+  }, [query, applications]);
+}
+
+function StudentSearch({ compact = false }: { compact?: boolean }) {
   return (
-    <>
-      <nav className="flex-1 space-y-1">
-        {NAV_ITEMS.map((item) => {
-          const active = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
-          return (
-            <Link
-              key={item.href}
-              to={item.href}
-              onClick={onNavigate}
-              className={cn(
-                "relative flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                active
-                  ? "bg-white/10 text-white"
-                  : "text-white/70 hover:bg-white/5 hover:text-white"
-              )}
-            >
-              {active && <span className="absolute left-0 top-1 bottom-1 w-0.5 rounded-full bg-white" aria-hidden />}
-              <item.icon className={cn("size-4 shrink-0", active && "text-white")} />
-              {item.label}
-            </Link>
-          );
-        })}
-      </nav>
-      <div className="space-y-1 border-t border-white/10 pt-4">
-        <Link
-          to="/entreprise"
-          onClick={onNavigate}
-          className="flex items-center gap-3 rounded-md border border-white/15 px-3 py-2 text-sm font-medium text-white/80 transition-colors hover:bg-white/10 hover:text-white"
-        >
-          <Building2 className="size-4 shrink-0" />
-          Espace entreprise
-        </Link>
-        {NAV_FOOTER_ITEMS.map((item) => (
-          <Link
-            key={item.href}
-            to={item.href}
-            onClick={onNavigate}
-            className={cn(
-              "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-              pathname.startsWith(item.href)
-                ? "bg-white/10 text-white"
-                : "text-white/70 hover:bg-white/5 hover:text-white"
-            )}
-          >
-            <item.icon
-              className={cn(
-                "size-4 shrink-0",
-                pathname.startsWith(item.href) && "text-white"
-              )}
-            />
-            {item.label}
-          </Link>
-        ))}
-        <button
-          type="button"
-          className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-white/70 transition-colors hover:bg-white/5 hover:text-white"
-        >
-          <LogOut className="size-4 shrink-0" />
-          Déconnexion
-        </button>
-      </div>
-    </>
+    <SearchBox
+      compact={compact}
+      placeholder="Rechercher un stage"
+      useResults={useStudentResults}
+      fallback={(query) => ({ to: "/offres", search: { q: query } })}
+    />
   );
 }
 
-function SidebarContent({ pathname, onNavigate }: { pathname: string; onNavigate?: () => void }) {
+/* ------------------------------------------------------------------ */
+/* Notifications                                                       */
+/* ------------------------------------------------------------------ */
+
+const NOTICE_ROUTE: Record<string, { to: string; icon: React.ComponentType<{ className?: string }> }> = {
+  candidature: { to: "/candidatures", icon: CheckCircle2 },
+  entretien: { to: "/candidatures", icon: CalendarClock },
+  offre: { to: "/offres", icon: Sparkles },
+  stage: { to: "/stage", icon: GraduationCap },
+  document: { to: "/documents", icon: FileText },
+  rapport: { to: "/stage", icon: FileText },
+};
+
+function StudentBell() {
+  const { notifications, markNotificationsRead } = useStore();
+  const notices = useMemo<Notice[]>(
+    () =>
+      notifications.map((n) => ({
+        id: n.id,
+        icon: NOTICE_ROUTE[n.kind]?.icon ?? Bell,
+        title: n.title,
+        meta: n.body,
+        when: relativeTime(n.date),
+        to: NOTICE_ROUTE[n.kind]?.to ?? "/notifications",
+      })),
+    [notifications]
+  );
   return (
-    <>
-      <div className="flex items-center gap-3 px-1">
-        <span className="grid size-9 place-items-center rounded-lg bg-white text-lg font-bold text-primary">S</span>
-        <span className="text-lg font-bold tracking-tight">StageManager</span>
-      </div>
-      <SidebarNav pathname={pathname} onNavigate={onNavigate} />
-    </>
+    <NoticeBell
+      notices={notices}
+      isRead={(id) => notifications.find((n) => n.id === id)?.read ?? true}
+      markRead={markNotificationsRead}
+      footer={{ to: "/notifications", label: "Voir toutes les notifications" }}
+    />
   );
 }
 
-function TopBar({ pathname }: { pathname: string }) {
-  const router = useRouter();
-  const { notifications, profile } = useStore();
-  const unread = notifications.filter((n) => !n.read).length;
-  const initials = `${profile.prenom[0] ?? ""}${profile.nom[0] ?? ""}`.toUpperCase();
-  const fullName = `${profile.prenom} ${profile.nom}`.trim() || "Utilisateur";
-  const [q, setQ] = useState("");
+/* ------------------------------------------------------------------ */
+/* Configuration                                                       */
+/* ------------------------------------------------------------------ */
 
-  const submitSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    router.navigate({ to: "/offres", search: { q } });
-  };
-
-  return (
-    <header className="flex h-16 items-center justify-between gap-4 border-b border-border bg-background px-4 sm:px-6">
-      <h1 className="text-lg font-semibold tracking-tight text-foreground">{PAGE_TITLES[pathname] ?? "StageManager"}</h1>
-
-      <div className="flex items-center gap-3 sm:gap-4">
-        <form onSubmit={submitSearch} className="relative hidden md:block">
-          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="Rechercher un stage..."
-            className="h-9 w-56 rounded-md border bg-muted px-9 text-sm outline-none transition focus:border-accent focus:ring-2 focus:ring-ring/20 lg:w-72"
-          />
-        </form>
-
-        <Link
-          to="/notifications"
-          className="relative rounded-md p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-          aria-label="Notifications"
-        >
-          <Bell className="size-5" />
-          {unread > 0 && (
-            <span className="absolute -right-0.5 -top-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-destructive px-1 text-[10px] font-semibold text-destructive-foreground">
-              {unread}
-            </span>
-          )}
-        </Link>
-
-        <div className="flex items-center gap-3">
-          <span className="grid size-9 shrink-0 place-items-center rounded-full bg-accent-soft text-sm font-semibold text-primary">
-            {initials || "U"}
-          </span>
-          <span className="hidden text-sm font-medium text-foreground sm:block">{fullName}</span>
-        </div>
-      </div>
-    </header>
-  );
-}
-
-function TopBarMobile({ pathname }: { pathname: string }) {
-  const { notifications } = useStore();
-  const unread = notifications.filter((n) => !n.read).length;
-  const [open, setOpen] = useState(false);
-  const title = PAGE_TITLES[pathname] ?? "StageManager";
-
-  return (
-    <>
-      <header className="flex h-14 items-center justify-between gap-2 border-b border-border bg-background px-3">
-        <Button
-          variant="ghost"
-          size="sm"
-          aria-label="Ouvrir le menu"
-          className="size-10 shrink-0 px-0"
-          onClick={() => setOpen(true)}
-        >
-          <Menu className="size-5" />
-        </Button>
-        <p className="min-w-0 flex-1 truncate text-center text-sm font-semibold tracking-tight text-foreground">
-          {title}
-        </p>
-        <Link
-          to="/notifications"
-          className="relative grid size-10 shrink-0 place-items-center rounded-md text-muted-foreground"
-          aria-label="Notifications"
-        >
-          <Bell className="size-5" />
-          {unread > 0 && (
-            <span className="absolute right-1 top-1 grid h-4 min-w-4 place-items-center rounded-full bg-destructive px-1 text-[10px] font-semibold text-destructive-foreground">
-              {unread}
-            </span>
-          )}
-        </Link>
-      </header>
-
-      {open && (
-        <div className="fixed inset-0 z-40 md:hidden">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setOpen(false)} />
-          <aside className="absolute left-0 top-0 flex h-full w-72 flex-col gap-8 bg-primary p-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <span className="grid size-9 place-items-center rounded-lg bg-white text-lg font-bold text-primary">S</span>
-                <span className="text-lg font-bold tracking-tight text-white">StageManager</span>
-              </div>
-              <button aria-label="Fermer le menu" onClick={() => setOpen(false)} className="grid size-10 place-items-center rounded-md text-white/70 hover:bg-white/10">
-                <X className="size-5" />
-              </button>
-            </div>
-            <SidebarNav pathname={pathname} onNavigate={() => setOpen(false)} />
-          </aside>
-        </div>
-      )}
-    </>
-  );
-}
+const studentConfig: SpaceConfig = {
+  home: "/",
+  label: "Espace étudiant",
+  navGroups: [
+    { title: null, items: [{ href: "/", label: "Tableau de bord", icon: LayoutDashboard, motion: "pop" }] },
+    {
+      title: "Recherche de stage",
+      items: [
+        { href: "/offres", label: "Offres de stage", icon: Briefcase, motion: "lift" },
+        { href: "/candidatures", label: "Mes candidatures", icon: Send, motion: "fly", count: "decisions" },
+      ],
+    },
+    {
+      title: "Mon stage",
+      items: [
+        { href: "/stage", label: "Suivi du stage", icon: GraduationCap, motion: "tilt" },
+        { href: "/documents", label: "Documents", icon: FileText, motion: "lift" },
+      ],
+    },
+    {
+      title: "Compte",
+      items: [
+        { href: "/profil", label: "Profil", icon: UserRound, motion: "pop" },
+        { href: "/parametres", label: "Paramètres", icon: Settings, motion: "spin" },
+        { href: "/aide", label: "Aide", icon: LifeBuoy, motion: "spin" },
+      ],
+    },
+  ],
+  /** Compteur : les propositions acceptées qui attendent le choix de l'étudiant. */
+  useCounts: () => {
+    const { applications } = useStore();
+    return { decisions: applications.filter((a) => a.status === "acceptee").length };
+  },
+  pageTitle: (pathname) => {
+    if (pathname.startsWith("/offres/")) return "Détail de l'offre";
+    return PAGE_TITLES[pathname.replace(/\/$/, "") || "/"] ?? "Espace étudiant";
+  },
+  useGreetingName: () => useStore().profile.prenom || "à vous",
+  useAccount: () => {
+    const { profile } = useStore();
+    const name = `${profile.prenom} ${profile.nom}`.trim() || "Étudiant";
+    return {
+      name,
+      subtitle: "Compte étudiant",
+      email: profile.email,
+      avatar: profile.photo ? (
+        <img src={profile.photo} alt="" className="size-8 shrink-0 rounded-lg object-cover" />
+      ) : (
+        <AvatarInitials initials={initialsOf(profile.prenom, profile.nom)} className="size-8 rounded-lg text-xs" />
+      ),
+      links: [
+        { to: "/profil", label: "Mon profil", icon: UserRound, motion: "pop" },
+        { to: "/parametres", label: "Paramètres", icon: Settings, motion: "spin" },
+      ],
+    };
+  },
+  switchTo: { to: "/entreprise", label: "Espace entreprise", icon: Building2, motion: "lift" },
+  search: StudentSearch,
+  bell: StudentBell,
+  primaryAction: {
+    to: "/offres",
+    label: "Trouver un stage",
+    icon: Search,
+    hideOn: (pathname) => pathname.startsWith("/offres"),
+  },
+  collapseKey: "sm.etudiant.sidebar-collapsed",
+  documentTitleSuffix: "StageManager",
+};
 
 export function AppShell({ children }: { children: React.ReactNode }) {
-  const pathname = useRouterState({ select: (s) => s.location.pathname });
-  // Les pages défilent dans <main> : on la remet en haut à chaque changement de page.
-  const scrollRef = useRef<HTMLElement>(null);
-  useLayoutEffect(() => {
-    scrollRef.current?.scrollTo({ top: 0 });
-  }, [pathname]);
-
-  useEffect(() => {
-    document.title = `${PAGE_TITLES[pathname] ?? "StageManager"} — StageManager`;
-  }, [pathname]);
-
-  return (
-    <div className="flex h-dvh bg-background">
-      {/* Navigation latérale — bleu marine (Design Brief §3.1) — visible dès 768px */}
-      <aside className="hidden md:flex w-64 flex-col bg-primary p-4">
-        <SidebarContent pathname={pathname} />
-      </aside>
-
-      {/* Zone principale */}
-      <div className="flex min-w-0 flex-1 flex-col">
-        {/* Barre supérieure desktop */}
-        <div className="hidden md:block">
-          <TopBar pathname={pathname} />
-        </div>
-        {/* Barre supérieure mobile (téléphone) */}
-        <div className="md:hidden">
-          <TopBarMobile pathname={pathname} />
-        </div>
-
-        <main ref={scrollRef} className="page-scroll flex-1 overflow-y-auto bg-canvas p-4 sm:p-6 lg:p-8">
-          <ShellPageTitleProvider title={PAGE_TITLES[pathname] ?? null}>
-            {children}
-          </ShellPageTitleProvider>
-        </main>
-      </div>
-    </div>
-  );
+  return <SpaceShell config={studentConfig}>{children}</SpaceShell>;
 }

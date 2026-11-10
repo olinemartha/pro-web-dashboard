@@ -1,85 +1,235 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { Calendar, User, FileText, CheckCircle2 } from "lucide-react";
-import { PageHeader, SectionCard } from "@/components/app/ui";
-import { internshipExtras } from "@/lib/mock-data";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { ArrowRight, Check, Download, FileText, GraduationCap, Mail } from "lucide-react";
+import { toast } from "sonner";
+import { CompanyMark } from "@/components/app/ui";
+import { ARROW_NUDGE, AvatarInitials, Badge, EmptyNote, SECTION_LINK, SectionHeader } from "@/components/company/ui";
+import { AnimatedNumber, Reveal } from "@/components/ui/motion";
+import { daysFromToday, fmtDate } from "@/lib/dates";
+import { companyOf, internshipExtras, offerOf } from "@/lib/mock-data";
+import { useStore } from "@/lib/store";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/stage")({
   head: () => ({
     meta: [
-      { title: "Mon stage — StageManager" },
-      { name: "description", content: "Suivi de votre stage en cours : entreprise, service, dates, missions et rapports." },
+      { title: "Suivi du stage — StageManager" },
+      { name: "description", content: "Suivi de votre stage : entreprise, service, dates, encadreur, calendrier et documents." },
     ],
   }),
   component: StagePage,
 });
 
+const initialsOf = (name: string) =>
+  name
+    .replace(/^(M\.|Mme|Mlle)\s+/i, "")
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((word) => word[0]?.toUpperCase() ?? "")
+    .join("");
+
 function StagePage() {
-  const { supervisor, start, end, infos, calendar, documents } = internshipExtras;
+  const { applications } = useStore();
+  const confirmedApp = applications.find((a) => a.status === "confirmee");
+
+  if (!confirmedApp) {
+    const accepted = applications.filter((a) => a.status === "acceptee").length;
+    return (
+      <Reveal className="card-surface">
+        <EmptyNote
+          icon={GraduationCap}
+          title="Votre stage n'est pas encore confirmé"
+          desc={
+            accepted
+              ? `Vous avez ${accepted > 1 ? `${accepted} propositions acceptées` : "une proposition acceptée"} : confirmez votre choix pour ouvrir le suivi du stage.`
+              : "Le suivi s'ouvre dès que vous confirmez une proposition acceptée par une entreprise."
+          }
+          className="py-12"
+        />
+        <div className="-mt-6 flex justify-center pb-10">
+          <Link to={accepted ? "/candidatures" : "/offres"} className={SECTION_LINK}>
+            {accepted ? "Choisir mon stage" : "Parcourir les offres"}
+            <ArrowRight className={cn("size-3.5", ARROW_NUDGE)} />
+          </Link>
+        </div>
+      </Reveal>
+    );
+  }
+
+  const offer = offerOf(confirmedApp.offerId);
+  const company = companyOf(offer.companyId);
+  const { supervisor, start, end, infos, calendar, documents, attendance } = internshipExtras;
+  const total = Math.max(1, daysFromToday(end) - daysFromToday(start));
+  const elapsed = Math.min(total, Math.max(0, -daysFromToday(start)));
+  const progress = Math.round((elapsed / total) * 100);
+  const started = daysFromToday(start) <= 0;
+  const ended = daysFromToday(end) < 0;
+  const nextIndex = calendar.findIndex((step) => daysFromToday(step.date) >= 0);
+  const present = attendance.reduce((sum, week) => sum + week.present, 0);
+  const late = attendance.reduce((sum, week) => sum + week.late, 0);
+  const absent = attendance.reduce((sum, week) => sum + week.absent, 0);
+
+  const facts = [
+    { label: "Début", value: fmtDate(start) },
+    { label: "Fin", value: fmtDate(end) },
+    { label: "Durée", value: offer.duration },
+    { label: "Lieu", value: offer.location },
+  ];
 
   return (
-    <div>
-      <PageHeader title="Mon stage" desc="Suivi de votre stage chez FINCA RDC — Direction Crédit." />
-
-      <div className="grid gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2 space-y-6">
-          <SectionCard title="Informations du stage">
-            <div className="space-y-3">
-              <div className="flex items-center gap-3"><Calendar className="size-4 text-muted-foreground shrink-0" /><div><p className="text-sm font-medium">Date de début</p><p className="text-xs text-muted-foreground">{start}</p></div></div>
-              <div className="flex items-center gap-3"><Calendar className="size-4 text-muted-foreground shrink-0" /><div><p className="text-sm font-medium">Date de fin</p><p className="text-xs text-muted-foreground">{end}</p></div></div>
-              <div className="flex items-center gap-3"><User className="size-4 text-muted-foreground shrink-0" /><div><p className="text-sm font-medium">Superviseur</p><p className="text-xs text-muted-foreground">{supervisor.name} — {supervisor.role}</p></div></div>
-              <div className="flex items-center gap-3"><FileText className="size-4 text-muted-foreground shrink-0" /><div><p className="text-sm font-medium">Statut</p><p className="text-xs text-muted-foreground">En cours</p></div></div>
-            </div>
-          </SectionCard>
-
-          <SectionCard title="Missions et objectifs">
-            <ul className="space-y-2 list-disc pl-5 text-sm text-muted-foreground">
-              {infos.map((i) => <li key={i}>{i}</li>)}
-            </ul>
-          </SectionCard>
-
-          <SectionCard title="Calendrier du stage">
-            <div className="divide-y">
-              {calendar.map((c) => (
-                <div key={c.date} className="flex justify-between px-3 py-3 text-sm">
-                  <span className="text-muted-foreground">{new Date(c.date).toLocaleDateString("fr-FR")}</span>
-                  <span className="font-medium">{c.label}</span>
-                </div>
-              ))}
-            </div>
-          </SectionCard>
+    <div className="space-y-6">
+      {/* ============================ En-tête du stage ============================ */}
+      <Reveal as="section" className="card-surface p-5 sm:p-6" aria-labelledby="stage-title">
+        <div className="flex flex-wrap items-start gap-4">
+          <CompanyMark id={offer.companyId} className="size-12 text-sm" />
+          <div className="min-w-0 flex-1">
+            <h2 id="stage-title" className="text-pretty text-xl font-semibold leading-snug tracking-tight">
+              {offer.title}
+            </h2>
+            <p className="mt-0.5 text-[13px] text-muted-foreground">
+              {company.name} · {offer.department}
+            </p>
+          </div>
+          <Badge label={ended ? "Stage terminé" : started ? "Stage en cours" : "Stage confirmé"} tone={ended ? "muted" : "success"} />
         </div>
 
-        <div className="space-y-6">
-          <SectionCard title="Superviseur">
-            <div className="flex items-center gap-3 p-3 rounded-lg bg-muted">
-              <div className="grid size-12 place-items-center rounded-full bg-primary text-primary-foreground font-semibold text-sm">{supervisor.name.split(" ")[0][0]}{supervisor.name.split(" ")[1][0]}</div>
-              <div>
-                <p className="text-sm font-medium">{supervisor.name}</p>
-                <p className="text-xs text-muted-foreground">{supervisor.role}</p>
-                <p className="text-xs text-primary">{supervisor.email}</p>
+        <dl className="mt-5 grid grid-cols-2 gap-y-4 rounded-xl border py-3.5 sm:grid-cols-4 sm:divide-x">
+          {facts.map((fact) => (
+            <div key={fact.label} className="min-w-0 px-4">
+              <dt className="text-[11px] font-medium text-muted-foreground">{fact.label}</dt>
+              <dd className="mt-0.5 truncate text-[13px] font-semibold">{fact.value}</dd>
+            </div>
+          ))}
+        </dl>
+
+        <div className="mt-5">
+          <div className="flex items-baseline justify-between text-xs">
+            <span className="font-medium text-muted-foreground">
+              {started ? "Avancement du stage" : `Début dans ${daysFromToday(start)} jours`}
+            </span>
+            {started && (
+              <span className="text-sm font-semibold tabular-nums">
+                <AnimatedNumber value={progress} suffix="%" />
+              </span>
+            )}
+          </div>
+          <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted" aria-hidden>
+            <div className="animate-grow-x h-full rounded-full bg-primary" style={{ width: `${progress}%`, ["--delay" as string]: "200ms" }} />
+          </div>
+        </div>
+      </Reveal>
+
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
+        <div className="flex min-w-0 flex-col gap-6">
+          {/* Calendrier */}
+          <Reveal as="section" delay={80} className="card-surface p-5">
+            <SectionHeader title="Calendrier du stage" description="Les grandes étapes fixées par l'entreprise" />
+            <ol className="-mx-5 mt-4 divide-y border-t">
+              {calendar.map((step, index) => {
+                const past = daysFromToday(step.date) < 0;
+                const next = index === nextIndex;
+                return (
+                  <li
+                    key={step.date}
+                    className={cn(
+                      "grid grid-cols-[20px_88px_minmax(0,1fr)] items-center gap-x-3.5 px-5 py-3 transition-colors duration-200",
+                      !next && "hover:bg-muted/40",
+                      next && "bg-primary-soft shadow-[inset_3px_0_0_hsl(var(--primary))]"
+                    )}
+                  >
+                    {past ? (
+                      <Check className="size-4 text-success" aria-label="Étape passée" />
+                    ) : (
+                      <span className={cn("mx-auto size-2 rounded-full", next ? "bg-primary" : "bg-border")} aria-hidden />
+                    )}
+                    <span className={cn("text-xs tabular-nums", next ? "font-semibold text-primary" : "text-muted-foreground")}>
+                      {fmtDate(step.date)}
+                    </span>
+                    <span className={cn("text-[13px]", past ? "text-muted-foreground" : "font-medium")}>
+                      {step.label}
+                      {next && <span className="sr-only"> (prochaine étape)</span>}
+                    </span>
+                  </li>
+                );
+              })}
+            </ol>
+          </Reveal>
+
+          {/* Informations pratiques */}
+          <Reveal as="section" delay={140} className="card-surface p-5 xl:flex-1">
+            <SectionHeader title="Informations pratiques" />
+            <ul className="mt-4 space-y-2.5">
+              {infos.map((info) => (
+                <li key={info} className="flex gap-2.5 text-[13px] leading-relaxed text-muted-foreground">
+                  <span className="mt-2 size-1.5 shrink-0 rounded-full bg-primary" aria-hidden />
+                  {info}
+                </li>
+              ))}
+            </ul>
+          </Reveal>
+        </div>
+
+        <aside className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-2 xl:flex xl:flex-col">
+          {/* Encadreur */}
+          <Reveal delay={120} className="card-surface p-5">
+            <SectionHeader title="Votre encadreur" />
+            <div className="mt-4 flex items-center gap-3">
+              <AvatarInitials initials={initialsOf(supervisor.name)} className="size-11 text-sm" />
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold">{supervisor.name}</p>
+                <p className="truncate text-xs text-muted-foreground">{supervisor.role}</p>
               </div>
             </div>
-          </SectionCard>
+            <a href={`mailto:${supervisor.email}`} className={cn(SECTION_LINK, "mt-4 w-full justify-center")}>
+              <Mail className="nav-icon nav-icon--fly size-3.5" />
+              Écrire à {supervisor.name.replace(/^(M\.|Mme)\s+/, "").split(" ")[0]}
+            </a>
+          </Reveal>
 
-          <SectionCard title="Documents">
-            <div className="divide-y">
-              {documents.map((d) => (
-                <div key={d.id} className="flex items-center justify-between px-3 py-3 text-sm">
-                  <span className="truncate text-sm font-medium">{d.name}</span>
-                  <span className="text-xs text-muted-foreground">{d.size}</span>
+          {/* Présence */}
+          <Reveal delay={160} className="card-surface p-5">
+            <SectionHeader title="Présence" description={started ? "Pointage saisi par l'entreprise" : "Le pointage commencera au début du stage"} />
+            {started && (
+            <dl className="mt-4 grid grid-cols-3 divide-x rounded-xl border py-3 text-center">
+              {[
+                { label: "Présent", value: present },
+                { label: "Retard", value: late },
+                { label: "Absent", value: absent },
+              ].map((item) => (
+                <div key={item.label}>
+                  <dt className="text-[11px] font-medium text-muted-foreground">{item.label}</dt>
+                  <dd className="mt-0.5 text-lg font-semibold tabular-nums">{item.value} j</dd>
                 </div>
               ))}
-            </div>
-          </SectionCard>
+            </dl>
+            )}
+          </Reveal>
 
-          <SectionCard title="Évaluation finale">
-            <div className="rounded-lg border p-4 text-center text-sm">
-              <CheckCircle2 className="mx-auto size-6 mb-2 text-success" />
-              <p className="text-sm font-medium">À venir</p>
-              <p className="text-xs text-muted-foreground">L'évaluation finale sera saisie par votre entreprise à la fin du stage.</p>
-            </div>
-          </SectionCard>
-        </div>
+          {/* Documents */}
+          <Reveal delay={200} className="card-surface p-5 xl:flex-1">
+            <SectionHeader title="Documents du stage" count={documents.length} to="/documents" />
+            <ul className="-mx-5 mt-4 divide-y border-t">
+              {documents.map((doc) => (
+                <li key={doc.id} className="group flex items-center gap-3 px-5 py-3 transition-colors duration-200 [transition-timing-function:var(--ease-soft)] hover:bg-muted/40">
+                  <FileText className="nav-icon nav-icon--lift size-[18px] shrink-0 text-muted-foreground transition-colors group-hover:text-foreground" />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-[13px] font-medium">{doc.name.replace(/\.pdf$/i, "")}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {doc.type} · {doc.size}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => toast.success("Téléchargement lancé", { description: doc.name })}
+                    aria-label={`Télécharger ${doc.name}`}
+                    className="press grid size-8 shrink-0 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  >
+                    <Download className="size-4" />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </Reveal>
+        </aside>
       </div>
     </div>
   );

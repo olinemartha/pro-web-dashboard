@@ -1,174 +1,178 @@
 import * as React from "react";
 import { Link } from "@tanstack/react-router";
-import { Bookmark } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
+import { Bookmark, Check, Clock, GraduationCap, MapPin } from "lucide-react";
+import { toast } from "sonner";
+import { Badge, CARD_INTERACTIVE, type Tone } from "@/components/company/ui";
+import type { CandidateStatus } from "@/lib/company-data";
+import { daysFromToday, fmtDate } from "@/lib/dates";
+import { companyOf, type Offer } from "@/lib/mock-data";
 import type { AppStatus } from "@/lib/rules";
 import { STATUS_LABELS } from "@/lib/rules";
+import { useStore } from "@/lib/store";
+import { cn } from "@/lib/utils";
 
-export const STATUS = STATUS_LABELS;
+/* ------------------------------------------------------------------ */
+/* Titre de page porté par la coque                                    */
+/* ------------------------------------------------------------------ */
 
-export interface StatusBadgeProps {
-  status: AppStatus;
-  size?: "sm" | "default";
+/**
+ * Chaque coque nomme la page courante dans sa barre supérieure persistante.
+ * Le contexte transmet ce titre aux pages.
+ */
+const ShellPageTitleContext = React.createContext<string | null>(null);
+
+export function ShellPageTitleProvider({ title, children }: { title: string | null; children: React.ReactNode }) {
+  return <ShellPageTitleContext.Provider value={title}>{children}</ShellPageTitleContext.Provider>;
 }
 
-export function StatusBadge({ status, size = "default" }: StatusBadgeProps) {
-  const { label, color } = STATUS_LABELS[status];
+/* ------------------------------------------------------------------ */
+/* Statuts de candidature                                              */
+/* ------------------------------------------------------------------ */
+
+/** Statut étudiant → ton du badge et couleur du pipeline (mêmes couleurs que l'espace entreprise). */
+export const STUDENT_STATUS: Record<AppStatus, { label: string; tone: Tone; dot: CandidateStatus }> = {
+  envoyee: { label: STATUS_LABELS.envoyee.label, tone: "muted", dot: "en_attente" },
+  examen: { label: STATUS_LABELS.examen.label, tone: "primary", dot: "examen" },
+  preselectionnee: { label: STATUS_LABELS.preselectionnee.label, tone: "primary", dot: "examen" },
+  entretien: { label: STATUS_LABELS.entretien.label, tone: "primary", dot: "entretien" },
+  acceptee: { label: STATUS_LABELS.acceptee.label, tone: "success", dot: "acceptee" },
+  confirmee: { label: STATUS_LABELS.confirmee.label, tone: "success", dot: "acceptee" },
+  refusee: { label: STATUS_LABELS.refusee.label, tone: "destructive", dot: "refusee" },
+  declinee: { label: STATUS_LABELS.declinee.label, tone: "muted", dot: "retiree" },
+};
+
+export function StatusBadge({ status, className }: { status: AppStatus; className?: string }) {
+  const meta = STUDENT_STATUS[status];
+  return <Badge label={meta.label} tone={meta.tone} className={cn("whitespace-nowrap", className)} />;
+}
+
+/* ------------------------------------------------------------------ */
+/* Entreprise                                                          */
+/* ------------------------------------------------------------------ */
+
+export function CompanyMark({ id, className }: { id: string; className?: string }) {
+  const company = companyOf(id);
   return (
     <span
-      className={cn(
-        "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold uppercase tracking-tighter",
-        color === "success" && "border-success/30 bg-success-soft text-success-ink",
-        color === "destructive" && "border-destructive/30 bg-destructive-soft text-destructive-ink",
-        color === "primary" && "border-primary/30 bg-primary-soft text-primary",
-        color === "accent" && "border-accent/30 bg-accent-soft text-primary",
-        color === "muted" && "border-muted/30 bg-muted text-muted-foreground",
-        size === "sm" && "px-2 py-0.5 text-[10px]"
-      )}
+      className={cn("grid size-10 shrink-0 place-items-center rounded-xl bg-primary text-xs font-semibold text-primary-foreground", className)}
+      aria-hidden
     >
-      {label}
+      {company?.initials ?? "E"}
     </span>
   );
 }
 
-export interface CompanyLogoProps {
-  id: string;
-  size?: "sm" | "default";
+/** « Clôture dans 18 j », « Clôturée ». */
+export function deadlineLabel(deadline: string) {
+  const left = daysFromToday(deadline);
+  if (left < 0) return { label: "Candidatures closes", urgent: false, closed: true };
+  if (left === 0) return { label: "Clôture aujourd'hui", urgent: true, closed: false };
+  if (left === 1) return { label: "Clôture demain", urgent: true, closed: false };
+  return { label: `Clôture dans ${left} j`, urgent: left <= 7, closed: false };
 }
 
-export function CompanyLogo({ id, size = "default" }: CompanyLogoProps) {
-  const company: Record<string, { name: string; initials: string }> = {
-    finca: { name: "FINCA RDC", initials: "FR" },
-  };
-  const info = company[id] ?? { name: "Entreprise", initials: "E" };
-
-  return (
-    <div className={cn("grid size-7 place-items-center rounded-full bg-primary-soft text-primary font-medium text-xs", size === "sm" && "size-6 text-[10px]")}>
-      {info.initials}
-    </div>
-  );
-}
-
-export interface OfferCardProps {
-  offer: {
-    id: string;
-    title: string;
-    department: string;
-    location: string;
-    duration: string;
-    level: string;
-    deadline: string;
-    published: string;
-    skills: string[];
-    companyId: string;
-  };
-}
-
-export function OfferCard({ offer }: OfferCardProps) {
-  return (
-    <div className="card-surface p-4">
-      <div className="flex justify-between items-start mb-2">
-        <p className="text-xs font-medium text-muted-foreground">{offer.level}</p>
-        <Button variant="ghost" size="sm" asChild>
-          <Link to="/offres/$id" params={{ id: offer.id }}>
-            <Bookmark className="size-4 text-muted-foreground hover:text-primary" />
-          </Link>
-        </Button>
-      </div>
-      <h3 className="text-sm font-semibold mb-1">{offer.title}</h3>
-      <p className="text-xs text-muted-foreground mb-3">{offer.department} · {offer.location}</p>
-      <div className="flex items-center gap-1.5 mb-3 text-xs text-muted-foreground">
-        <span>⏱ {offer.duration}</span>
-        <span>•</span>
-        <span>📅 {offer.deadline}</span>
-      </div>
-      <div className="flex flex-wrap gap-1.5">
-        {offer.skills.map((s) => (
-          <span key={s} className="rounded-full bg-accent-soft px-2 py-0.5 text-xs text-primary">{s}</span>
-        ))}
-      </div>
-    </div>
-  );
-}
+/* ------------------------------------------------------------------ */
+/* Carte d'offre                                                       */
+/* ------------------------------------------------------------------ */
 
 /**
- * Chaque shell nomme la page courante dans sa barre supérieure persistante.
- * Le contexte transmet ce titre : une page qui le répète n'affiche pas de
- * second titre, elle ne garde que sa description et ses actions.
+ * Carte d'offre de l'espace étudiant : toute la carte ouvre l'offre ;
+ * le signet (enregistrer) reste un bouton à part. Les compétences que
+ * l'étudiant possède sont cochées.
  */
-const ShellPageTitleContext = React.createContext<string | null>(null);
-
-export function ShellPageTitleProvider({
-  title,
-  children,
-}: {
-  title: string | null;
-  children: React.ReactNode;
-}) {
-  return (
-    <ShellPageTitleContext.Provider value={title}>{children}</ShellPageTitleContext.Provider>
-  );
-}
-
-export interface PageHeaderProps {
-  title: string;
-  desc: string;
-  action?: React.ReactNode;
-}
-
-export function PageHeader({ title, desc, action }: PageHeaderProps) {
-  const shellTitle = React.useContext(ShellPageTitleContext);
-  const repeatsShellTitle = shellTitle
-    ? shellTitle.trim().localeCompare(title.trim(), "fr", { sensitivity: "base" }) === 0
-    : false;
+export function StudentOfferCard({ offer, applied }: { offer: Offer; applied?: AppStatus }) {
+  const { saved, toggleSave, profile } = useStore();
+  const isSaved = saved.includes(offer.id);
+  const mine = new Set(profile.competences.map((skill) => skill.toLowerCase()));
+  const matching = offer.skills.filter((skill) => mine.has(skill.toLowerCase())).length;
+  const deadline = deadlineLabel(offer.deadline);
 
   return (
-    <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-      <div className="min-w-0">
-        {!repeatsShellTitle && (
-          <h1 className="text-xl font-semibold tracking-tight text-foreground">{title}</h1>
+    <article className={cn(CARD_INTERACTIVE, "relative flex h-full cursor-pointer flex-col p-5")}>
+      <div className="flex items-start gap-3">
+        <CompanyMark id={offer.companyId} />
+        <div className="min-w-0 flex-1">
+          <h3 className="text-pretty text-[15px] font-semibold leading-snug tracking-tight">
+            <Link
+              to="/offres/$id"
+              params={{ id: offer.id }}
+              className="transition-colors after:absolute after:inset-0 after:rounded-xl after:content-[''] group-hover:text-primary focus-visible:outline-none focus-visible:after:outline focus-visible:after:outline-2 focus-visible:after:outline-offset-2 focus-visible:after:outline-accent"
+            >
+              {offer.title}
+            </Link>
+          </h3>
+          <p className="mt-0.5 truncate text-xs text-muted-foreground">
+            {companyOf(offer.companyId)?.name} · {offer.department}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => {
+            toggleSave(offer.id);
+            toast.success(isSaved ? "Offre retirée de vos favoris" : "Offre enregistrée", { description: offer.title });
+          }}
+          aria-pressed={isSaved}
+          aria-label={isSaved ? `Retirer ${offer.title} des offres enregistrées` : `Enregistrer ${offer.title}`}
+          className={cn(
+            "press group/save relative z-10 -mr-1 -mt-1 grid size-9 shrink-0 place-items-center rounded-lg transition-colors",
+            isSaved ? "text-primary hover:bg-primary-soft" : "text-muted-foreground hover:bg-muted hover:text-foreground"
+          )}
+        >
+          <Bookmark className={cn("size-[18px] transition-transform duration-300 [transition-timing-function:var(--ease-soft)] group-hover/save:-translate-y-0.5 motion-reduce:transition-none", isSaved && "fill-current")} />
+        </button>
+      </div>
+
+      <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 text-xs text-muted-foreground">
+        <span className="inline-flex items-center gap-1.5">
+          <MapPin className="size-3.5" /> {offer.location}
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <Clock className="size-3.5" /> {offer.duration}
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <GraduationCap className="size-3.5" /> {offer.level}
+        </span>
+      </div>
+
+      <p className="mt-3 line-clamp-2 text-pretty text-[13px] leading-relaxed text-muted-foreground">{offer.description}</p>
+
+      <div className="mt-3 flex flex-wrap gap-1.5">
+        {offer.skills.map((skill) => {
+          const hit = mine.has(skill.toLowerCase());
+          return (
+            <span
+              key={skill}
+              className={cn(
+                "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs",
+                hit ? "bg-primary-soft font-medium text-primary" : "bg-muted text-muted-foreground"
+              )}
+            >
+              {hit && <Check className="size-3" aria-label="Vous possédez cette compétence" />}
+              {skill}
+            </span>
+          );
+        })}
+      </div>
+
+      <div className="mt-auto flex items-center justify-between gap-3 border-t pt-3.5 text-xs">
+        {applied ? (
+          <StatusBadge status={applied} />
+        ) : (
+          <span className="tabular-nums text-muted-foreground">
+            <span className="font-semibold text-foreground">{matching}</span>/{offer.skills.length} compétences en commun
+          </span>
         )}
-        <p className={cn("text-sm text-muted-foreground", !repeatsShellTitle && "mt-1")}>{desc}</p>
+        <span
+          className={cn(
+            "inline-flex items-center gap-1 whitespace-nowrap tabular-nums",
+            deadline.urgent ? "font-semibold text-warning" : "text-muted-foreground"
+          )}
+          title={`Date limite : ${fmtDate(offer.deadline)}`}
+        >
+          {deadline.urgent && <Clock className="size-3" />}
+          {deadline.label}
+        </span>
       </div>
-      {action && <div className="shrink-0">{action}</div>}
-    </div>
-  );
-}
-
-export interface SectionCardProps {
-  title: string;
-  className?: string;
-  action?: React.ReactNode;
-  children: React.ReactNode;
-}
-
-export function SectionCard({ title, className, action, children }: SectionCardProps) {
-  return (
-    <section className={cn("card-surface p-5 sm:p-6", className)}>
-      <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">{title}</h2>
-        {action && <div>{action}</div>}
-      </div>
-      {children}
-    </section>
-  );
-}
-
-export interface EmptyStateProps {
-  icon: React.ReactNode;
-  title: string;
-  desc: string;
-  action?: React.ReactNode;
-}
-
-export function EmptyState({ icon, title, desc, action }: EmptyStateProps) {
-  return (
-    <div className="flex flex-col items-center justify-center text-center p-8">
-      <div className="mb-3 rounded-full bg-accent-soft p-3 text-primary">{icon}</div>
-      <h3 className="text-sm font-semibold">{title}</h3>
-      <p className="mt-1 text-sm text-muted-foreground">{desc}</p>
-      {action && <div className="mt-4">{action}</div>}
-    </div>
+    </article>
   );
 }

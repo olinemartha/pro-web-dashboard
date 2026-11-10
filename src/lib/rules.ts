@@ -13,7 +13,7 @@ export type AppStatus =
 
 export const STATUS_LABELS: Record<AppStatus, { label: string; color: string }> = {
   envoyee: { label: "Envoyée", color: "muted" },
-  examen: { label: "En cours d'examen", color: "primary" },
+  examen: { label: "En examen", color: "primary" },
   preselectionnee: { label: "Présélectionnée", color: "accent" },
   entretien: { label: "En entretien", color: "primary" },
   acceptee: { label: "Acceptée", color: "success" },
@@ -47,6 +47,8 @@ export interface Application {
   offerId: string;
   date: string;
   status: AppStatus;
+  /** Entretien programmé par l'entreprise (statut « entretien »). */
+  interview?: { date: string; time: string; place: string };
 }
 
 /** Champs comptés dans le taux de complétion. */
