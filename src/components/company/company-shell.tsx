@@ -59,7 +59,7 @@ const NAV_GROUPS: { title: string | null; items: NavItem[] }[] = [
   {
     title: "Entreprise",
     items: [
-      { href: "/entreprise/profil", label: "Mon profil entreprise", icon: Building2, motion: "lift" },
+      { href: "/entreprise/profil", label: "Profil", icon: Building2, motion: "lift" },
       { href: "/entreprise/parametres", label: "Paramètres", icon: Settings, motion: "spin" },
     ],
   },

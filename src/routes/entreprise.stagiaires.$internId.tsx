@@ -33,7 +33,6 @@ import {
   Select,
   iconMotion,
   inputClass,
-  rowActionClass,
   textareaClass,
   type Tone,
 } from "@/components/company/ui";
@@ -252,48 +251,34 @@ function InternDossierPage() {
                   </p>
                 </div>
                 <Badge label={reportLabel[report.status]} tone={reportTone[report.status]} className="hidden whitespace-nowrap sm:inline-flex" />
-                <div className="flex items-center gap-1">
-                  {report.status !== "valide" ? (
-                    <button
-                      type="button"
-                      onClick={() => {
+                {/* Toutes les actions du rapport dans le menu « … » */}
+                <ActionMenu label={`Actions — rapport ${report.period}`}>
+                  {report.status !== "valide" && (
+                    <MenuItem
+                      onSelect={() => {
                         setReportStatus(intern.id, report.id, "valide");
                         toast.success("Rapport validé", { description: report.period });
                       }}
-                      aria-label={`Valider le rapport ${report.period}`}
-                      className={rowActionClass()}
                     >
-                      <CheckCircle2 className="size-3.5 shrink-0" />
-                      <span className="hidden whitespace-nowrap sm:inline">Valider</span>
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => toast.success("Téléchargement du rapport", { description: report.period })}
-                      aria-label={`Télécharger le rapport ${report.period}`}
-                      className={rowActionClass()}
+                      <CheckCircle2 className="size-3.5" /> Valider
+                    </MenuItem>
+                  )}
+                  <MenuItem onSelect={() => toast.success("Téléchargement du rapport", { description: report.period })}>
+                    <Download className="size-3.5" /> Télécharger
+                  </MenuItem>
+                  {report.status === "soumis" && (
+                    <MenuItem
+                      onSelect={() => {
+                        setReportStatus(intern.id, report.id, "corrige");
+                        toast.success("Rapport retourné pour correction", {
+                          description: "Le stagiaire peut déposer une version corrigée.",
+                        });
+                      }}
                     >
-                      <Download className="size-3.5 shrink-0" />
-                      <span className="hidden whitespace-nowrap sm:inline">Télécharger</span>
-                    </button>
+                      <Undo2 className="size-3.5" /> Retourner pour correction
+                    </MenuItem>
                   )}
-                  {report.status === "soumis" ? (
-                    <ActionMenu>
-                      <MenuItem
-                        onSelect={() => {
-                          setReportStatus(intern.id, report.id, "corrige");
-                          toast.success("Rapport retourné pour correction", {
-                            description: "Le stagiaire peut déposer une version corrigée.",
-                          });
-                        }}
-                      >
-                        <Undo2 className="size-3.5" /> Retourner pour correction
-                      </MenuItem>
-                    </ActionMenu>
-                  ) : (
-                    <span className="w-8" aria-hidden />
-                  )}
-                </div>
+                </ActionMenu>
               </li>
             ))}
           </ul>
