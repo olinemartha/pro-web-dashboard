@@ -50,6 +50,8 @@ export interface Candidate {
   email: string;
   phone: string;
   competences: string[];
+  /** Photo de profil (facultative) : à défaut, les initiales s’affichent. */
+  photo?: string | null;
   cvName: string;
   appliedAt: string;
   status: CandidateStatus;

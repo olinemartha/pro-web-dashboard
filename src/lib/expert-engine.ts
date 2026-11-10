@@ -172,14 +172,14 @@ export function buildExpertRun({
         label: "Compétences communes",
         satisfied: skillsOk,
         detail: overlapping.length
-          ? `${overlapping.length} compétence(s) commune(s) : ${overlapping.join(", ")}`
+          ? `${overlapping.length} compétence${overlapping.length > 1 ? "s" : ""} commune${overlapping.length > 1 ? "s" : ""} : ${overlapping.join(", ")}`
           : "Aucune compétence commune",
         ruleId: "R2",
       },
       {
         label: "Capacité disponible",
         satisfied: capacityOk,
-        detail: `${left} place(s) restante(s) sur ${service.internsNeeded}`,
+        detail: `${left} place${left > 1 ? "s" : ""} libre${left > 1 ? "s" : ""} sur ${service.internsNeeded}`,
         ruleId: "R3",
       },
       {
@@ -209,7 +209,7 @@ export function buildExpertRun({
       limits,
       ruleIds: DEMO_RULES.map((rule) => rule.id),
       capacityAtRun: { needed: service.internsNeeded, filled, left },
-      summary: `${satisfied.filter((criterion) => criterion.satisfied).length} critère(s) satisfait(s) sur ${satisfied.length}`,
+      summary: `${satisfied.filter((criterion) => criterion.satisfied).length} critère${satisfied.filter((criterion) => criterion.satisfied).length > 1 ? "s" : ""} sur ${satisfied.length}`,
       score,
     };
   });
