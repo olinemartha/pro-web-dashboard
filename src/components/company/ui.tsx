@@ -456,6 +456,12 @@ export function Drawer({
 /* Menu d'actions secondaires                                          */
 /* ------------------------------------------------------------------ */
 
+/**
+ * Menu « … ». Il s'affiche dans un portail, au-dessus de toute la page :
+ * une ligne animée ou une carte « overflow-hidden » ne peut plus le couvrir
+ * ni le couper. Il s'ouvre vers le haut quand la place manque en dessous ;
+ * Échap, un clic à l'extérieur, le défilement ou un redimensionnement le ferment.
+ */
 export function ActionMenu({
   label = "Plus d'actions",
   children,
@@ -464,31 +470,75 @@ export function ActionMenu({
   children: React.ReactNode;
 }) {
   const [open, setOpen] = React.useState(false);
+  const [place, setPlace] = React.useState<{ top?: number; bottom?: number; right: number }>({ right: 0 });
+  const buttonRef = React.useRef<HTMLButtonElement>(null);
+
+  const openMenu = () => {
+    const rect = buttonRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const right = Math.max(8, window.innerWidth - rect.right);
+    // Place estimée d'un menu de 3 ou 4 entrées.
+    setPlace(window.innerHeight - rect.bottom < 200 && rect.top > 200
+      ? { bottom: window.innerHeight - rect.top + 4, right }
+      : { top: rect.bottom + 4, right });
+    setOpen(true);
+  };
+
+  React.useEffect(() => {
+    if (!open) return;
+    const close = () => setOpen(false);
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.stopPropagation();
+        close();
+        buttonRef.current?.focus();
+      }
+    };
+    window.addEventListener("scroll", close, true);
+    window.addEventListener("resize", close);
+    document.addEventListener("keydown", onKey, true);
+    return () => {
+      window.removeEventListener("scroll", close, true);
+      window.removeEventListener("resize", close);
+      document.removeEventListener("keydown", onKey, true);
+    };
+  }, [open]);
 
   return (
     <div className="relative">
       <button
+        ref={buttonRef}
         type="button"
         aria-label={label}
         aria-haspopup="menu"
         aria-expanded={open}
-        onClick={() => setOpen((value) => !value)}
-        className="inline-flex size-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+        onClick={() => (open ? setOpen(false) : openMenu())}
+        className={cn(
+          "inline-flex size-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40",
+          open && "bg-muted text-foreground"
+        )}
       >
         <MoreHorizontal className="size-4" />
       </button>
-      {open && (
-        <>
-          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} aria-hidden />
-          <div
-            role="menu"
-            className="animate-scale-in absolute right-0 top-full z-20 mt-1 w-48 rounded-lg border bg-popover p-1 text-popover-foreground shadow-lg"
-            onClick={() => setOpen(false)}
-          >
-            {children}
-          </div>
-        </>
-      )}
+      {open &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <>
+            <div className="fixed inset-0 z-[70]" onClick={() => setOpen(false)} aria-hidden />
+            <div
+              role="menu"
+              style={{ top: place.top, bottom: place.bottom, right: place.right }}
+              className={cn(
+                "animate-scale-in fixed z-[71] w-52 rounded-xl border bg-popover p-1 text-popover-foreground shadow-[0_16px_40px_-12px_rgba(15,23,42,0.28)]",
+                place.bottom !== undefined ? "origin-bottom-right" : "origin-top-right"
+              )}
+              onClick={() => setOpen(false)}
+            >
+              {children}
+            </div>
+          </>,
+          document.body
+        )}
     </div>
   );
 }
@@ -508,7 +558,7 @@ export function MenuItem({
       role="menuitem"
       onClick={onSelect}
       className={cn(
-        "flex w-full items-center gap-2 rounded-sm px-2.5 py-1.5 text-left text-sm transition-colors hover:bg-muted",
+        "flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-[13px] font-medium transition-colors hover:bg-muted",
         destructive && "text-destructive-ink hover:bg-destructive-soft"
       )}
     >

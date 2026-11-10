@@ -204,14 +204,13 @@ function CompanyInterviewsPage() {
               {interview.time.replace(":", " h ")}
             </span>
           </p>
-          <p className="mt-1 flex items-center gap-1.5 text-xs md:hidden">
-            {upcomingRow ? (
+          <p className="mt-1 flex items-center gap-2 text-xs md:hidden">
+            <Badge label={interviewStatusLabels[interview.status].label} tone={tone(interview.status)} className="px-1.5 py-0 text-[11px]" />
+            {upcomingRow && (
               <span className={cn("inline-flex items-center gap-1", urgent ? "font-semibold text-warning" : "text-muted-foreground")}>
                 {urgent && <Clock className="size-3" />}
                 {relativeDay(interview.date)}
               </span>
-            ) : (
-              <Badge label={interviewStatusLabels[interview.status].label} tone={tone(interview.status)} className="px-1.5 py-0 text-[11px]" />
             )}
           </p>
         </div>
@@ -229,20 +228,20 @@ function CompanyInterviewsPage() {
         </div>
 
         <div className="hidden flex-col items-start gap-1 md:flex">
+          <Badge label={interviewStatusLabels[interview.status].label} tone={tone(interview.status)} className="whitespace-nowrap" />
           {upcomingRow ? (
             <span
               className={cn(
                 "inline-flex items-center gap-1 whitespace-nowrap text-xs tabular-nums",
-                urgent ? "font-semibold text-warning" : "font-medium text-muted-foreground"
+                urgent ? "font-semibold text-warning" : "text-muted-foreground"
               )}
             >
               {urgent && <Clock className="size-3" />}
               {relativeDay(interview.date)}
             </span>
           ) : (
-            <Badge label={interviewStatusLabels[interview.status].label} tone={tone(interview.status)} className="whitespace-nowrap" />
+            <span className="text-xs tabular-nums text-muted-foreground">{fmtDate(interview.date, false)}</span>
           )}
-          {!upcomingRow && <span className="text-xs tabular-nums text-muted-foreground">{fmtDate(interview.date, false)}</span>}
         </div>
 
         {/* Une action principale, le reste dans le menu */}
@@ -375,9 +374,9 @@ function CompanyInterviewsPage() {
             onChange={setFilter}
             options={[
               { value: "tous" as Filter, label: "Tous", count: sorted.length },
-              { value: "a_venir" as Filter, label: "À venir", count: upcomingAll.length },
-              { value: "realise" as Filter, label: "Réalisés", count: done.length },
-              { value: "annule" as Filter, label: "Annulés", count: cancelled.length },
+              { value: "a_venir" as Filter, label: "À venir", count: upcomingAll.length, dot: "entretien" as const },
+              { value: "realise" as Filter, label: "Réalisés", count: done.length, dot: "acceptee" as const },
+              { value: "annule" as Filter, label: "Annulés", count: cancelled.length, dot: "refusee" as const },
             ]}
           />
         </div>
