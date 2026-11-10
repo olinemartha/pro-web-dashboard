@@ -78,6 +78,13 @@ function CompanyInterviewsPage() {
   };
 
   const isUpcoming = (interview: Interview) => interview.status === "programme" && interview.date >= today;
+  /** Programmé à une date passée : il faut dire s'il a eu lieu ou non. */
+  const isOverdue = (interview: Interview) => interview.status === "programme" && interview.date < today;
+  /** La candidature attend encore une décision (ni acceptée, ni refusée, ni retirée). */
+  const isOpenCandidate = (id: string) => {
+    const status = candidate(id)?.status;
+    return status === "en_attente" || status === "examen" || status === "entretien";
+  };
 
   const sorted = useMemo(
     () => [...interviews].sort((a, b) => `${a.date}T${a.time}`.localeCompare(`${b.date}T${b.time}`)),
@@ -87,18 +94,20 @@ function CompanyInterviewsPage() {
   const thisWeek = upcomingAll.filter((interview) => daysFromToday(interview.date) <= 7);
   const soon = upcomingAll.filter((interview) => daysFromToday(interview.date) <= 1);
   const done = sorted.filter((interview) => interview.status === "realise");
-  const toDecide = done.filter((interview) => candidate(interview.candidateId)?.status === "entretien");
+  const toDecide = done.filter((interview) => isOpenCandidate(interview.candidateId));
+  const overdueAll = sorted.filter(isOverdue);
   const cancelled = sorted.filter((interview) => interview.status === "annule");
 
   const visible = sorted.filter((interview) => {
-    if (filter === "a_venir") return isUpcoming(interview);
+    if (filter === "a_venir") return isUpcoming(interview) || isOverdue(interview);
     if (filter === "semaine") return isUpcoming(interview) && daysFromToday(interview.date) <= 7;
     if (filter === "realise" || filter === "annule") return interview.status === filter;
     return true;
   });
   const upcoming = visible.filter(isUpcoming);
-  // L'historique se lit du plus récent au plus ancien.
-  const past = visible.filter((interview) => !isUpcoming(interview)).reverse();
+  const overdue = visible.filter(isOverdue);
+  // L'historique (réalisés, annulés) se lit du plus récent au plus ancien.
+  const past = visible.filter((interview) => interview.status !== "programme").reverse();
 
   const eligibleCandidates = useMemo(() => {
     const list = candidates.filter((entry) => (ELIGIBLE_STATUSES as readonly string[]).includes(entry.status));
@@ -154,7 +163,10 @@ function CompanyInterviewsPage() {
         action: { label: "Décider", onClick: () => navigate({ to: "/entreprise/candidatures", search: { q: name } }) },
       });
     } else if (status === "annule") {
-      toast.success("Entretien annulé", { description: name });
+      toast.success("Entretien annulé", {
+        description: name,
+        action: { label: "Rétablir", onClick: () => setInterviewStatus(interview.id, "programme") },
+      });
     } else {
       toast.success("Entretien rétabli", { description: name });
     }
@@ -164,10 +176,16 @@ function CompanyInterviewsPage() {
   const renderRow = (interview: Interview, index: number, highlight = false) => {
     const entry = candidate(interview.candidateId);
     const date = new Date(`${interview.date}T00:00:00`);
-    const upcomingRow = isUpcoming(interview);
+    const overdueRow = isOverdue(interview);
+    const upcomingRow = isUpcoming(interview) || overdueRow;
     const left = daysFromToday(interview.date);
     const urgent = upcomingRow && left <= 1;
-    const decide = interview.status === "realise" && entry?.status === "entretien";
+    // On ne marque « réalisé » qu'un entretien du jour ou passé.
+    const canMarkDone = interview.status === "programme" && left <= 0;
+    const decide = interview.status === "realise" && isOpenCandidate(interview.candidateId);
+    const statusBadge = overdueRow
+      ? { label: "À confirmer", tone: "warning" as Tone }
+      : { label: interviewStatusLabels[interview.status].label, tone: tone(interview.status) };
     const Place = isRemote(interview.location) ? Video : MapPin;
     return (
       <Reveal
@@ -205,7 +223,7 @@ function CompanyInterviewsPage() {
             </span>
           </p>
           <p className="mt-1 flex items-center gap-2 text-xs md:hidden">
-            <Badge label={interviewStatusLabels[interview.status].label} tone={tone(interview.status)} className="px-1.5 py-0 text-[11px]" />
+            <Badge label={statusBadge.label} tone={statusBadge.tone} className="px-1.5 py-0 text-[11px]" />
             {upcomingRow && (
               <span className={cn("inline-flex items-center gap-1", urgent ? "font-semibold text-warning" : "text-muted-foreground")}>
                 {urgent && <Clock className="size-3" />}
@@ -228,7 +246,7 @@ function CompanyInterviewsPage() {
         </div>
 
         <div className="hidden flex-col items-start gap-1 md:flex">
-          <Badge label={interviewStatusLabels[interview.status].label} tone={tone(interview.status)} className="whitespace-nowrap" />
+          <Badge label={statusBadge.label} tone={statusBadge.tone} className="whitespace-nowrap" />
           {upcomingRow ? (
             <span
               className={cn(
@@ -246,7 +264,7 @@ function CompanyInterviewsPage() {
 
         {/* Une action principale, le reste dans le menu */}
         <div className="flex items-center gap-1">
-          {upcomingRow && (
+          {canMarkDone && (
             <button
               type="button"
               onClick={() => setStatus(interview, "realise")}
@@ -279,7 +297,10 @@ function CompanyInterviewsPage() {
               <span className="hidden whitespace-nowrap sm:inline">Rétablir</span>
             </button>
           )}
-          {interview.status === "realise" && !decide && <span className="hidden w-36 sm:block" aria-hidden />}
+          {/* Garde le bord droit aligné quand la ligne n'a pas d'action principale. */}
+          {((interview.status === "realise" && !decide) || (interview.status === "programme" && !canMarkDone)) && (
+            <span className="hidden w-36 sm:block" aria-hidden />
+          )}
           <ActionMenu>
             <MenuItem onSelect={() => openEdit(interview)}>
               <Pencil className="size-3.5" /> Modifier
@@ -370,11 +391,11 @@ function CompanyInterviewsPage() {
           </h2>
           <FilterChips
             label="Filtrer les entretiens"
-            value={filter === "semaine" ? "a_venir" : filter}
+            value={filter === "semaine" ? ("" as Filter) : filter}
             onChange={setFilter}
             options={[
               { value: "tous" as Filter, label: "Tous", count: sorted.length },
-              { value: "a_venir" as Filter, label: "À venir", count: upcomingAll.length, dot: "entretien" as const },
+              { value: "a_venir" as Filter, label: "À venir", count: upcomingAll.length + overdueAll.length, dot: "entretien" as const },
               { value: "realise" as Filter, label: "Réalisés", count: done.length, dot: "acceptee" as const },
               { value: "annule" as Filter, label: "Annulés", count: cancelled.length, dot: "refusee" as const },
             ]}
@@ -406,20 +427,29 @@ function CompanyInterviewsPage() {
           </div>
         ) : (
           <>
+            {overdue.length > 0 && (
+              <>
+                <h3 className="border-b bg-warning-soft px-5 py-2 text-xs font-semibold text-warning">
+                  À confirmer <span className="font-medium tabular-nums">· {overdue.length}</span>
+                  <span className="font-normal"> — date passée : marquez-les réalisés ou annulez-les</span>
+                </h3>
+                <ul className="divide-y">{overdue.map((interview, index) => renderRow(interview, index))}</ul>
+              </>
+            )}
             {upcoming.length > 0 && (
               <>
                 <h3 className="border-b bg-muted/40 px-5 py-2 text-xs font-semibold text-muted-foreground">
                   À venir <span className="font-medium tabular-nums">· {upcoming.length}</span>
                 </h3>
-                <ul className="divide-y">{upcoming.map((interview, index) => renderRow(interview, index, index === 0))}</ul>
+                <ul className={cn("divide-y", overdue.length > 0 && "border-t")}>{upcoming.map((interview, index) => renderRow(interview, overdue.length + index, index === 0))}</ul>
               </>
             )}
             {past.length > 0 && (
               <>
-                <h3 className={cn("border-b bg-muted/40 px-5 py-2 text-xs font-semibold text-muted-foreground", upcoming.length > 0 && "border-t")}>
+                <h3 className={cn("border-b bg-muted/40 px-5 py-2 text-xs font-semibold text-muted-foreground", (upcoming.length > 0 || overdue.length > 0) && "border-t")}>
                   Historique <span className="font-medium tabular-nums">· {past.length}</span>
                 </h3>
-                <ul className="divide-y">{past.map((interview, index) => renderRow(interview, upcoming.length + index))}</ul>
+                <ul className="divide-y">{past.map((interview, index) => renderRow(interview, overdue.length + upcoming.length + index))}</ul>
               </>
             )}
           </>
