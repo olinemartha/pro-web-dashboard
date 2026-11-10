@@ -9,7 +9,8 @@ export type AppStatus =
   | "acceptee"
   | "refusee"
   | "declinee"
-  | "confirmee";
+  | "confirmee"
+  | "retiree";
 
 export const STATUS_LABELS: Record<AppStatus, { label: string; color: string }> = {
   envoyee: { label: "Envoyée", color: "muted" },
@@ -20,7 +21,20 @@ export const STATUS_LABELS: Record<AppStatus, { label: string; color: string }> 
   refusee: { label: "Refusée", color: "destructive" },
   declinee: { label: "Déclinée", color: "muted" },
   confirmee: { label: "Confirmée", color: "success" },
+  retiree: { label: "Retirée", color: "muted" },
 };
+
+/** Une candidature peut être retirée tant que l'entreprise n'a pas répondu. */
+export const WITHDRAWABLE: AppStatus[] = ["envoyee", "examen", "preselectionnee", "entretien"];
+
+export function canWithdraw(app: Application) {
+  return WITHDRAWABLE.includes(app.status);
+}
+
+/** Retire une candidature en cours : elle passe à « Retirée » et l'entreprise ne la traite plus. */
+export function withdrawApplication(apps: Application[], appId: string): Application[] {
+  return apps.map((a) => (a.id === appId && canWithdraw(a) ? { ...a, status: "retiree", interview: undefined } : a));
+}
 
 export interface Profile {
   nom: string;

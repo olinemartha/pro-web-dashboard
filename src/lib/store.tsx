@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import type { Profile, Application } from "./rules";
-import { profileCompletion, confirmOffer } from "./rules";
+import { profileCompletion, confirmOffer, withdrawApplication } from "./rules";
 import { demoProfile, demoApplications, demoSaved, demoNotifications, demoActivity } from "./mock-data";
 
 interface AppState {
@@ -16,6 +16,8 @@ interface AppState {
   addApplication: (a: Application) => void;
   toggleSave: (offerId: string) => void;
   confirm: (appId: string) => void;
+  /** Retire une candidature en cours (statut « Retirée »). */
+  withdraw: (appId: string) => void;
   /** Marque des notifications comme lues. */
   markNotificationsRead: (ids: string[]) => void;
 }
@@ -50,6 +52,8 @@ export const useStore = create<AppState>((set, get) => ({
     set((state) => ({
       notifications: state.notifications.map((n) => (ids.includes(n.id) ? { ...n, read: true } : n)),
     })),
+
+  withdraw: (appId) => set((state) => ({ applications: withdrawApplication(state.applications, appId) })),
 
   confirm: (appId) => {
     const apps = confirmOffer(get().applications, appId);

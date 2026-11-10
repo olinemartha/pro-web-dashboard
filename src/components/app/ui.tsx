@@ -39,6 +39,7 @@ export const STUDENT_STATUS: Record<AppStatus, { label: string; tone: Tone; dot:
   confirmee: { label: STATUS_LABELS.confirmee.label, tone: "success", dot: "acceptee" },
   refusee: { label: STATUS_LABELS.refusee.label, tone: "destructive", dot: "refusee" },
   declinee: { label: STATUS_LABELS.declinee.label, tone: "muted", dot: "retiree" },
+  retiree: { label: STATUS_LABELS.retiree.label, tone: "muted", dot: "retiree" },
 };
 
 export function StatusBadge({ status, className }: { status: AppStatus; className?: string }) {

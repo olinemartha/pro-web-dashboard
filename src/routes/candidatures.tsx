@@ -1,12 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, CalendarClock, CheckCircle2, Send, UserSearch } from "lucide-react";
+import { ArrowRight, CalendarClock, CheckCircle2, Send, Undo2, UserSearch } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { CompanyMark, STUDENT_STATUS, StatusBadge } from "@/components/app/ui";
 import {
   ARROW_NUDGE,
+  ActionMenu,
   EmptyNote,
   FilterChips,
+  MenuItem,
   Modal,
   PageIntro,
   SECTION_LINK,
@@ -18,7 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Reveal } from "@/components/ui/motion";
 import { fmtDate } from "@/lib/dates";
 import { companyOf, offerOf } from "@/lib/mock-data";
-import type { AppStatus, Application } from "@/lib/rules";
+import { canWithdraw, type AppStatus, type Application } from "@/lib/rules";
 import { useStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
 
@@ -43,6 +45,7 @@ const GROUP: Record<AppStatus, Exclude<Filter, "toutes">> = {
   confirmee: "acceptees",
   refusee: "closes",
   declinee: "closes",
+  retiree: "closes",
 };
 
 const plural = (n: number, word: string) => `${n} ${word}${n > 1 ? "s" : ""}`;
@@ -70,10 +73,11 @@ function RowAction({ application }: { application: Application }) {
 }
 
 function Applications() {
-  const { applications, confirm, confirmed } = useStore();
+  const { applications, confirm, confirmed, withdraw } = useStore();
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<Filter>("toutes");
   const [pick, setPick] = useState<string | null>(null);
+  const [withdrawing, setWithdrawing] = useState<string | null>(null);
 
   const accepted = applications.filter((a) => a.status === "acceptee");
   const confirmedApp = applications.find((a) => a.status === "confirmee");
@@ -92,6 +96,8 @@ function Applications() {
 
   const pickApp = pick ? applications.find((a) => a.id === pick) : undefined;
   const pickOffer = pickApp ? offerOf(pickApp.offerId) : null;
+  const withdrawApp = withdrawing ? applications.find((a) => a.id === withdrawing) : undefined;
+  const withdrawOffer = withdrawApp ? offerOf(withdrawApp.offerId) : null;
 
   return (
     <div className="space-y-6">
@@ -271,7 +277,19 @@ function Applications() {
                     <span className="hidden sm:block">
                       <StatusBadge status={a.status} />
                     </span>
-                    <RowAction application={a} />
+                    <div className="flex items-center gap-1">
+                      <RowAction application={a} />
+                      {canWithdraw(a) ? (
+                        <ActionMenu label={`Plus d'actions pour la candidature ${offer.title}`}>
+                          <MenuItem destructive onSelect={() => setWithdrawing(a.id)}>
+                            <Undo2 className="size-4" />
+                            Retirer ma candidature
+                          </MenuItem>
+                        </ActionMenu>
+                      ) : (
+                        <span className="size-9 shrink-0" aria-hidden />
+                      )}
+                    </div>
                   </div>
                 </Reveal>
               );
@@ -323,6 +341,38 @@ function Applications() {
             ))}
           </dl>
         )}
+      </Modal>
+
+      <Modal
+        open={Boolean(withdrawOffer)}
+        onClose={() => setWithdrawing(null)}
+        icon={Undo2}
+        title="Retirer cette candidature ?"
+        description={withdrawOffer ? `${withdrawOffer.title} · ${companyOf(withdrawOffer.companyId).name}` : undefined}
+        footer={
+          <>
+            <Button variant="outline" onClick={() => setWithdrawing(null)}>
+              Annuler
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                if (!withdrawing || !withdrawOffer) return;
+                withdraw(withdrawing);
+                setWithdrawing(null);
+                toast.success("Candidature retirée", { description: `${companyOf(withdrawOffer.companyId).name} ne la traitera plus.` });
+              }}
+            >
+              Retirer ma candidature
+            </Button>
+          </>
+        }
+      >
+        <ul className="space-y-2 text-pretty text-[13px] leading-relaxed text-muted-foreground">
+          <li>L'entreprise ne traitera plus votre candidature{withdrawApp?.status === "entretien" ? " et votre entretien sera annulé" : ""}.</li>
+          <li>Ce retrait est définitif : vous ne pourrez plus postuler à cette offre.</li>
+          <li>La candidature reste visible ici, avec le statut « Retirée ».</li>
+        </ul>
       </Modal>
     </div>
   );
