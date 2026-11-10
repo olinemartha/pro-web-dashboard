@@ -54,9 +54,11 @@ import {
 } from "@/lib/company-data";
 
 export const Route = createFileRoute("/entreprise/offres")({
-  validateSearch: (search: Record<string, unknown>): { nouveau?: boolean } => ({
+  validateSearch: (search: Record<string, unknown>): { nouveau?: boolean; offre?: string } => ({
     // Le routeur lit « ?nouveau=1 » comme le nombre 1.
     nouveau: search.nouveau === true || search.nouveau === 1 || search.nouveau === "1" ? true : undefined,
+    // « ?offre=o1 » ouvre directement le détail de l'offre (depuis la recherche).
+    offre: typeof search.offre === "string" && search.offre ? search.offre : undefined,
   }),
   head: () => ({
     meta: [{ title: "Mes offres — Espace entreprise" }],
@@ -145,7 +147,7 @@ function toForm(offer: CompanyOffer): OfferForm {
 
 function CompanyOffersPage() {
   const { offers, candidates, services, addOffer, updateOffer, setOfferStatus } = useCompanyStore();
-  const { nouveau } = Route.useSearch();
+  const { nouveau, offre } = Route.useSearch();
   const navigate = useNavigate();
   const [filter, setFilter] = useState<OfferStatus | "tous" | "bientot">("tous");
   const [search, setSearch] = useState("");
@@ -165,6 +167,12 @@ function CompanyOffersPage() {
     setFormOpen(true);
     navigate({ to: "/entreprise/offres", search: { nouveau: false }, replace: true });
   }, [nouveau, navigate]);
+
+  useEffect(() => {
+    if (!offre) return;
+    setDetailId(offre);
+    navigate({ to: "/entreprise/offres", search: {}, replace: true });
+  }, [offre, navigate]);
 
   const closingSoon = useMemo(
     () =>
@@ -320,6 +328,16 @@ function CompanyOffersPage() {
   };
 
   const changeStatus = (offer: CompanyOffer, status: OfferStatus) => {
+    // Une offre ne repasse pas en ligne avec une date limite déjà passée : on demande d'abord une nouvelle date.
+    if (status === "publiee" && (!offer.deadline || daysFromToday(offer.deadline) < 0)) {
+      setEditingId(offer.id);
+      setForm({ ...toForm(offer), deadline: "", status: "publiee" });
+      setErrors({ deadline: "La date limite est passée : choisissez une nouvelle date pour remettre l'offre en ligne." });
+      setDetailId(null);
+      setFormOpen(true);
+      toast.info("Date limite dépassée", { description: "Choisissez une nouvelle date, puis enregistrez." });
+      return;
+    }
     setOfferStatus(offer.id, status);
     const messages: Record<OfferStatus, string> = {
       brouillon: "Offre repassée en brouillon",

@@ -141,8 +141,16 @@ function CompanyServicesPage() {
 
   const submit = () => {
     const next: Record<string, string> = {};
-    if (!form.name.trim()) next.name = "Le nom du service est obligatoire.";
-    if (!form.internsNeeded || Number(form.internsNeeded) < 1) next.internsNeeded = "Indiquez au moins 1 stagiaire.";
+    const name = form.name.trim();
+    const needed = Number(form.internsNeeded);
+    const current = editingId ? services.find((service) => service.id === editingId) : undefined;
+    const alreadyFilled = current ? filledFor(current) : 0;
+    if (!name) next.name = "Le nom du service est obligatoire.";
+    else if (services.some((service) => service.id !== editingId && service.name.trim().toLowerCase() === name.toLowerCase()))
+      next.name = "Un service porte déjà ce nom.";
+    if (!form.internsNeeded || !Number.isInteger(needed) || needed < 1) next.internsNeeded = "Indiquez un nombre entier, au moins 1.";
+    else if (needed < alreadyFilled)
+      next.internsNeeded = `${alreadyFilled} stagiaire${alreadyFilled > 1 ? "s sont" : " est"} déjà affecté${alreadyFilled > 1 ? "s" : ""} à ce service.`;
     if (!form.profiles.trim()) next.profiles = "Précisez les profils souhaités.";
     setErrors(next);
     const first = ["name", "internsNeeded", "profiles"].find((key) => next[key]);

@@ -33,6 +33,7 @@ const REQUIRED: { key: keyof CompanyProfile; id: string; message: string }[] = [
   { key: "name", id: "company-name", message: "Le nom de l'entreprise est obligatoire." },
   { key: "sector", id: "company-sector", message: "Précisez le secteur d'activité." },
   { key: "email", id: "company-email", message: "L'e-mail professionnel est obligatoire." },
+  { key: "website", id: "company-website", message: "" },
   { key: "registration", id: "company-registration", message: "Le numéro RCCM est obligatoire." },
   { key: "representativeName", id: "rep-name", message: "Indiquez le nom du responsable." },
 ];
@@ -106,9 +107,11 @@ function CompanyProfilePage() {
   const save = () => {
     const next: typeof errors = {};
     REQUIRED.forEach((field) => {
-      if (!String(draft[field.key] ?? "").trim()) next[field.key] = field.message;
+      if (field.message && !String(draft[field.key] ?? "").trim()) next[field.key] = field.message;
     });
     if (draft.email.trim() && !/^\S+@\S+\.\S+$/.test(draft.email.trim())) next.email = "Saisissez une adresse e-mail valide.";
+    if (draft.website.trim() && !/^https?:\/\/[^\s.]+\.[^\s]+$/i.test(draft.website.trim()))
+      next.website = "Saisissez une adresse complète, par exemple https://finca.cd.";
     setErrors(next);
     const first = REQUIRED.find((field) => next[field.key]);
     if (first) {
@@ -196,7 +199,7 @@ function CompanyProfilePage() {
                 onChange={(event) => set({ initials: event.target.value.toUpperCase() })}
               />
             </Field>
-            <Field label="Site web" htmlFor="company-website" hint="Adresse complète, par exemple https://exemple.cd.">
+            <Field label="Site web" htmlFor="company-website" error={errors.website} hint="Adresse complète, par exemple https://exemple.cd.">
               {input("website", "company-website", "https://", { type: "url", inputMode: "url" })}
             </Field>
             <Field label="Description" htmlFor="company-description" className="sm:col-span-2">

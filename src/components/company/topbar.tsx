@@ -92,7 +92,7 @@ export function SearchCommand({ compact = false }: { compact?: boolean }) {
         label: o.title,
         meta: o.department,
         go: () => {
-          navigate({ to: "/entreprise/offres" });
+          navigate({ to: "/entreprise/offres", search: { offre: o.id } });
           reset();
         },
       }));

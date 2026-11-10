@@ -18,20 +18,32 @@ import {
   type OfferStatus,
   type Service,
 } from "./company-data";
+import { localIsoDate } from "./dates";
 import {
   buildExpertRun,
   EXPERT_ENGINE_VERSION,
   latestRunFor,
 } from "./expert-engine";
 
+/** Date du jour en heure locale (Kinshasa), pas en UTC. */
 function today() {
-  return new Date().toISOString().split("T")[0];
+  return localIsoDate();
 }
 
 function addMonths(iso: string, months: number) {
   const date = new Date(`${iso}T00:00:00`);
   date.setMonth(date.getMonth() + months);
-  return date.toISOString().split("T")[0];
+  return localIsoDate(date);
+}
+
+/** Une candidature close (acceptée, refusée, retirée) n'a plus d'entretien à venir. */
+const CLOSED: CandidateStatus[] = ["acceptee", "refusee", "retiree"];
+function cancelPendingInterviews(interviews: Interview[], candidateId: string) {
+  return interviews.map((interview) =>
+    interview.candidateId === candidateId && interview.status === "programme" && interview.date >= today()
+      ? { ...interview, status: "annule" as const }
+      : interview
+  );
 }
 
 function historyEntry(status: CandidateStatus, note?: string) {
@@ -153,6 +165,7 @@ export const useCompanyStore = create<CompanyState>((set, get) => ({
 
   updateCandidateStatus: (candidateId, status, note) =>
     set((state) => ({
+      interviews: CLOSED.includes(status) ? cancelPendingInterviews(state.interviews, candidateId) : state.interviews,
       candidates: state.candidates.map((candidate) => {
         if (candidate.id !== candidateId || candidate.status === status) return candidate;
         return {
@@ -171,6 +184,7 @@ export const useCompanyStore = create<CompanyState>((set, get) => ({
     const existing = state.interns.find((intern) => intern.candidateId === candidateId);
     if (existing) {
       set({
+        interviews: cancelPendingInterviews(state.interviews, candidateId),
         candidates: state.candidates.map((entry) =>
           entry.id === candidateId && entry.status !== "acceptee"
             ? {
@@ -215,6 +229,7 @@ export const useCompanyStore = create<CompanyState>((set, get) => ({
           : entry
       ),
       interns: [intern, ...state.interns],
+      interviews: cancelPendingInterviews(state.interviews, candidateId),
     });
 
     return internId;
@@ -222,6 +237,7 @@ export const useCompanyStore = create<CompanyState>((set, get) => ({
 
   refuseCandidate: (candidateId, reason) =>
     set((state) => ({
+      interviews: cancelPendingInterviews(state.interviews, candidateId),
       candidates: state.candidates.map((candidate) =>
         candidate.id === candidateId
           ? {

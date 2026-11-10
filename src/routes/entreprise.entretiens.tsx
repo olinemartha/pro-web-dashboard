@@ -110,7 +110,12 @@ function CompanyInterviewsPage() {
   const past = visible.filter((interview) => interview.status !== "programme").reverse();
 
   const eligibleCandidates = useMemo(() => {
-    const list = candidates.filter((entry) => (ELIGIBLE_STATUSES as readonly string[]).includes(entry.status));
+    const scheduled = new Set(
+      interviews.filter((interview) => interview.status === "programme").map((interview) => interview.candidateId)
+    );
+    const list = candidates.filter(
+      (entry) => (ELIGIBLE_STATUSES as readonly string[]).includes(entry.status) && !scheduled.has(entry.id)
+    );
     if (editingId) {
       const interview = interviews.find((entry) => entry.id === editingId);
       const current = interview ? candidate(interview.candidateId) : undefined;
@@ -495,7 +500,7 @@ function CompanyInterviewsPage() {
           </Field>
           {eligibleCandidates.length === 0 && !editingId && (
             <p className="rounded-lg bg-muted px-4 py-3 text-[13px] text-muted-foreground">
-              Aucun candidat à convoquer : les candidatures refusées, retirées ou acceptées ne peuvent plus l'être.
+              Aucun candidat à convoquer : ceux qui ont déjà un entretien programmé, ou dont la candidature est close, n'apparaissent pas.
             </p>
           )}
           <InterviewFields
