@@ -210,7 +210,7 @@ function CompanyApplicationsPage() {
       return;
     }
     refuseCandidate(refuseTarget.id, refuseReason);
-    toast.success("Candidature refusée", { description: `${refuseTarget.name} sera informé du motif.` });
+    toast.success("Candidature refusée", { description: `Le motif sera communiqué à ${refuseTarget.name}.` });
     setRefuseTarget(null);
     setRefuseReason("");
     setRefuseError("");

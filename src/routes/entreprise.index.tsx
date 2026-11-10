@@ -518,7 +518,7 @@ function CompanyDashboard() {
         id: `service-${service.id}`,
         subject: service.name,
         task: incomplete ? "Besoins à compléter" : "Besoins à revoir",
-        context: "Alimente les recommandations du système expert",
+        context: "Sert aux recommandations d'affectation",
         when: incomplete ? "à compléter" : `il y a ${staleDays} j`,
         whenLong: incomplete ? "besoins incomplets" : `besoins mis à jour il y a ${staleDays} jours`,
         urgent: false,
@@ -571,7 +571,7 @@ function CompanyDashboard() {
     const intern = interns.find((entry) => entry.id === internId);
     if (!intern) return { label: "Dossier introuvable", tone: "muted" };
     if (!intern.confirmed) return { label: "Affectation à valider", tone: "warning" };
-    if (intern.reports.some((report) => report.status === "soumis")) return { label: "Rapport à examiner", tone: "primary" };
+    if (intern.reports.some((report) => report.status === "soumis")) return { label: "Rapport à relire", tone: "primary" };
     if (!intern.evaluation) return { label: "Suivi en cours", tone: "accent" };
     if (intern.certificate === "non_generee") return { label: "Attestation à générer", tone: "warning" };
     if (intern.certificate === "generee") return { label: "Attestation à valider", tone: "warning" };
@@ -590,7 +590,7 @@ function CompanyDashboard() {
     spark?: number[];
   }[] = [
     {
-      label: "Offres actives",
+      label: "Offres publiées",
       value: activeOffers.length,
       icon: Briefcase,
       motion: "lift",

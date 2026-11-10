@@ -186,7 +186,7 @@ function CompanyServicesPage() {
   return (
     <div className="space-y-6">
       <PageIntro
-        desc="Les services qui accueillent des stagiaires, et ce qu'ils recherchent. Ces besoins forment la base de faits du système expert : plus ils sont précis et récents, plus ses recommandations sont justes."
+        desc="Indiquez pour chaque service combien de stagiaires il accueille et quels profils il recherche. Le système expert s'en sert pour recommander une affectation : des besoins précis et à jour donnent de meilleures recommandations."
         action={
           <Button onClick={openCreate} className="group">
             <Plus className="mr-2 size-4 transition-transform duration-300 [transition-timing-function:var(--ease-soft)] group-hover:rotate-90 motion-reduce:transition-none" />
@@ -461,7 +461,7 @@ function CompanyServicesPage() {
         onClose={() => setDeleteId(null)}
         icon={Trash2}
         title="Supprimer ce service ?"
-        description={toDelete ? `${toDelete.name} sera retiré de la base de faits du système expert.` : undefined}
+        description={toDelete ? `${toDelete.name} ne sera plus proposé par le système expert.` : undefined}
         footer={
           <>
             <Button variant="outline" onClick={() => setDeleteId(null)}>

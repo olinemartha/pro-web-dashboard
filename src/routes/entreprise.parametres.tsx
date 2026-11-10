@@ -109,7 +109,7 @@ function CompanySettingsPage() {
 
   const toggleNotify = (key: keyof typeof notify, label: string) => (value: boolean) => {
     setNotify((state) => ({ ...state, [key]: value }));
-    toast.success(value ? "Alerte activée" : "Alerte désactivée", { description: label });
+    toast.success(value ? "Notification activée" : "Notification désactivée", { description: label });
   };
 
   return (
@@ -135,7 +135,7 @@ function CompanySettingsPage() {
                   }}
                 />
               </Field>
-              <Field label="E-mail du compte" htmlFor="settings-email" required error={accountErrors.email} hint="Sert à la connexion et aux alertes.">
+              <Field label="E-mail du compte" htmlFor="settings-email" required error={accountErrors.email} hint="Sert à la connexion et aux notifications.">
                 <input
                   id="settings-email"
                   type="email"
@@ -161,8 +161,8 @@ function CompanySettingsPage() {
           <Reveal as="section" delay={120} className="card-surface flex flex-1 flex-col overflow-hidden" aria-labelledby="alertes-titre">
             <CardHeader
               id="alertes-titre"
-              title="Alertes"
-              desc="Ce qui vous est signalé par e-mail."
+              title="Notifications par e-mail"
+              desc="Choisissez ce que vous recevez par e-mail."
               aside={<Badge label="Démonstration" tone="muted" className="shrink-0" />}
             />
             <div className="flex-1 divide-y">
@@ -170,21 +170,21 @@ function CompanySettingsPage() {
                 <Switch
                   checked={notify.applications}
                   onCheckedChange={toggleNotify("applications", "Nouvelles candidatures")}
-                  aria-label="Alertes : nouvelles candidatures"
+                  aria-label="Notifications : nouvelles candidatures"
                 />
               </SettingRow>
               <SettingRow icon={CalendarClock} motion="tilt" title="Rappels d'entretien" desc="La veille de chaque entretien programmé.">
                 <Switch
                   checked={notify.interviews}
                   onCheckedChange={toggleNotify("interviews", "Rappels d'entretien")}
-                  aria-label="Alertes : rappels d'entretien"
+                  aria-label="Notifications : rappels d'entretien"
                 />
               </SettingRow>
               <SettingRow icon={FileText} motion="lift" title="Rapports de stagiaires" desc="Quand un rapport périodique est déposé.">
                 <Switch
                   checked={notify.reports}
                   onCheckedChange={toggleNotify("reports", "Rapports de stagiaires")}
-                  aria-label="Alertes : rapports de stagiaires"
+                  aria-label="Notifications : rapports de stagiaires"
                 />
               </SettingRow>
             </div>
@@ -274,7 +274,7 @@ function CompanySettingsPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => toast.info("Déconnexion", { description: "Fonction de démonstration." })}
+                  onClick={() => toast.info("Déconnexion indisponible", { description: "Elle sera active avec les comptes utilisateurs." })}
                 >
                   Se déconnecter
                 </Button>

@@ -499,7 +499,7 @@ export const candidateStatusLabels: Record<
   { label: string; tone: "muted" | "primary" | "accent" | "success" | "destructive" }
 > = {
   en_attente: { label: "En attente", tone: "muted" },
-  examen: { label: "En cours d'examen", tone: "primary" },
+  examen: { label: "En examen", tone: "primary" },
   entretien: { label: "En entretien", tone: "primary" },
   acceptee: { label: "Acceptée", tone: "success" },
   refusee: { label: "Refusée", tone: "destructive" },

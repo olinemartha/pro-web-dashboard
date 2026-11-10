@@ -308,7 +308,10 @@ function CompanyOffersPage() {
       updateOffer(editingId, payload);
       if (previous && previous.applicationsCount > 0) {
         toast.success("Offre modifiée", {
-          description: `${previous.applicationsCount} candidat(s) concerné(s) seront informés de la modification.`,
+          description:
+            previous.applicationsCount > 1
+              ? `Les ${previous.applicationsCount} candidats concernés seront prévenus de la modification.`
+              : "Le candidat concerné sera prévenu de la modification.",
         });
       } else {
         toast.success("Offre modifiée");
@@ -343,7 +346,9 @@ function CompanyOffersPage() {
     toast.success(messages[status], {
       description:
         offer.applicationsCount > 0
-          ? `${offer.applicationsCount} candidat(s) recevront une notification.`
+          ? offer.applicationsCount > 1
+            ? `Les ${offer.applicationsCount} candidats concernés recevront une notification.`
+            : "Le candidat concerné recevra une notification."
           : offer.title,
     });
   };
@@ -642,7 +647,7 @@ function CompanyOffersPage() {
                 onChange={(event) => set({ title: event.target.value })}
               />
             </Field>
-            <Field label="Service / département" htmlFor="offre-service" required error={errors.department}>
+            <Field label="Service d'accueil" htmlFor="offre-service" required error={errors.department}>
               <input
                 id="offre-service"
                 className={inputClass}

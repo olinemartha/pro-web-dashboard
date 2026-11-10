@@ -59,9 +59,8 @@ function ProposalCard({ proposal, compact = false }: { proposal: ExpertProposal;
           <div>
             <h3 className="text-sm font-semibold leading-snug">{proposal.serviceName}</h3>
             <p className="mt-0.5 text-xs leading-relaxed tabular-nums text-muted-foreground">
-              {proposal.capacityAtRun.left} place(s) restante(s) ·{" "}
-              {proposal.capacityAtRun.filled} déjà pourvue(s) sur{" "}
-              {proposal.capacityAtRun.needed}
+              {proposal.capacityAtRun.left} place{proposal.capacityAtRun.left > 1 ? "s" : ""} libre{proposal.capacityAtRun.left > 1 ? "s" : ""} ·{" "}
+              {proposal.capacityAtRun.filled} pourvue{proposal.capacityAtRun.filled > 1 ? "s" : ""} sur {proposal.capacityAtRun.needed}
             </p>
           </div>
         </div>
@@ -229,7 +228,7 @@ export function ExpertPanel({ intern }: { intern: Intern }) {
     setSelected(run.proposals[0]?.serviceId ?? "");
     setError("");
     toast.success("Analyse relancée", {
-      description: `Nouvelle version créée — ${run.proposals.length} proposition(s).`,
+      description: `Nouvelle analyse : ${run.proposals.length} proposition${run.proposals.length > 1 ? "s" : ""}.`,
     });
   };
 
@@ -267,7 +266,7 @@ export function ExpertPanel({ intern }: { intern: Intern }) {
               {intern.confirmed ? (
                 <Badge label="Affectation confirmée" tone="success" />
               ) : (
-                <Badge label="Affectation à confirmer" tone="muted" />
+                <Badge label="Affectation à valider" tone="warning" />
               )}
             </div>
             <p className="mt-1 text-sm leading-relaxed tabular-nums text-muted-foreground">
@@ -282,16 +281,13 @@ export function ExpertPanel({ intern }: { intern: Intern }) {
 
         <div className="mt-4 flex flex-wrap gap-2 text-xs leading-relaxed tabular-nums text-muted-foreground">
           <span className="rounded-md bg-muted px-2.5 py-1">
-            {services.length} service(s) comparé(s)
+            {services.length} service{services.length > 1 ? "s" : ""} comparé{services.length > 1 ? "s" : ""}
           </span>
           <span className="rounded-md bg-muted px-2.5 py-1">
-            {latestRun?.proposals.length ?? 0} proposition(s)
+            {latestRun?.proposals.length ?? 0} proposition{(latestRun?.proposals.length ?? 0) > 1 ? "s" : ""}
           </span>
           <span className="rounded-md bg-muted px-2.5 py-1">
-            {latestRun?.rules.length ?? DEMO_RULES.length} règle(s) appliquée(s)
-          </span>
-          <span className="rounded-md bg-muted px-2.5 py-1">
-            Moteur {latestRun?.engineVersion ?? "demo-1.0"}
+            {latestRun?.rules.length ?? DEMO_RULES.length} règle{(latestRun?.rules.length ?? DEMO_RULES.length) > 1 ? "s" : ""} appliquée{(latestRun?.rules.length ?? DEMO_RULES.length) > 1 ? "s" : ""}
           </span>
         </div>
 
@@ -400,7 +396,7 @@ export function ExpertPanel({ intern }: { intern: Intern }) {
                         </div>
                       )}
                       <div className="flex gap-1.5">
-                        <dt className="shrink-0">Moteur :</dt>
+                        <dt className="shrink-0">Version du moteur :</dt>
                         <dd className="min-w-0 tabular-nums">
                           {decision.engineVersion} · exécution {decision.runId || "—"}
                         </dd>
@@ -531,7 +527,7 @@ export function ExpertPanel({ intern }: { intern: Intern }) {
           onClose={() => setReasoningOpen(false)}
           icon={Scale}
           title="Trace de l'analyse"
-          description={`${fmtDateTime(latestRun.createdAt)} · ${latestRun.id} · moteur ${latestRun.engineVersion}`}
+          description={`${fmtDateTime(latestRun.createdAt)} · ${latestRun.id} · version du moteur ${latestRun.engineVersion}`}
           wide
         >
           <div className="grid gap-6 sm:grid-cols-2">

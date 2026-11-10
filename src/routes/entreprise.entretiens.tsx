@@ -322,11 +322,11 @@ function CompanyInterviewsPage() {
   return (
     <div className="space-y-6">
       <PageIntro
-        desc="Planifiez vos entretiens, marquez-les réalisés, puis décidez de la candidature."
+        desc="Programmez vos entretiens, indiquez s'ils ont eu lieu, puis décidez de chaque candidature."
         action={
           <Button onClick={openCreate} className="group">
             <CalendarPlus className="mr-2 size-4 nav-icon nav-icon--tilt" />
-            Planifier un entretien
+            Programmer un entretien
           </Button>
         }
       />
@@ -405,13 +405,13 @@ function CompanyInterviewsPage() {
             <EmptyNote
               icon={CalendarClock}
               title={filter === "tous" ? "Aucun entretien pour l'instant" : "Rien dans cette catégorie"}
-              desc={filter === "tous" ? "Planifiez un entretien ici ou depuis une candidature." : "Changez de filtre pour voir les autres entretiens."}
+              desc={filter === "tous" ? "Programmez un entretien ici ou depuis une candidature." : "Changez de filtre pour voir les autres entretiens."}
               className="pb-4"
             />
             <div className="flex justify-center">
               {filter === "tous" ? (
                 <button type="button" onClick={openCreate} className={SECTION_LINK}>
-                  <CalendarPlus className="size-3.5" /> Planifier un entretien
+                  <CalendarPlus className="size-3.5" /> Programmer un entretien
                 </button>
               ) : (
                 <button type="button" onClick={() => setFilter("tous")} className={SECTION_LINK}>
@@ -455,7 +455,7 @@ function CompanyInterviewsPage() {
         open={formOpen}
         onClose={() => setFormOpen(false)}
         icon={editingId ? Pencil : CalendarPlus}
-        title={editingId ? "Modifier l'entretien" : "Planifier un entretien"}
+        title={editingId ? "Modifier l'entretien" : "Programmer un entretien"}
         description="Le candidat est notifié automatiquement."
         footer={
           <>

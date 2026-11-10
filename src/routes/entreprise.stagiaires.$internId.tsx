@@ -138,7 +138,7 @@ function InternDossierPage() {
                 {intern.confirmed ? (
                   <Badge label={intern.service} tone="success" />
                 ) : (
-                  <Badge label="Affectation à confirmer" tone="warning" />
+                  <Badge label="Affectation à valider" tone="warning" />
                 )}
                 <Badge label={`Attestation ${certificateLabel[intern.certificate].toLowerCase()}`} tone={certificateTone[intern.certificate]} />
               </div>
@@ -171,7 +171,7 @@ function InternDossierPage() {
             <div className="min-w-0 px-4">
               <dt className="text-xs text-muted-foreground">Affectation</dt>
               <dd className="mt-0.5 truncate text-[13px] font-medium">
-                {decision ? (decision.source === "recommandation" ? "Recommandée" : "Choix motivé") : "À confirmer"}
+                {decision ? (decision.source === "recommandation" ? "Recommandée" : "Choix motivé") : "À valider"}
               </dd>
               {decision && <dd className="truncate text-xs text-muted-foreground">par {decision.decidedBy}</dd>}
             </div>
@@ -360,7 +360,7 @@ function InternDossierPage() {
                 size="sm"
                 onClick={() => {
                   validateCertificate(intern.id);
-                  toast.success("Attestation validée et déposée");
+                  toast.success("Attestation validée", { description: `Elle peut maintenant être remise à ${intern.name}.` });
                 }}
               >
                 <BadgeCheck className="mr-1.5 size-3.5" /> Valider

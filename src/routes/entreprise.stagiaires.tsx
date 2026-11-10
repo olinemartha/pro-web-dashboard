@@ -202,7 +202,7 @@ function CompanyInternsLayout() {
                           {intern.name}
                         </span>
                         <span className={cn("block truncate text-xs", intern.confirmed ? "text-muted-foreground" : "font-medium text-warning")}>
-                          {intern.confirmed ? intern.service : "Affectation à confirmer"}
+                          {intern.confirmed ? intern.service : "Affectation à valider"}
                         </span>
                         {/* Avancement du stage */}
                         <span className="mt-2 flex items-center gap-2">
