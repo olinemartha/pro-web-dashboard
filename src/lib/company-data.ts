@@ -318,10 +318,11 @@ export const demoCandidates: Candidate[] = [
     id: "c2", offerId: "o1", name: "Jean Kabasele", initials: "JK", universite: "Université Protestante au Congo",
     filiere: "Économie", niveau: "Licence (L3)", email: "jean.kabasele@exemple.cd",
     phone: "+243 82 111 2233", competences: ["Excel", "Statistiques"],
-    cvName: "CV_Jean_Kabasele.pdf", appliedAt: "2026-10-24", status: "examen",
+    cvName: "CV_Jean_Kabasele.pdf", appliedAt: "2026-10-24", status: "entretien",
     history: [
       { status: "en_attente", date: "2026-10-24" },
       { status: "examen", date: "2026-10-30", note: "Profil en cours d'examen" },
+      { status: "entretien", date: "2026-11-04", note: "Entretien programmé" },
     ],
   },
   {
@@ -335,10 +336,11 @@ export const demoCandidates: Candidate[] = [
     id: "c4", offerId: "o2", name: "Patrick Mwamba", initials: "PM", universite: "Université de Lubumbashi",
     filiere: "Informatique", niveau: "Master (M1)", email: "patrick.mwamba@exemple.cd",
     phone: "+243 84 777 8899", competences: ["React", "TypeScript", "SQL", "Node.js"],
-    cvName: "CV_Patrick_Mwamba.pdf", appliedAt: "2026-10-27", status: "examen",
+    cvName: "CV_Patrick_Mwamba.pdf", appliedAt: "2026-10-27", status: "entretien",
     history: [
       { status: "en_attente", date: "2026-10-27" },
       { status: "examen", date: "2026-11-01", note: "Profil en cours d'examen" },
+      { status: "entretien", date: "2026-11-06", note: "Entretien programmé" },
     ],
   },
   {
