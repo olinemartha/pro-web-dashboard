@@ -149,7 +149,7 @@ function CompanyOffersPage() {
   const { offers, candidates, services, addOffer, updateOffer, setOfferStatus } = useCompanyStore();
   const { nouveau, offre } = Route.useSearch();
   const navigate = useNavigate();
-  const [filter, setFilter] = useState<OfferStatus | "tous" | "bientot">("tous");
+  const [filter, setFilter] = useState<OfferStatus | "tous">("tous");
   const [search, setSearch] = useState("");
 
   const [formOpen, setFormOpen] = useState(false);
@@ -186,11 +186,7 @@ function CompanyOffersPage() {
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase();
     const base =
-      filter === "tous"
-        ? offers
-        : filter === "bientot"
-          ? closingSoon
-          : offers.filter((offer) => offer.status === filter);
+      filter === "tous" ? offers : offers.filter((offer) => offer.status === filter);
     if (!term) return base;
     return base.filter((offer) =>
       [offer.title, offer.department, offer.location, ...offer.skills].some((value) =>
@@ -205,7 +201,6 @@ function CompanyOffersPage() {
     (candidate) => candidate.status === "en_attente" || candidate.status === "examen"
   ).length;
   // Un indicateur déjà actif remet la liste à « Toutes ».
-  const toggleFilter = (value: OfferStatus | "bientot") => setFilter((current) => (current === value ? "tous" : value));
   const detail = offers.find((offer) => offer.id === detailId) ?? null;
   // Suggestions de compétences : celles déjà utilisées dans vos offres.
   const skillSuggestions = useMemo(
@@ -375,8 +370,6 @@ function CompanyOffersPage() {
             icon={Briefcase}
             motion="lift"
             foot={`sur ${offers.length} offre${offers.length > 1 ? "s" : ""} créée${offers.length > 1 ? "s" : ""}`}
-            onClick={() => toggleFilter("publiee")}
-            pressed={filter === "publiee"}
           />,
           <StatCard
             key="brouillons"
@@ -385,8 +378,6 @@ function CompanyOffersPage() {
             icon={FileText}
             motion="lift"
             foot={statusCount("brouillon") ? "à compléter puis publier" : "aucun brouillon en cours"}
-            onClick={() => toggleFilter("brouillon")}
-            pressed={filter === "brouillon"}
           />,
           <StatCard
             key="candidatures"
@@ -396,7 +387,6 @@ function CompanyOffersPage() {
             motion="bounce"
             foot={toReview ? `${toReview} à examiner` : "aucune en attente"}
             tone={toReview ? "alert" : "neutral"}
-            to="/entreprise/candidatures"
           />,
           <StatCard
             key="bientot"
@@ -406,8 +396,6 @@ function CompanyOffersPage() {
             motion="tilt"
             foot={closingSoon.length ? `sous ${CLOSING_DAYS} jours` : `aucune sous ${CLOSING_DAYS} jours`}
             tone={closingSoon.length ? "alert" : "neutral"}
-            onClick={() => toggleFilter("bientot")}
-            pressed={filter === "bientot"}
           />,
         ].map((card, index) => (
           <Reveal key={index} delay={index * 60} className="min-w-0">
@@ -420,7 +408,7 @@ function CompanyOffersPage() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <FilterChips
           label="Filtrer les offres par statut"
-          value={filter === "bientot" ? ("" as OfferStatus | "tous") : filter}
+          value={filter}
           onChange={(value) => setFilter(value)}
           options={FILTERS.map((entry) => ({
             value: entry.value,

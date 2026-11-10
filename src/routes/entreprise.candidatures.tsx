@@ -69,8 +69,7 @@ export const Route = createFileRoute("/entreprise/candidatures")({
 
 const tone = (status: CandidateStatus): Tone => candidateStatusLabels[status].tone;
 
-/** « a_examiner » regroupe les candidatures en attente et en examen. */
-type StatusFilter = CandidateStatus | "toutes" | "a_examiner";
+type StatusFilter = CandidateStatus | "toutes";
 
 const STATUS_STEPS: { value: StatusFilter; label: string }[] = [
   { value: "toutes", label: "Toutes" },
@@ -150,9 +149,7 @@ function CompanyApplicationsPage() {
     const term = search.trim().toLowerCase();
     return scoped
       .filter((candidate) => {
-        if (statusFilter === "a_examiner") {
-          if (candidate.status !== "en_attente" && candidate.status !== "examen") return false;
-        } else if (statusFilter !== "toutes" && candidate.status !== statusFilter) return false;
+        if (statusFilter !== "toutes" && candidate.status !== statusFilter) return false;
         if (!term) return true;
         return [candidate.name, candidate.filiere, candidate.universite, candidate.niveau, offerTitle(candidate.offerId)].some(
           (value) => value.toLowerCase().includes(term)
@@ -281,7 +278,6 @@ function CompanyApplicationsPage() {
             icon={Inbox}
             motion="bounce"
             foot={offerFilter === "toutes" ? "toutes offres confondues" : offerTitle(offerFilter)}
-            onClick={() => setStatusFilter("toutes")}
           />,
           <StatCard
             key="examiner"
@@ -291,8 +287,6 @@ function CompanyApplicationsPage() {
             motion="pop"
             foot={toReview ? "en attente de votre décision" : "rien en attente"}
             tone={toReview ? "alert" : "neutral"}
-            onClick={() => setStatusFilter((current) => (current === "a_examiner" ? "toutes" : "a_examiner"))}
-            pressed={statusFilter === "a_examiner"}
           />,
           <StatCard
             key="entretien"
@@ -301,8 +295,6 @@ function CompanyApplicationsPage() {
             icon={CalendarPlus}
             motion="tilt"
             foot="décision attendue après l'entretien"
-            onClick={() => setStatusFilter((current) => (current === "entretien" ? "toutes" : "entretien"))}
-            pressed={statusFilter === "entretien"}
           />,
           <StatCard
             key="taux"
@@ -313,8 +305,6 @@ function CompanyApplicationsPage() {
             motion="bounce"
             foot={acceptance === null ? "aucune décision prise" : `sur ${decided.length} décision${decided.length > 1 ? "s" : ""} prise${decided.length > 1 ? "s" : ""}`}
             tone={acceptance !== null && acceptance >= 50 ? "trend" : "neutral"}
-            onClick={() => setStatusFilter((current) => (current === "acceptee" ? "toutes" : "acceptee"))}
-            pressed={statusFilter === "acceptee"}
           />,
         ].map((card, index) => (
           <Reveal key={index} delay={index * 60} className="min-w-0">
@@ -368,7 +358,7 @@ function CompanyApplicationsPage() {
               value: step.value,
               label: step.label,
               count: counts[step.value] ?? 0,
-              dot: step.value === "toutes" || step.value === "a_examiner" ? undefined : step.value,
+              dot: step.value === "toutes" ? undefined : step.value,
             }))}
             className="-mx-1"
           />

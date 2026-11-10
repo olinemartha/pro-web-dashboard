@@ -272,7 +272,7 @@ Chaque motif ci-dessous existe en code ; les pages l'importent au lieu de le ré
 
 ### Gabarit des pages de liste (Mes offres, Candidatures, Entretiens)
 1. `PageIntro` : une phrase d'intention, l'action principale à droite.
-2. Quatre `StatCard` qui **filtrent** la page (un second clic rend tout), en cascade de 60 ms ; contour bleu roi quand le filtre est actif.
+2. Quatre `StatCard` **simples indicateurs** (non cliquables), en cascade de 60 ms. Les filtres passent uniquement par les puces.
 3. La liste : une carte avec en-tête (titre 15 px + compteur gris, `FilterChips`, recherche), lignes séparées par un filet, `Reveal` en cascade de 40 ms ; un seul bouton de ligne `rowActionClass()` et le reste dans `ActionMenu`.
 4. État vide : `EmptyNote` + « Tout afficher ».
 5. Détail : `Modal` (offre) ou `Drawer` (candidat) ; repères en bande bordée, sections titrées en 13 px semibold, statuts aux couleurs du pipeline.
@@ -295,7 +295,7 @@ Chaque motif ci-dessous existe en code ; les pages l'importent au lieu de le ré
 ### Cards / Containers
 - **Corner Style** : 12 px. **Background** : blanc sur canevas #F5F7FA. **Border** : 1 px #DDE1E9. **Padding** : 20 px.
 - Les listes dans une carte utilisent des lignes séparées par un filet, pas des cartes imbriquées.
-- **Cartes cliquables** : seulement les cartes qui mènent à une seule destination (indicateurs KPI, cartes d'offre → détail, lignes d'entretiens, d'activité et de dossiers). Au survol : la carte se soulève de 2 px, bordure bleue légère, curseur main, titre en bleu roi ; au clavier, contour bleu vif autour de la carte. Les boutons à l'intérieur restent cliquables séparément. Jamais pour les cartes à plusieurs actions ou filtres (« À traiter », Pipeline, carte entreprise).
+- **Cartes cliquables** : seulement les cartes qui mènent à une seule destination (indicateurs KPI, cartes d'offre → détail, lignes d'entretiens, d'activité et de dossiers). Au survol : la carte se soulève de 2 px, bordure bleue légère, curseur main, titre en bleu roi ; au clavier, contour bleu vif autour de la carte. Les boutons à l'intérieur restent cliquables séparément. Jamais pour les cartes à plusieurs actions ou filtres (« À traiter », Pipeline, carte entreprise), ni pour les indicateurs des pages de liste ou les cartes de services (le bouton « Modifier » suffit).
 
 ### KPI Cards
 Quatre cartes séparées et espacées. En haut : libellé 13 px à gauche (deux lignes autorisées sur téléphone) et icône monochrome nue à droite. Au centre : valeur 30 px, avec une courbe pour les candidatures. En bas, séparée par un filet : une précision de 12 px (tendance verte, alerte ambre ou contexte gris).

@@ -679,8 +679,6 @@ export function StatCard({
   foot,
   tone = "neutral",
   to,
-  onClick,
-  pressed,
   aside,
   suffix,
 }: {
@@ -693,19 +691,13 @@ export function StatCard({
   foot: string;
   /** neutral : gris · trend : vert avec flèche montante · alert : ambre avec horloge. */
   tone?: "neutral" | "trend" | "alert";
-  /** Page qui détaille le chiffre (carte-lien). */
+  /** Page qui détaille le chiffre (carte-lien). Sans lien : simple indicateur. */
   to?: string;
-  /** Sinon : la carte filtre la page en cours (bouton à bascule). */
-  onClick?: () => void;
-  pressed?: boolean;
   /** Visuel facultatif à droite de la valeur (ex. une petite courbe). */
   aside?: React.ReactNode;
 }) {
-  const shell = cn(
-    CARD_INTERACTIVE,
-    "flex h-full w-full flex-col gap-4 p-4 text-left sm:p-5",
-    pressed && "border-primary ring-1 ring-primary"
-  );
+  // Lien seulement sur le tableau de bord ; ailleurs, un simple indicateur (les filtres sont dans les puces).
+  const shell = cn(to ? CARD_INTERACTIVE : "card-surface", "flex h-full w-full flex-col gap-4 p-4 text-left sm:p-5");
   const body = (
     <>
       <div className="flex items-start justify-between gap-2.5">
@@ -740,11 +732,7 @@ export function StatCard({
         {body}
       </Link>
     );
-  return (
-    <button type="button" onClick={onClick} aria-pressed={pressed} className={shell}>
-      {body}
-    </button>
-  );
+  return <div className={shell}>{body}</div>;
 }
 
 /* ------------------------------------------------------------------ */

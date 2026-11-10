@@ -2,7 +2,7 @@ import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-r
 import { useState } from "react";
 import { ArrowLeft, ClipboardCheck, FileText, UserCheck, Users } from "lucide-react";
 import { Reveal } from "@/components/ui/motion";
-import { AvatarInitials, EmptyNote, PageIntro, SECTION_LINK, StatCard } from "@/components/company/ui";
+import { AvatarInitials, EmptyNote, FilterChips, PageIntro, SECTION_LINK, StatCard } from "@/components/company/ui";
 import { useCompanyStore } from "@/lib/company-store";
 import { daysFromToday, fmtDate } from "@/lib/dates";
 import { cn } from "@/lib/utils";
@@ -45,7 +45,6 @@ function CompanyInternsLayout() {
     return true;
   });
 
-  const toggle = (value: Filter) => setFilter((current) => (current === value ? "tous" : value));
 
   if (dossierOpen) {
     return (
@@ -111,7 +110,6 @@ function CompanyInternsLayout() {
               icon={Users}
               motion="bounce"
               foot={`${interns.length - toAssign.length} affectation${interns.length - toAssign.length > 1 ? "s" : ""} confirmée${interns.length - toAssign.length > 1 ? "s" : ""}`}
-              onClick={() => setFilter("tous")}
             />,
             <StatCard
               key="affecter"
@@ -121,8 +119,6 @@ function CompanyInternsLayout() {
               motion="bounce"
               foot={toAssign.length ? "recommandation à valider" : "toutes confirmées"}
               tone={toAssign.length ? "alert" : "neutral"}
-              onClick={() => toggle("a_affecter")}
-              pressed={filter === "a_affecter"}
             />,
             <StatCard
               key="rapports"
@@ -132,8 +128,6 @@ function CompanyInternsLayout() {
               motion="lift"
               foot={reportsCount ? `chez ${withReports.length} stagiaire${withReports.length > 1 ? "s" : ""}` : "aucun en attente"}
               tone={reportsCount ? "alert" : "neutral"}
-              onClick={() => toggle("rapports")}
-              pressed={filter === "rapports"}
             />,
             <StatCard
               key="evaluer"
@@ -142,8 +136,6 @@ function CompanyInternsLayout() {
               icon={ClipboardCheck}
               motion="pop"
               foot={`${interns.length - toEvaluate.length} saisie${interns.length - toEvaluate.length > 1 ? "s" : ""}`}
-              onClick={() => toggle("a_evaluer")}
-              pressed={filter === "a_evaluer"}
             />,
           ].map((card, index) => (
             <Reveal key={index} delay={index * 60} className="min-w-0">
@@ -160,18 +152,25 @@ function CompanyInternsLayout() {
           className="card-surface overflow-hidden"
           aria-labelledby="dossiers-titre"
         >
-          <div className="flex items-center justify-between gap-3 border-b px-5 pb-3.5 pt-4">
+          <div className="space-y-2.5 border-b px-5 pb-3.5 pt-4">
             <h2 id="dossiers-titre" className="flex items-center gap-2 text-[15px] font-semibold tracking-tight">
               Dossiers
               <span className="rounded-md bg-muted px-1.5 py-0.5 text-[11px] font-medium tabular-nums text-muted-foreground">
                 {visible.length}
               </span>
             </h2>
-            {filter !== "tous" && (
-              <button type="button" onClick={() => setFilter("tous")} className="text-xs font-medium text-primary hover:underline">
-                Tout afficher
-              </button>
-            )}
+            <FilterChips
+              label="Filtrer les dossiers"
+              value={filter}
+              onChange={setFilter}
+              className="-mx-1"
+              options={[
+                { value: "tous" as Filter, label: "Tous", count: interns.length },
+                { value: "a_affecter" as Filter, label: "À affecter", count: toAssign.length },
+                { value: "rapports" as Filter, label: "Rapports", count: withReports.length },
+                { value: "a_evaluer" as Filter, label: "À évaluer", count: toEvaluate.length },
+              ]}
+            />
           </div>
 
           {visible.length === 0 ? (

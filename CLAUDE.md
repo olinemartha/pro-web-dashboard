@@ -19,7 +19,7 @@ Application web de gestion des stages (mémoire de fin d'études), premier clien
 | Carte cliquable (une seule destination) | `CARD_INTERACTIVE` + un seul lien étiré | `@/components/company/ui` |
 | En-tête de carte | `SectionHeader` (titre 15 px, compteur, lien « Tout voir ») | idem |
 | Lien de section | `SectionLink` / `SECTION_LINK` (contour → bleu roi plein au survol) | idem |
-| Indicateur chiffré | `StatCard` (`to` = lien vers la page qui détaille ; `onClick` + `pressed` = filtre la page) | idem |
+| Indicateur chiffré | `StatCard` : avec `to` (tableau de bord seulement), lien vers la page qui détaille ; sans `to`, simple indicateur non cliquable | idem |
 | Filtres de liste | `FilterChips` (puces glacier, compteurs, pastille de couleur) + `SearchInput` | idem |
 | Bouton de ligne | `rowActionClass()` (discret, 144 px, flèche seule sur téléphone) | idem |
 | Couleurs de statut | `PIPELINE_COLORS`, `StatusDot`, `PipelineBar`, `PIPELINE_SHORT_LABELS` | idem |
@@ -76,7 +76,7 @@ Mes offres, Candidatures et Entretiens suivent ce gabarit ; toute nouvelle page 
 - Pas de barre de défilement dans une carte : le contenu passe à la ligne ou se replie (« Afficher plus »).
 - Aucun débordement horizontal à 320 px. Points de rupture vérifiés : 375, 768, 1024, 1280, 1440.
 - Pas de cartes imbriquées : des lignes séparées par un filet (`divide-y`).
-- Une carte entière n'est cliquable que si elle mène à une seule destination ; jamais pour une carte qui contient filtres ou plusieurs actions.
+- Peu d'éléments cliquables : une carte entière n'est cliquable que si elle mène à une seule destination (cartes d'offre, lignes de liste, indicateurs du tableau de bord). Les indicateurs des pages de liste ne sont pas cliquables : les filtres sont dans les puces. Jamais pour une carte qui contient filtres ou plusieurs actions.
 
 **Formulaires**
 - Placeholders (« Ex. Kinshasa, Gombe », « Choisir une durée »), **jamais de valeur préremplie** que l'utilisateur n'a pas choisie.

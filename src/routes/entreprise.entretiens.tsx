@@ -51,7 +51,7 @@ export const Route = createFileRoute("/entreprise/entretiens")({
 
 const tone = (status: InterviewStatus): Tone => interviewStatusLabels[status].tone;
 
-type Filter = "tous" | "a_venir" | "semaine" | "realise" | "annule";
+type Filter = "tous" | "a_venir" | "realise" | "annule";
 
 /** Seuls les candidats encore en course peuvent être convoqués. */
 const ELIGIBLE_STATUSES = ["en_attente", "examen", "entretien"] as const;
@@ -100,7 +100,6 @@ function CompanyInterviewsPage() {
 
   const visible = sorted.filter((interview) => {
     if (filter === "a_venir") return isUpcoming(interview) || isOverdue(interview);
-    if (filter === "semaine") return isUpcoming(interview) && daysFromToday(interview.date) <= 7;
     if (filter === "realise" || filter === "annule") return interview.status === filter;
     return true;
   });
@@ -124,7 +123,6 @@ function CompanyInterviewsPage() {
     return list;
   }, [candidates, editingId, interviews]);
 
-  const toggle = (value: Filter) => setFilter((current) => (current === value ? "tous" : value));
 
   const openCreate = () => {
     setEditingId(null);
@@ -343,8 +341,6 @@ function CompanyInterviewsPage() {
             icon={CalendarClock}
             motion="tilt"
             foot={upcomingAll[0] ? `prochain ${relativeDay(upcomingAll[0].date)}` : "aucun programmé"}
-            onClick={() => toggle("a_venir")}
-            pressed={filter === "a_venir"}
           />,
           <StatCard
             key="semaine"
@@ -354,8 +350,6 @@ function CompanyInterviewsPage() {
             motion="pop"
             foot={soon.length ? `${soon.length} aujourd'hui ou demain` : "rien d'imminent"}
             tone={soon.length ? "alert" : "neutral"}
-            onClick={() => toggle("semaine")}
-            pressed={filter === "semaine"}
           />,
           <StatCard
             key="realises"
@@ -365,8 +359,6 @@ function CompanyInterviewsPage() {
             motion="pop"
             foot={toDecide.length ? `${toDecide.length} décision${toDecide.length > 1 ? "s" : ""} à prendre` : "toutes les décisions prises"}
             tone={toDecide.length ? "alert" : "neutral"}
-            onClick={() => toggle("realise")}
-            pressed={filter === "realise"}
           />,
           <StatCard
             key="annules"
@@ -375,8 +367,6 @@ function CompanyInterviewsPage() {
             icon={XCircle}
             motion="pop"
             foot="non poursuivis"
-            onClick={() => toggle("annule")}
-            pressed={filter === "annule"}
           />,
         ].map((card, index) => (
           <Reveal key={index} delay={index * 60} className="min-w-0">
@@ -396,7 +386,7 @@ function CompanyInterviewsPage() {
           </h2>
           <FilterChips
             label="Filtrer les entretiens"
-            value={filter === "semaine" ? ("" as Filter) : filter}
+            value={filter}
             onChange={setFilter}
             options={[
               { value: "tous" as Filter, label: "Tous", count: sorted.length },

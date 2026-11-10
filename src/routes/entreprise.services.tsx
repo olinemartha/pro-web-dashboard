@@ -7,7 +7,6 @@ import { Reveal } from "@/components/ui/motion";
 import {
   ActionMenu,
   Badge,
-  CARD_INTERACTIVE,
   EmptyNote,
   Field,
   FilterChips,
@@ -114,7 +113,6 @@ function CompanyServicesPage() {
     [services, offers]
   );
 
-  const toggle = (value: Filter) => setFilter((current) => (current === value ? "tous" : value));
 
   const set = (patch: Partial<ServiceForm>) => {
     setForm((current) => ({ ...current, ...patch }));
@@ -207,7 +205,6 @@ function CompanyServicesPage() {
             icon={Layers}
             motion="stack"
             foot={`${totalNeeded} place${totalNeeded > 1 ? "s" : ""} au total`}
-            onClick={() => setFilter("tous")}
           />,
           <StatCard
             key="pourvues"
@@ -218,8 +215,6 @@ function CompanyServicesPage() {
             motion="bounce"
             foot={`${totalFilled} sur ${totalNeeded} affectation${totalFilled > 1 ? "s" : ""} confirmée${totalFilled > 1 ? "s" : ""}`}
             tone={totalNeeded && totalFilled === totalNeeded ? "trend" : "neutral"}
-            onClick={() => toggle("complets")}
-            pressed={filter === "complets"}
           />,
           <StatCard
             key="libres"
@@ -229,8 +224,6 @@ function CompanyServicesPage() {
             motion="bounce"
             foot={toFill.length ? `dans ${toFill.length} service${toFill.length > 1 ? "s" : ""}` : "tous les services sont complets"}
             tone={totalLeft ? "alert" : "neutral"}
-            onClick={() => toggle("a_pourvoir")}
-            pressed={filter === "a_pourvoir"}
           />,
           <StatCard
             key="maj"
@@ -240,8 +233,6 @@ function CompanyServicesPage() {
             motion="pop"
             foot={toUpdate.length ? "incomplets ou anciens" : "tous à jour"}
             tone={toUpdate.length ? "alert" : "neutral"}
-            onClick={() => toggle("a_completer")}
-            pressed={filter === "a_completer"}
           />,
         ].map((card, index) => (
           <Reveal key={index} delay={index * 60} className="min-w-0">
@@ -296,22 +287,14 @@ function CompanyServicesPage() {
             const stale = staleDays(service) > STALE_DAYS;
             return (
               <Reveal key={service.id} delay={index < 6 ? 120 + index * 50 : 0} className="min-w-0">
-                <article className={cn(CARD_INTERACTIVE, "relative flex h-full cursor-pointer flex-col p-5")}>
+                <article className="card-surface flex h-full flex-col p-5">
                   <div className="flex items-start gap-3">
                     <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-primary-soft text-xs font-semibold text-primary">
                       {initialsOf(service.name)}
                     </span>
                     <div className="min-w-0 flex-1">
                       <h2 className="text-pretty text-[15px] font-semibold leading-snug tracking-tight">
-                        {/* Toute la carte ouvre la mise à jour des besoins */}
-                        <button
-                          type="button"
-                          onClick={() => openEdit(service)}
-                          aria-label={`${service.name} — mettre à jour les besoins`}
-                          className="text-left transition-colors after:absolute after:inset-0 after:rounded-xl after:content-[''] group-hover:text-primary focus-visible:outline-none focus-visible:after:outline focus-visible:after:outline-2 focus-visible:after:outline-offset-2 focus-visible:after:outline-accent"
-                        >
-                          {service.name}
-                        </button>
+                        {service.name}
                       </h2>
                       <p className={cn("mt-0.5 text-xs", stale ? "font-medium text-warning" : "text-muted-foreground")}>
                         Mis à jour {relativeDay(service.updatedAt)}
