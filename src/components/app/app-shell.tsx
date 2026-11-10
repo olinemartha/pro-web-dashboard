@@ -1,5 +1,5 @@
 import { Link, useRouter, useRouterState } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
   Bell,
   Briefcase,
@@ -235,6 +235,11 @@ function TopBarMobile({ pathname }: { pathname: string }) {
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  // Les pages défilent dans <main> : on la remet en haut à chaque changement de page.
+  const scrollRef = useRef<HTMLElement>(null);
+  useLayoutEffect(() => {
+    scrollRef.current?.scrollTo({ top: 0 });
+  }, [pathname]);
 
   useEffect(() => {
     document.title = `${PAGE_TITLES[pathname] ?? "StageManager"} — StageManager`;
@@ -258,7 +263,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <TopBarMobile pathname={pathname} />
         </div>
 
-        <main className="page-scroll flex-1 overflow-y-auto bg-canvas p-4 sm:p-6 lg:p-8">
+        <main ref={scrollRef} className="page-scroll flex-1 overflow-y-auto bg-canvas p-4 sm:p-6 lg:p-8">
           <ShellPageTitleProvider title={PAGE_TITLES[pathname] ?? null}>
             {children}
           </ShellPageTitleProvider>

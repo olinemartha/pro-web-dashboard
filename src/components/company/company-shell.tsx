@@ -546,6 +546,11 @@ function readCollapsed() {
 
 export function CompanyShell({ children }: { children: React.ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  // Les pages défilent dans cette zone, pas dans la fenêtre : on la remet en haut à chaque changement de page.
+  const scrollRef = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    scrollRef.current?.scrollTo({ top: 0 });
+  }, [pathname]);
   const title = pageTitle(pathname);
   const [collapsed, setCollapsed] = useState(readCollapsed);
 
@@ -607,7 +612,7 @@ export function CompanyShell({ children }: { children: React.ReactNode }) {
         </div>
       </aside>
 
-      <div className="page-scroll flex min-w-0 flex-1 flex-col overflow-y-auto">
+      <div ref={scrollRef} className="page-scroll flex min-w-0 flex-1 flex-col overflow-y-auto">
         <TopBar pathname={pathname} />
         <MobileBar pathname={pathname} />
 
