@@ -607,7 +607,7 @@ export function CompanyShell({ children }: { children: React.ReactNode }) {
         </div>
       </aside>
 
-      <div className="flex min-w-0 flex-1 flex-col overflow-y-auto">
+      <div className="page-scroll flex min-w-0 flex-1 flex-col overflow-y-auto">
         <TopBar pathname={pathname} />
         <MobileBar pathname={pathname} />
 
