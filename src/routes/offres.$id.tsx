@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { CompanyMark, StatusBadge, deadlineLabel, offersReturn } from "@/components/app/ui";
 import { CriteriaList } from "@/components/app/assignment";
 import { matchOffer, VERDICT_LABELS } from "@/lib/offer-matching";
-import { ARROW_NUDGE, Badge, EmptyNote, Modal, SECTION_LINK, StatusDot, iconMotion } from "@/components/company/ui";
+import { ARROW_NUDGE, Badge, EmptyNote, ExpertBadge, Modal, RuleMeter, SECTION_LINK, StatusDot, iconMotion } from "@/components/company/ui";
 import { Button } from "@/components/ui/button";
 import { Reveal } from "@/components/ui/motion";
 import { daysFromToday, fmtDate } from "@/lib/dates";
@@ -164,19 +164,27 @@ function OfferDetail() {
         <aside className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-2 xl:flex xl:flex-col">
           <Reveal delay={80} className="card-surface p-5">
             <h2 className="text-[15px] font-semibold tracking-tight">Votre candidature</h2>
-            <div className="mt-4 border-b pb-4">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <h3 className="flex items-center gap-1.5 text-[13px] font-semibold">
-                  <Sparkles className="size-3.5 text-primary" aria-hidden />
-                  Analyse du système expert
-                </h3>
-                <Badge
-                  label={`${VERDICT_LABELS[match.verdict]} · ${match.met}/4`}
-                  tone={match.verdict === "recommandee" ? "primary" : "muted"}
-                  className="text-[11px]"
-                />
+            <div
+              className={cn(
+                "mt-4",
+                match.verdict === "recommandee"
+                  ? "rounded-xl border border-primary/25 bg-primary-soft/50 p-3.5"
+                  : "border-b pb-4"
+              )}
+            >
+              <h3 className="flex items-center gap-1.5 text-[13px] font-semibold">
+                <Sparkles className="size-3.5 text-primary" aria-hidden />
+                Analyse du système expert
+              </h3>
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                {match.verdict === "recommandee" ? (
+                  <ExpertBadge label="Recommandée pour vous" />
+                ) : (
+                  <Badge label={VERDICT_LABELS[match.verdict]} tone="muted" className="text-[11px]" />
+                )}
+                <RuleMeter met={match.met} total={4} />
               </div>
-              <p className="mt-1 text-pretty text-xs text-muted-foreground">
+              <p className="mt-2 text-pretty text-xs text-muted-foreground">
                 Votre profil comparé à cette offre, règle par règle.
               </p>
               <div className="mt-3">

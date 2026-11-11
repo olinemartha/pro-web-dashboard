@@ -300,6 +300,13 @@ Chaque motif ci-dessous existe en code ; les pages l'importent au lieu de le ré
 ### KPI Cards
 Quatre cartes séparées et espacées. En haut : libellé 13 px à gauche (deux lignes autorisées sur téléphone) et icône monochrome nue à droite. Au centre : valeur 30 px, avec une courbe pour les candidatures. En bas, séparée par un filet : une précision de 12 px (tendance verte, alerte ambre ou contexte gris).
 
+### Signature « système expert »
+Toute recommandation du système expert, dans les deux espaces, porte la même signature (`ExpertBadge`, `RuleMeter`, `EXPERT_CARD` dans `ui.tsx`) :
+- **Badge** : pilule bleu glacier, filet bleu roi à 25 %, texte bleu roi 11 px, étincelle Lucide. Un reflet traverse le badge à l'arrivée puis au survol de la carte ; l'étincelle scintille (`.expert-badge`, `.expert-sparkle` dans `index.css`, immobiles sous `prefers-reduced-motion`).
+- **Jauge des règles** : une case par règle, pleines en bleu (en vert si toutes satisfaites), « 3/4 règles ».
+- **Carte recommandée** : filet bleu et haut glacier en dégradé vers le blanc (`.expert-card`). Ligne recommandée : fond glacier et liseré bleu roi de 3 px.
+- Utilisée pour : offres recommandées à l'étudiant (cartes, tableau de bord, détail), service proposé avant et après le choix du stage, ligne recommandée de « À traiter », synthèse et première ligne du rapport d'expertise, dossiers à affecter dans « Mes stagiaires ». Jamais dans la carte « Votre décision », qui ne change pas.
+
 ### File « À traiter »
 Titre « À traiter » avec un compteur, filtres sur la même ligne, filet dessous. Chaque ligne : icône nue de sens · **la personne (ou le service) en gras**, suivie de la tâche en gris (« Rachel Ilunga · Candidature à examiner ») · contexte en dessous · **colonne de délai** alignée à droite (« 14 j d'attente », « demain ») · bouton. Le délai passe en **ambre avec une horloge** quand c'est urgent (attente de 7 jours ou plus, entretien aujourd'hui ou demain). Les rappels de services ont un sujet gris, moins appuyé. La ligne d'affectation est le seul élément teinté : fond glacier plein, liseré bleu roi de 3 px à gauche, icône balance, « Recommandé : **Direction IT** », jauge de critères (pastilles bleu roi) et « 4/4 critères » ; elle mène à l'explication et ne décide jamais à la place de l'entreprise. Tri par urgence réelle ; au-delà de 5 lignes, un bouton déplie la liste sur place. Chaque lien a un nom accessible rédigé en phrase.
 

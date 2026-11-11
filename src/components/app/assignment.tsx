@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Check, Layers, Minus, Sparkles } from "lucide-react";
-import { Badge, Modal } from "@/components/company/ui";
+import { Badge, ExpertBadge, Modal, RuleMeter } from "@/components/company/ui";
 import { Button } from "@/components/ui/button";
 import { useMyAssignment as useAssignment } from "@/lib/store";
 import { Reveal } from "@/components/ui/motion";
@@ -87,11 +87,16 @@ export function AssignmentCard({
               <Layers className="size-[18px] shrink-0 text-primary" />
               {intern.service}
             </p>
-            <p className="mt-2 text-pretty text-xs leading-relaxed text-muted-foreground">
-              {retained
-                ? `Proposé par le système expert : ${retained.satisfied.filter((c) => c.satisfied).length} critères satisfaits sur ${retained.satisfied.length}.`
-                : "Choisi directement par l'entreprise, en dehors des propositions du système expert."}
-            </p>
+            {retained ? (
+              <div className="mt-2.5 flex flex-wrap items-center gap-2">
+                <ExpertBadge label="Proposé par le système expert" />
+                <RuleMeter met={retained.satisfied.filter((c) => c.satisfied).length} total={retained.satisfied.length} />
+              </div>
+            ) : (
+              <p className="mt-2 text-pretty text-xs leading-relaxed text-muted-foreground">
+                Choisi directement par l'entreprise, en dehors des propositions du système expert.
+              </p>
+            )}
           </div>
           {retained ? (
             <div>
@@ -105,16 +110,23 @@ export function AssignmentCard({
         </div>
       ) : proposals.length > 0 ? (
         <ul className="divide-y">
-          {proposals.map((proposal) => (
-            <li key={proposal.serviceId} className="grid gap-4 px-5 py-4 sm:px-6 lg:grid-cols-[minmax(0,240px)_minmax(0,1fr)]">
+          {proposals.map((proposal, index) => (
+            <li
+              key={proposal.serviceId}
+              className={cn(
+                "grid gap-4 px-5 py-4 sm:px-6 lg:grid-cols-[minmax(0,240px)_minmax(0,1fr)]",
+                index === 0 && "bg-primary-soft/50 shadow-[inset_3px_0_0_hsl(var(--primary))]"
+              )}
+            >
               <div className="min-w-0">
                 <p className="flex items-center gap-2 text-[13px] font-semibold">
-                  <Layers className="size-4 shrink-0 text-muted-foreground" />
+                  <Layers className={cn("size-4 shrink-0", index === 0 ? "text-primary" : "text-muted-foreground")} />
                   {proposal.serviceName}
                 </p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {proposal.satisfied.filter((c) => c.satisfied).length} critère{proposal.satisfied.filter((c) => c.satisfied).length > 1 ? "s" : ""} satisfait{proposal.satisfied.filter((c) => c.satisfied).length > 1 ? "s" : ""} sur {proposal.satisfied.length}
-                </p>
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  {index === 0 && <ExpertBadge label="Recommandé" />}
+                  <RuleMeter met={proposal.satisfied.filter((c) => c.satisfied).length} total={proposal.satisfied.length} />
+                </div>
               </div>
               <CriteriaList criteria={proposal.satisfied} />
             </li>
@@ -145,13 +157,12 @@ export function ExpertHint({ candidateId, offerTitle }: { candidateId?: string; 
   return (
     <>
       <p className="mt-1.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs">
-        <Sparkles className="size-3.5 shrink-0 text-primary" />
         {top ? (
-          <span className="text-muted-foreground">
-            Système expert : <span className="font-semibold text-foreground">{top.serviceName}</span> proposé
-          </span>
+          <ExpertBadge label={`Service proposé : ${top.serviceName}`} />
         ) : (
-          <span className="text-muted-foreground">Analyse du système expert à venir</span>
+          <span className="inline-flex items-center gap-1.5 text-muted-foreground">
+            <Sparkles className="size-3.5 shrink-0" /> Analyse du système expert à venir
+          </span>
         )}
         {top && (
           <>

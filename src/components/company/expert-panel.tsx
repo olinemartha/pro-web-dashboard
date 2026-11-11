@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { AvatarInitials, Badge, Field, Modal, SECTION_LINK, Select, textareaClass, type Tone } from "@/components/company/ui";
+import { ExpertBadge, AvatarInitials, Badge, Field, Modal, SECTION_LINK, Select, textareaClass, type Tone } from "@/components/company/ui";
 import { Stamp, stampDate } from "@/components/company/stamp";
 import { useCompanyStore } from "@/lib/company-store";
 import { fmtDate } from "@/lib/dates";
@@ -358,8 +358,8 @@ export function ExpertPanel({ intern }: { intern: Intern }) {
               <>
                 {/* Synthèse : la conclusion d'abord */}
                 <section className="border-b bg-primary-soft/40 px-6 py-6" aria-labelledby={`synthese-${intern.id}`}>
-                  <h3 id={`synthese-${intern.id}`} className="text-xs font-medium text-muted-foreground">
-                    Recommandation
+                  <h3 id={`synthese-${intern.id}`}>
+                    <ExpertBadge label="Recommandation du système expert" />
                   </h3>
                   <div className="mt-1.5 flex flex-wrap items-end justify-between gap-4">
                     <p className="text-2xl font-semibold tracking-tight text-primary">{top.serviceName}</p>
@@ -445,6 +445,7 @@ export function ExpertPanel({ intern }: { intern: Intern }) {
                               <td className="px-3 py-3">
                                 <div className="flex min-w-0 flex-wrap items-center gap-1.5">
                                   <span className="font-semibold">{proposal.serviceName}</span>
+                                  {first && <ExpertBadge label="Recommandé" className="px-1.5 py-0" />}
                                   {retained && <Badge label="Retenu" tone="success" className="px-1.5 py-0 text-[11px]" />}
                                 </div>
                                 <p className="text-xs tabular-nums text-muted-foreground">

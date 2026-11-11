@@ -1,8 +1,8 @@
 import * as React from "react";
 import { Link } from "@tanstack/react-router";
-import { Bookmark, Check, Clock, GraduationCap, MapPin, Sparkles } from "lucide-react";
+import { Bookmark, Check, Clock, GraduationCap, MapPin } from "lucide-react";
 import { toast } from "sonner";
-import { Badge, CARD_INTERACTIVE, type Tone } from "@/components/company/ui";
+import { Badge, CARD_INTERACTIVE, EXPERT_CARD, ExpertBadge, RuleMeter, type Tone } from "@/components/company/ui";
 import type { CandidateStatus } from "@/lib/company-data";
 import { daysFromToday, fmtDate } from "@/lib/dates";
 import { companyOf, type Offer } from "@/lib/mock-data";
@@ -102,8 +102,12 @@ export function StudentOfferCard({ offer, applied }: { offer: Offer; applied?: A
   const match = matchOffer(profile, offer);
   const deadline = deadlineLabel(offer.deadline);
 
+  // Recommandée par le système expert et pas encore postulée : la carte se distingue.
+  const highlighted = match.verdict === "recommandee" && !applied;
+
   return (
-    <article className={cn(CARD_INTERACTIVE, "relative flex h-full cursor-pointer flex-col p-5")}>
+    <article className={cn(CARD_INTERACTIVE, highlighted && EXPERT_CARD, "relative flex h-full cursor-pointer flex-col p-5")}>
+      {highlighted && <ExpertBadge label="Recommandée pour vous par le système expert" className="-mt-1 mb-3 self-start" />}
       <div className="flex items-start gap-3">
         <CompanyMark id={offer.companyId} />
         <div className="min-w-0 flex-1">
@@ -173,10 +177,9 @@ export function StudentOfferCard({ offer, applied }: { offer: Offer; applied?: A
         {applied ? (
           <StatusBadge status={applied} />
         ) : (
-          match.verdict === "recommandee" ? (
-            <span className="inline-flex items-center gap-1 font-semibold text-primary">
-              <Sparkles className="size-3.5" aria-hidden />
-              Recommandée pour vous
+          highlighted ? (
+            <span className="inline-flex items-center gap-2" title="Règles du système expert satisfaites">
+              <RuleMeter met={match.met} total={4} />
             </span>
           ) : (
             <span className="tabular-nums text-muted-foreground" title="Règles du système expert satisfaites">

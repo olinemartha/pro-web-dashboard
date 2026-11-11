@@ -1,7 +1,7 @@
 import * as React from "react";
 import { createPortal } from "react-dom";
 import { Link } from "@tanstack/react-router";
-import { ArrowRight, ChevronDown, Clock, MoreHorizontal, Search, TrendingUp, X } from "lucide-react";
+import { ArrowRight, ChevronDown, Clock, MoreHorizontal, Search, Sparkles, TrendingUp, X } from "lucide-react";
 import { AnimatedNumber } from "@/components/ui/motion";
 import { cn } from "@/lib/utils";
 import type { CandidateStatus } from "@/lib/company-data";
@@ -46,6 +46,70 @@ export function Badge({
     </span>
   );
 }
+
+/* ------------------------------------------------------------------ */
+/* Signature « système expert »                                        */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Badge des recommandations du système expert, le même dans les deux espaces :
+ * étincelle qui scintille, reflet qui traverse le badge (index.css, .expert-badge).
+ */
+export function ExpertBadge({
+  label = "Recommandé par le système expert",
+  className,
+}: {
+  label?: string;
+  className?: string;
+}) {
+  return (
+    <span
+      className={cn(
+        "expert-badge inline-flex max-w-full items-center gap-1.5 rounded-full border border-primary/25 px-2.5 py-0.5 text-[11px] font-semibold text-primary",
+        className
+      )}
+    >
+      <Sparkles className="expert-sparkle size-3.5 shrink-0" aria-hidden />
+      <span className="truncate">{label}</span>
+    </span>
+  );
+}
+
+/** Jauge des règles satisfaites : une case par règle, pleines en bleu (en vert si toutes). */
+export function RuleMeter({
+  met,
+  total,
+  className,
+  showLabel = true,
+}: {
+  met: number;
+  total: number;
+  className?: string;
+  showLabel?: boolean;
+}) {
+  const all = met === total;
+  return (
+    <span className={cn("inline-flex items-center gap-2", className)}>
+      <span className="flex gap-0.5" aria-hidden>
+        {Array.from({ length: total }, (_, index) => (
+          <span
+            key={index}
+            className={cn("animate-grow-x h-1.5 w-3 rounded-full", index < met ? (all ? "bg-success" : "bg-primary") : "bg-border")}
+            style={{ ["--delay" as string]: `${200 + index * 80}ms` }}
+          />
+        ))}
+      </span>
+      {showLabel && (
+        <span className={cn("whitespace-nowrap text-xs font-semibold tabular-nums", all ? "text-success-ink" : "text-primary")}>
+          {met}/{total} règles
+        </span>
+      )}
+    </span>
+  );
+}
+
+/** Carte d'un élément recommandé : filet bleu et haut glacier (index.css, .expert-card). */
+export const EXPERT_CARD = "expert-card";
 
 /* ------------------------------------------------------------------ */
 /* Entrée de page                                                      */

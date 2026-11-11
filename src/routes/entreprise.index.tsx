@@ -22,6 +22,7 @@ import {
   AvatarInitials,
   Badge,
   EmptyNote,
+  ExpertBadge,
   PIPELINE_COLORS,
   PIPELINE_ORDER,
   SECTION_LINK,
@@ -779,9 +780,7 @@ function CompanyDashboard() {
                           </span>
                           {rec ? (
                             <span className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs">
-                              <span className="truncate text-primary">
-                                Recommandé : <span className="font-semibold">{rec.service}</span>
-                              </span>
+                              <ExpertBadge label={`Recommandé : ${rec.service}`} />
                               <span className="flex shrink-0 items-center gap-0.5" aria-hidden="true">
                                 {Array.from({ length: rec.total }, (_, i) => (
                                   <span

@@ -15,6 +15,8 @@ import { CompanyMark, StatusBadge, deadlineLabel } from "@/components/app/ui";
 import {
   ARROW_NUDGE,
   EmptyNote,
+  ExpertBadge,
+  RuleMeter,
   SECTION_LINK,
   SectionHeader,
   StatCard,
@@ -273,16 +275,32 @@ function Dashboard() {
                 {recommended.map(({ offer, match }) => {
                   const deadline = deadlineLabel(offer.deadline);
                   return (
-                    <li key={offer.id} className="group flex items-center gap-3.5 px-5 py-3 transition-colors duration-200 [transition-timing-function:var(--ease-soft)] hover:bg-muted/40">
+                    <li
+                      key={offer.id}
+                      className={cn(
+                        "group flex items-center gap-3.5 px-5 py-3 transition-colors duration-200 [transition-timing-function:var(--ease-soft)]",
+                        match.verdict === "recommandee"
+                          ? "bg-primary-soft/60 shadow-[inset_3px_0_0_hsl(var(--primary))] hover:bg-primary-soft"
+                          : "hover:bg-muted/40"
+                      )}
+                    >
                       <CompanyMark id={offer.companyId} className="size-9" />
                       <div className="min-w-0 flex-1">
                         <p className="line-clamp-2 text-[13px] font-semibold sm:line-clamp-1">{offer.title}</p>
                         <p className="mt-0.5 truncate text-xs text-muted-foreground">
                           {offer.department}
-                          <span className={cn("hidden sm:inline", match.verdict === "recommandee" && "font-medium text-primary")}>
-                            {" "}· {VERDICT_LABELS[match.verdict]} ({match.met}/4 critères)
-                          </span>
+                          {match.verdict !== "recommandee" && (
+                            <span className="hidden sm:inline">
+                              {" "}· {VERDICT_LABELS[match.verdict]} ({match.met}/4 règles)
+                            </span>
+                          )}
                         </p>
+                        {match.verdict === "recommandee" && (
+                          <div className="mt-1.5 hidden flex-wrap items-center gap-2 sm:flex">
+                            <ExpertBadge label="Recommandée pour vous" />
+                            <RuleMeter met={match.met} total={4} />
+                          </div>
+                        )}
                         <p className="mt-0.5 truncate text-xs tabular-nums text-muted-foreground sm:hidden">
                           <span className={cn(match.verdict === "recommandee" && "font-medium text-primary")}>{match.met}/4 critères</span> ·{" "}
                           <span className={cn(deadline.urgent && "font-medium text-warning")}>{deadline.label}</span>
@@ -300,7 +318,7 @@ function Dashboard() {
                         to="/offres/$id"
                         params={{ id: offer.id }}
                         aria-label={`Voir l'offre ${offer.title}`}
-                        className={cn(rowActionClass(), "group")}
+                        className={cn(rowActionClass(match.verdict === "recommandee"), "group")}
                       >
                         <span className="hidden whitespace-nowrap sm:inline">Voir l'offre</span>
                         <ArrowRight className={cn("size-3.5 shrink-0", ARROW_NUDGE)} />

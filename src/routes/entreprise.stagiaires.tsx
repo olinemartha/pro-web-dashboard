@@ -2,7 +2,8 @@ import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-r
 import { useState } from "react";
 import { ArrowLeft, ClipboardCheck, FileText, UserCheck, Users } from "lucide-react";
 import { Reveal } from "@/components/ui/motion";
-import { AvatarInitials, EmptyNote, FilterChips, PageIntro, SECTION_LINK, StatCard } from "@/components/company/ui";
+import { AvatarInitials, EmptyNote, ExpertBadge, FilterChips, PageIntro, SECTION_LINK, StatCard } from "@/components/company/ui";
+import { latestRunFor } from "@/lib/expert-engine";
 import { useCompanyStore } from "@/lib/company-store";
 import { daysFromToday, fmtDate } from "@/lib/dates";
 import { cn } from "@/lib/utils";
@@ -28,7 +29,12 @@ function progressOf(intern: Intern) {
 }
 
 function CompanyInternsLayout() {
-  const { interns } = useCompanyStore();
+  const { interns, expertRuns } = useCompanyStore();
+  /** Service recommandé par la dernière analyse, pour les dossiers pas encore affectés. */
+  const recommendedFor = (internId: string) => {
+    const run = latestRunFor(expertRuns, internId);
+    return run?.status === "prete" ? run.proposals[0]?.serviceName : undefined;
+  };
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const dossierOpen = pathname.startsWith("/entreprise/stagiaires/");
   const [filter, setFilter] = useState<Filter>("tous");
@@ -204,6 +210,9 @@ function CompanyInternsLayout() {
                         <span className={cn("block truncate text-xs", intern.confirmed ? "text-muted-foreground" : "font-medium text-warning")}>
                           {intern.confirmed ? intern.service : "Affectation à valider"}
                         </span>
+                        {!intern.confirmed && recommendedFor(intern.id) && (
+                          <ExpertBadge label={`Recommandé : ${recommendedFor(intern.id)}`} className="mt-1.5" />
+                        )}
                         {/* Avancement du stage */}
                         <span className="mt-2 flex items-center gap-2">
                           <span className="h-1 flex-1 overflow-hidden rounded-full bg-muted">

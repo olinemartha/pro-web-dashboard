@@ -548,3 +548,84 @@
     animation: none;
   }
 }
+
+/* ------------------------------------------------------------------ */
+/* Signature « système expert » (étudiant et entreprise)               */
+/* Un reflet traverse le badge à l'arrivée, puis au survol de la carte ; */
+/* l'étincelle scintille. Carte recommandée : filet bleu et haut glacier. */
+/* ------------------------------------------------------------------ */
+@keyframes expert-sheen {
+  from {
+    background-position: 160% 0;
+  }
+  to {
+    background-position: -60% 0;
+  }
+}
+@keyframes expert-sheen-again {
+  from {
+    background-position: 160% 0;
+  }
+  to {
+    background-position: -60% 0;
+  }
+}
+@keyframes expert-twinkle {
+  0%,
+  100% {
+    transform: scale(1) rotate(0deg);
+  }
+  40% {
+    transform: scale(1.3) rotate(20deg);
+  }
+  70% {
+    transform: scale(0.92) rotate(-8deg);
+  }
+}
+@keyframes expert-twinkle-again {
+  0%,
+  100% {
+    transform: scale(1) rotate(0deg);
+  }
+  40% {
+    transform: scale(1.3) rotate(20deg);
+  }
+  70% {
+    transform: scale(0.92) rotate(-8deg);
+  }
+}
+.expert-badge {
+  background-color: hsl(var(--primary-soft));
+  background-image: linear-gradient(110deg, hsl(var(--card) / 0) 35%, hsl(var(--card) / 0.9) 50%, hsl(var(--card) / 0) 65%);
+  background-size: 250% 100%;
+  background-repeat: no-repeat;
+  background-position: -60% 0;
+  animation: expert-sheen 1400ms var(--ease-soft) 450ms both;
+}
+.group:hover .expert-badge,
+.expert-badge:hover {
+  animation: expert-sheen-again 1100ms var(--ease-soft) both;
+}
+.expert-sparkle {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: expert-twinkle 900ms var(--ease-soft) 600ms both;
+}
+.group:hover .expert-sparkle,
+.expert-badge:hover .expert-sparkle {
+  animation: expert-twinkle-again 800ms var(--ease-soft) both;
+}
+.expert-card {
+  border-color: hsl(var(--primary) / 0.3);
+  background-image: linear-gradient(180deg, hsl(var(--primary-soft)) 0, hsl(var(--card)) 112px);
+}
+@media (prefers-reduced-motion: reduce) {
+  .expert-badge,
+  .group:hover .expert-badge,
+  .expert-badge:hover,
+  .expert-sparkle,
+  .group:hover .expert-sparkle,
+  .expert-badge:hover .expert-sparkle {
+    animation: none;
+  }
+}
