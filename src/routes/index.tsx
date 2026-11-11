@@ -399,8 +399,8 @@ function Dashboard() {
                 })}
               </ul>
             )}
-            <Link to="/notifications" className={cn(SECTION_LINK, "mt-4 w-full justify-center")}>
-              Voir les notifications
+            <Link to="/candidatures" className={cn(SECTION_LINK, "mt-4 w-full justify-center")}>
+              Suivre mes candidatures
               <ArrowRight className={cn("size-3.5", ARROW_NUDGE)} />
             </Link>
           </Reveal>

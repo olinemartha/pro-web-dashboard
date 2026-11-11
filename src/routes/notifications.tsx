@@ -95,7 +95,7 @@ function NotificationsPage() {
                     <meta.icon
                       className={cn(
                         `nav-icon nav-icon--${meta.motion} mt-0.5 size-[18px]`,
-                        n.read ? "text-muted-foreground" : "text-primary"
+                        "text-muted-foreground group-hover:text-foreground"
                       )}
                     />
                     <span className="min-w-0">

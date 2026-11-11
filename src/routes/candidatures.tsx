@@ -1,6 +1,6 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { ArrowRight, CalendarClock, CheckCircle2, Send, Undo2, UserSearch } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { CompanyMark, STUDENT_STATUS, StatusBadge } from "@/components/app/ui";
 import {
@@ -24,7 +24,16 @@ import { canWithdraw, type AppStatus, type Application } from "@/lib/rules";
 import { useStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
 
+type Filter = "toutes" | "en_cours" | "acceptees" | "closes";
+type ApplicationsSearch = { q?: string; filtre?: Filter };
+const FILTERS: Filter[] = ["toutes", "en_cours", "acceptees", "closes"];
+
+/** Le filtre et la recherche vivent dans l'adresse : ils survivent au retour depuis une offre. */
 export const Route = createFileRoute("/candidatures")({
+  validateSearch: (s: Record<string, unknown>): ApplicationsSearch => ({
+    ...(typeof s["q"] === "string" && s["q"] ? { q: s["q"] } : {}),
+    ...(FILTERS.includes(s["filtre"] as Filter) && s["filtre"] !== "toutes" ? { filtre: s["filtre"] as Filter } : {}),
+  }),
   head: () => ({
     meta: [
       { title: "Mes candidatures — StageManager" },
@@ -33,8 +42,6 @@ export const Route = createFileRoute("/candidatures")({
   }),
   component: Applications,
 });
-
-type Filter = "toutes" | "en_cours" | "acceptees" | "closes";
 
 const GROUP: Record<AppStatus, Exclude<Filter, "toutes">> = {
   envoyee: "en_cours",
@@ -74,8 +81,26 @@ function RowAction({ application }: { application: Application }) {
 
 function Applications() {
   const { applications, confirm, confirmed, withdraw } = useStore();
-  const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState<Filter>("toutes");
+  const { q = "", filtre: filter = "toutes" } = Route.useSearch();
+  const navigate = useNavigate({ from: "/candidatures" });
+  const [search, setSearchText] = useState(q);
+  useEffect(() => setSearchText(q), [q]);
+  const update = (patch: ApplicationsSearch) =>
+    navigate({
+      search: (prev: ApplicationsSearch) => {
+        const next = { ...prev, ...patch };
+        return {
+          ...(next.q ? { q: next.q } : {}),
+          ...(next.filtre && next.filtre !== "toutes" ? { filtre: next.filtre } : {}),
+        };
+      },
+      replace: true,
+    });
+  const setSearch = (value: string) => {
+    setSearchText(value);
+    update({ q: value.trim() ? value : undefined });
+  };
+  const setFilter = (value: Filter) => update({ filtre: value });
   const [pick, setPick] = useState<string | null>(null);
   const [withdrawing, setWithdrawing] = useState<string | null>(null);
 

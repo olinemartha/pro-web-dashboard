@@ -1,6 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Bookmark, Briefcase, CalendarClock, Sparkles } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { StudentOfferCard } from "@/components/app/ui";
 import {
   EmptyNote,
@@ -16,8 +16,20 @@ import { daysFromToday } from "@/lib/dates";
 import { offers } from "@/lib/mock-data";
 import { useStore } from "@/lib/store";
 
+type Filter = "toutes" | "pour_vous" | "enregistrees" | "postulees";
+type Sort = "recentes" | "cloture" | "competences";
+type OffersSearch = { q?: string; filtre?: Filter; tri?: Sort };
+
+const FILTERS: Filter[] = ["toutes", "pour_vous", "enregistrees", "postulees"];
+const SORTS: Sort[] = ["recentes", "cloture", "competences"];
+
+/** Filtres, tri et recherche vivent dans l'adresse : ils survivent au retour depuis le détail d'une offre. */
 export const Route = createFileRoute("/offres/")({
-  validateSearch: (s: Record<string, unknown>): { q?: string } => (typeof s["q"] === "string" ? { q: s["q"] } : {}),
+  validateSearch: (s: Record<string, unknown>): OffersSearch => ({
+    ...(typeof s["q"] === "string" && s["q"] ? { q: s["q"] } : {}),
+    ...(FILTERS.includes(s["filtre"] as Filter) && s["filtre"] !== "toutes" ? { filtre: s["filtre"] as Filter } : {}),
+    ...(SORTS.includes(s["tri"] as Sort) && s["tri"] !== "recentes" ? { tri: s["tri"] as Sort } : {}),
+  }),
   head: () => ({
     meta: [
       { title: "Offres de stage — StageManager" },
@@ -27,18 +39,34 @@ export const Route = createFileRoute("/offres/")({
   component: Offers,
 });
 
-type Filter = "toutes" | "pour_vous" | "enregistrees" | "postulees";
-type Sort = "recentes" | "cloture" | "competences";
-
 const CLOSING_DAYS = 14;
 const plural = (n: number, word: string) => `${n} ${word}${n > 1 ? "s" : ""}`;
 
 function Offers() {
-  const { q: initialQuery } = Route.useSearch();
+  const { q = "", filtre: filter = "toutes", tri: sort = "recentes" } = Route.useSearch();
+  const navigate = useNavigate({ from: "/offres/" });
   const { saved, applications, profile } = useStore();
-  const [search, setSearch] = useState(initialQuery ?? "");
-  const [filter, setFilter] = useState<Filter>("toutes");
-  const [sort, setSort] = useState<Sort>("recentes");
+  // Le texte tapé reste local (saisie fluide) et se recopie dans l'adresse.
+  const [search, setSearchText] = useState(q);
+  useEffect(() => setSearchText(q), [q]);
+  const update = (patch: OffersSearch) =>
+    navigate({
+      search: (prev: OffersSearch) => {
+        const next = { ...prev, ...patch };
+        return {
+          ...(next.q ? { q: next.q } : {}),
+          ...(next.filtre && next.filtre !== "toutes" ? { filtre: next.filtre } : {}),
+          ...(next.tri && next.tri !== "recentes" ? { tri: next.tri } : {}),
+        };
+      },
+      replace: true,
+    });
+  const setSearch = (value: string) => {
+    setSearchText(value);
+    update({ q: value.trim() ? value : undefined });
+  };
+  const setFilter = (value: Filter) => update({ filtre: value });
+  const setSort = (value: Sort) => update({ tri: value });
 
   const mine = useMemo(() => new Set(profile.competences.map((skill) => skill.toLowerCase())), [profile.competences]);
   const appliedBy = useMemo(() => new Map(applications.map((a) => [a.offerId, a.status])), [applications]);
@@ -130,6 +158,11 @@ function Offers() {
       <p className="sr-only" aria-live="polite">
         {`${plural(list.length, "offre")} affichée${list.length > 1 ? "s" : ""}`}
       </p>
+      {filter === "pour_vous" && (
+        <p className="-mt-3 text-pretty text-xs text-muted-foreground">
+          Offres encore ouvertes, auxquelles vous n'avez pas postulé, qui demandent au moins 2 de vos compétences.
+        </p>
+      )}
 
       {list.length === 0 ? (
         <div className="card-surface">
