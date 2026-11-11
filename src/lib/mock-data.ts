@@ -38,10 +38,10 @@ export const demoProfile: Profile = {
 };
 
 export const demoApplications: Application[] = [
-  { id: "a1", offerId: "o1", date: "2026-10-22", status: "acceptee" },
-  { id: "a2", offerId: "o5", date: "2026-10-18", status: "acceptee" },
-  { id: "a3", offerId: "o3", date: "2026-10-14", status: "entretien", interview: { date: "2026-11-12", time: "10h00", place: "Agence de Lubumbashi" } },
-  { id: "a4", offerId: "o4", date: "2026-10-30", status: "examen" },
+  { id: "a1", offerId: "o1", date: "2026-10-22", status: "acceptee", candidateId: "cg1" },
+  { id: "a2", offerId: "o5", date: "2026-10-18", status: "acceptee", candidateId: "cg2" },
+  { id: "a3", offerId: "o3", date: "2026-10-14", status: "entretien", candidateId: "cg3", interview: { date: "2026-11-12", time: "10:00", place: "Agence de Lubumbashi" } },
+  { id: "a4", offerId: "o4", date: "2026-10-30", status: "examen", candidateId: "cg4" },
 ];
 
 export const demoSaved = ["o2", "o6"];

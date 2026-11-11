@@ -1,12 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, Check, Download, FileText, GraduationCap, Mail } from "lucide-react";
+import { ArrowRight, Check, Download, FileText, GraduationCap, Layers, Mail, Minus, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { CompanyMark } from "@/components/app/ui";
 import { ARROW_NUDGE, AvatarInitials, Badge, EmptyNote, SECTION_LINK, SectionHeader } from "@/components/company/ui";
 import { AnimatedNumber, Reveal } from "@/components/ui/motion";
 import { daysFromToday, fmtDate } from "@/lib/dates";
 import { companyOf, internshipExtras, offerOf } from "@/lib/mock-data";
-import { useStore } from "@/lib/store";
+import { useMyAssignment, useStore } from "@/lib/store";
+import type { ExpertCriterion } from "@/lib/company-data";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/stage")({
@@ -81,8 +82,17 @@ function StagePage() {
   }
 
   const offer = offerOf(confirmedApp.offerId);
+  const assignment = useMyAssignment(confirmedApp.candidateId);
   const company = companyOf(offer.companyId);
-  const { supervisor, start, end, infos, calendar, documents, attendance } = internshipExtras;
+  const { infos, calendar, documents, attendance } = internshipExtras;
+  // Le dossier de l'entreprise fait foi pour les dates et l'encadreur ; à défaut, la démonstration.
+  const start = assignment?.intern.start ?? internshipExtras.start;
+  const end = assignment?.intern.end ?? internshipExtras.end;
+  const supervisor = assignment
+    ? assignment.supervisor
+      ? { name: assignment.supervisor.name, role: assignment.supervisor.role, email: assignment.supervisor.email }
+      : null
+    : internshipExtras.supervisor;
   const total = Math.max(1, daysFromToday(end) - daysFromToday(start));
   const elapsed = Math.min(total, Math.max(0, -daysFromToday(start)));
   const progress = Math.round((elapsed / total) * 100);
@@ -143,6 +153,8 @@ function StagePage() {
         </div>
       </Reveal>
 
+      {assignment && <AssignmentCard assignment={assignment} />}
+
       <div className="grid grid-cols-[minmax(0,1fr)] gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
         <div className="flex min-w-0 flex-col gap-6">
           {/* Calendrier */}
@@ -197,17 +209,25 @@ function StagePage() {
           {/* Encadreur */}
           <Reveal delay={120} className="card-surface p-5">
             <SectionHeader title="Votre encadreur" />
-            <div className="mt-4 flex items-center gap-3">
-              <AvatarInitials initials={initialsOf(supervisor.name)} className="size-11 text-sm" />
-              <div className="min-w-0">
-                <p className="truncate text-sm font-semibold">{supervisor.name}</p>
-                <p className="truncate text-xs text-muted-foreground">{supervisor.role}</p>
-              </div>
-            </div>
-            <a href={`mailto:${supervisor.email}`} className={cn(SECTION_LINK, "mt-4 w-full justify-center")}>
-              <Mail className="nav-icon nav-icon--fly size-3.5" />
-              Écrire à {supervisor.name.replace(/^(M\.|Mme)\s+/, "").split(" ")[0]}
-            </a>
+            {supervisor ? (
+              <>
+                <div className="mt-4 flex items-center gap-3">
+                  <AvatarInitials initials={initialsOf(supervisor.name)} className="size-11 text-sm" />
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold">{supervisor.name}</p>
+                    <p className="truncate text-xs text-muted-foreground">{supervisor.role}</p>
+                  </div>
+                </div>
+                <a href={`mailto:${supervisor.email}`} className={cn(SECTION_LINK, "mt-4 w-full justify-center")}>
+                  <Mail className="nav-icon nav-icon--fly size-3.5" />
+                  Écrire à {supervisor.name.replace(/^(M\.|Mme)\s+/, "").split(" ")[0]}
+                </a>
+              </>
+            ) : (
+              <p className="mt-3 text-pretty text-[13px] leading-relaxed text-muted-foreground">
+                FINCA RDC désignera votre encadreur après avoir validé votre service d'accueil.
+              </p>
+            )}
           </Reveal>
 
           {/* Présence */}
@@ -257,5 +277,112 @@ function StagePage() {
         </aside>
       </div>
     </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Affectation : ce que le système expert propose, ce que l'entreprise décide */
+/* ------------------------------------------------------------------ */
+
+function CriteriaList({ criteria }: { criteria: ExpertCriterion[] }) {
+  return (
+    <ul className="space-y-2">
+      {criteria.map((criterion) => (
+        <li key={criterion.label} className="flex gap-2.5 text-[13px]">
+          {criterion.satisfied ? (
+            <Check className="mt-0.5 size-4 shrink-0 text-success" aria-label="Critère satisfait" />
+          ) : (
+            <Minus className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-label="Critère non satisfait" />
+          )}
+          <span className="min-w-0">
+            <span className={cn("font-medium", !criterion.satisfied && "text-muted-foreground")}>{criterion.label}</span>
+            {criterion.ruleId && (
+              <span className="ml-1.5 rounded bg-muted px-1 py-px text-[11px] font-medium tabular-nums text-muted-foreground">
+                Règle {criterion.ruleId}
+              </span>
+            )}
+            <span className="block text-pretty text-xs text-muted-foreground">{criterion.detail}</span>
+          </span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function AssignmentCard({ assignment }: { assignment: NonNullable<ReturnType<typeof useMyAssignment>> }) {
+  const { intern, run, decision } = assignment;
+  const decided = intern.confirmed;
+  const retained = decided ? run?.proposals.find((proposal) => proposal.serviceId === intern.serviceId) : undefined;
+  // Seuls les services qui satisfont au moins un critère sont présentés comme des propositions.
+  const proposals = (run?.proposals ?? []).filter((proposal) => proposal.satisfied.some((c) => c.satisfied));
+
+  return (
+    <Reveal as="section" delay={60} className="card-surface overflow-hidden" aria-labelledby="affectation-titre">
+      <div className="flex flex-wrap items-start justify-between gap-3 border-b px-5 pb-3.5 pt-4 sm:px-6">
+        <div className="min-w-0">
+          <h2 id="affectation-titre" className="text-[15px] font-semibold tracking-tight">
+            Votre affectation
+          </h2>
+          <p className="mt-0.5 max-w-[68ch] text-pretty text-xs text-muted-foreground">
+            {decided
+              ? `FINCA RDC a validé votre service d'accueil${decision ? ` le ${fmtDate(decision.decidedAt.slice(0, 10))}` : ""}.`
+              : run
+                ? "Le système expert a comparé votre profil aux besoins des services. FINCA RDC choisira votre service d'accueil parmi ses propositions."
+                : "FINCA RDC n'a pas encore lancé l'analyse de votre profil."}
+          </p>
+        </div>
+        <Badge label={decided ? "Service retenu" : "Analyse en cours"} tone={decided ? "success" : "primary"} dot={decided ? "acceptee" : "examen"} />
+      </div>
+
+      {decided ? (
+        <div className="grid gap-6 px-5 py-5 sm:px-6 lg:grid-cols-[minmax(0,240px)_minmax(0,1fr)]">
+          <div>
+            <p className="text-[11px] font-medium text-muted-foreground">Service d'accueil</p>
+            <p className="mt-1 flex items-center gap-2 text-[15px] font-semibold">
+              <Layers className="size-[18px] shrink-0 text-primary" />
+              {intern.service}
+            </p>
+            <p className="mt-2 text-pretty text-xs leading-relaxed text-muted-foreground">
+              {retained
+                ? `Proposé par le système expert : ${retained.satisfied.filter((c) => c.satisfied).length} critères satisfaits sur ${retained.satisfied.length}.`
+                : "Choisi directement par l'entreprise, en dehors des propositions du système expert."}
+            </p>
+          </div>
+          {retained ? (
+            <div>
+              <h3 className="text-[13px] font-semibold">Pourquoi ce service</h3>
+              <p className="mt-0.5 text-xs text-muted-foreground">Les règles appliquées par le système expert à votre profil.</p>
+              <div className="mt-3">
+                <CriteriaList criteria={retained.satisfied} />
+              </div>
+            </div>
+          ) : null}
+        </div>
+      ) : proposals.length > 0 ? (
+        <ul className="divide-y">
+          {proposals.map((proposal) => (
+            <li key={proposal.serviceId} className="grid gap-4 px-5 py-4 sm:px-6 lg:grid-cols-[minmax(0,240px)_minmax(0,1fr)]">
+              <div className="min-w-0">
+                <p className="flex items-center gap-2 text-[13px] font-semibold">
+                  <Layers className="size-4 shrink-0 text-muted-foreground" />
+                  {proposal.serviceName}
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {proposal.satisfied.filter((c) => c.satisfied).length} critère{proposal.satisfied.filter((c) => c.satisfied).length > 1 ? "s" : ""} satisfait{proposal.satisfied.filter((c) => c.satisfied).length > 1 ? "s" : ""} sur {proposal.satisfied.length}
+                </p>
+              </div>
+              <CriteriaList criteria={proposal.satisfied} />
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="px-5 py-5 text-[13px] text-muted-foreground sm:px-6">Les propositions apparaîtront ici dès que l'analyse aura été faite.</p>
+      )}
+
+      <p className="flex items-start gap-2 border-t bg-muted/30 px-5 py-3 text-xs text-muted-foreground sm:px-6">
+        <Sparkles className="mt-px size-3.5 shrink-0" />
+        Le système expert recommande ; la décision d'affectation appartient à l'entreprise.
+      </p>
+    </Reveal>
   );
 }

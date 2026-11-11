@@ -330,10 +330,53 @@ export const demoCompanyOffers: CompanyOffer[] = [
 
 export const demoCandidates: Candidate[] = [
   {
-    id: "c1", offerId: "o1", name: "Grâce Mukendi", initials: "GM", universite: "Université de Kinshasa",
+    id: "cg1", offerId: "o1", name: "Grâce Mukendi", initials: "GM", universite: "Université de Kinshasa",
     filiere: "Gestion financière", niveau: "Licence (L3)", email: "grace.mukendi@exemple.cd",
     phone: "+243 81 234 5678", competences: ["Excel", "Analyse financière", "Rédaction", "SQL"],
-    cvName: "CV_Grace_Mukendi.pdf", appliedAt: "2026-10-22", status: "acceptee",
+    cvName: "CV_Grace_Mukendi.pdf", appliedAt: "2026-10-22", status: "acceptee", studentAppId: "a1",
+    history: [
+      { status: "en_attente", date: "2026-10-22" },
+      { status: "examen", date: "2026-10-25", note: "Profil en cours d'examen" },
+      { status: "acceptee", date: "2026-11-05", note: "Candidature acceptée" },
+    ],
+  },
+  {
+    id: "cg2", offerId: "o5", name: "Grâce Mukendi", initials: "GM", universite: "Université de Kinshasa",
+    filiere: "Gestion financière", niveau: "Licence (L3)", email: "grace.mukendi@exemple.cd",
+    phone: "+243 81 234 5678", competences: ["Excel", "Analyse financière", "Rédaction", "SQL"],
+    cvName: "CV_Grace_Mukendi.pdf", appliedAt: "2026-10-18", status: "acceptee", studentAppId: "a2",
+    history: [
+      { status: "en_attente", date: "2026-10-18" },
+      { status: "examen", date: "2026-10-21", note: "Profil en cours d'examen" },
+      { status: "acceptee", date: "2026-11-01", note: "Candidature acceptée" },
+    ],
+  },
+  {
+    id: "cg3", offerId: "o3", name: "Grâce Mukendi", initials: "GM", universite: "Université de Kinshasa",
+    filiere: "Gestion financière", niveau: "Licence (L3)", email: "grace.mukendi@exemple.cd",
+    phone: "+243 81 234 5678", competences: ["Excel", "Analyse financière", "Rédaction", "SQL"],
+    cvName: "CV_Grace_Mukendi.pdf", appliedAt: "2026-10-14", status: "entretien", studentAppId: "a3",
+    history: [
+      { status: "en_attente", date: "2026-10-14" },
+      { status: "examen", date: "2026-10-16", note: "Profil en cours d'examen" },
+      { status: "entretien", date: "2026-11-04", note: "Entretien programmé" },
+    ],
+  },
+  {
+    id: "cg4", offerId: "o4", name: "Grâce Mukendi", initials: "GM", universite: "Université de Kinshasa",
+    filiere: "Gestion financière", niveau: "Licence (L3)", email: "grace.mukendi@exemple.cd",
+    phone: "+243 81 234 5678", competences: ["Excel", "Analyse financière", "Rédaction", "SQL"],
+    cvName: "CV_Grace_Mukendi.pdf", appliedAt: "2026-10-30", status: "examen", studentAppId: "a4",
+    history: [
+      { status: "en_attente", date: "2026-10-30" },
+      { status: "examen", date: "2026-11-03", note: "Profil en cours d'examen" },
+    ],
+  },
+  {
+    id: "c1", offerId: "o1", name: "Ruth Kabamba", initials: "RK", universite: "Université de Kinshasa",
+    filiere: "Gestion financière", niveau: "Licence (L3)", email: "ruth.kabamba@exemple.cd",
+    phone: "+243 81 234 9012", competences: ["Excel", "Analyse financière", "Rédaction", "SQL"],
+    cvName: "CV_Ruth_Kabamba.pdf", appliedAt: "2026-10-22", status: "acceptee",
     history: [
       { status: "en_attente", date: "2026-10-22" },
       { status: "examen", date: "2026-10-24" },
@@ -435,6 +478,7 @@ export const demoCandidates: Candidate[] = [
 /* ------------------------------------------------------------------ */
 
 export const demoInterviews: Interview[] = [
+  { id: "ig3", candidateId: "cg3", date: "2026-11-12", time: "10:00", location: "Agence de Lubumbashi", status: "programme" },
   { id: "i1", candidateId: "c5", date: "2026-11-02", time: "10:00", location: "Siège FINCA — Salle 2", status: "realise" },
   { id: "i2", candidateId: "c2", date: "2026-11-14", time: "14:30", location: "Siège FINCA — Salle 1", status: "programme" },
   { id: "i3", candidateId: "c6", date: "2026-10-30", time: "09:00", location: "Visio", status: "realise" },
@@ -448,7 +492,17 @@ export const demoInterviews: Interview[] = [
 
 export const demoInterns: Intern[] = [
   {
-    id: "s1", candidateId: "c1", name: "Grâce Mukendi", initials: "GM", offerId: "o1", serviceId: "sv1",
+    id: "sg1", candidateId: "cg1", name: "Grâce Mukendi", initials: "GM", offerId: "o1",
+    service: "À affecter", start: "2026-11-16", end: "2027-02-16",
+    missions: "", objectives: "", confirmed: false, reports: [], evaluation: null, certificate: "non_generee",
+  },
+  {
+    id: "sg2", candidateId: "cg2", name: "Grâce Mukendi", initials: "GM", offerId: "o5",
+    service: "À affecter", start: "2026-11-16", end: "2027-05-16",
+    missions: "", objectives: "", confirmed: false, reports: [], evaluation: null, certificate: "non_generee",
+  },
+  {
+    id: "s1", candidateId: "c1", name: "Ruth Kabamba", initials: "RK", offerId: "o1", serviceId: "sv1",
     service: "Direction Crédit", supervisorId: "e1", start: "2026-10-05", end: "2027-01-05",
     missions: "Analyse des dossiers de crédit et visites terrain.",
     objectives: "Maîtriser le processus d'octroi de crédit.",

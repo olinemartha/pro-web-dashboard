@@ -247,6 +247,10 @@ export const useCompanyStore = create<CompanyState>((set, get) => ({
       interviews: cancelPendingInterviews(state.interviews, candidateId),
     });
 
+    // Un nouveau stagiaire est disponible : le moteur d'inférence propose aussitôt des services.
+    // Il recommande seulement ; l'entreprise valide ensuite l'affectation.
+    get().runExpertAnalysis(internId);
+
     return internId;
   },
 

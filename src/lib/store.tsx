@@ -17,6 +17,7 @@ import {
 import { useCompanyStore } from "./company-store";
 import type { CandidateStatus } from "./company-data";
 import { fmtDate, localIsoDate } from "./dates";
+import { latestRunFor } from "./expert-engine";
 
 interface AppState {
   profile: Profile;
@@ -196,6 +197,56 @@ useCompanyStore.subscribe((company) => {
     }));
 });
 
+// Affectation validée et encadreur désigné : l'étudiant en est prévenu.
+// On mémorise ce qui a déjà été vu pour ne notifier qu'un vrai changement.
+const seenAssignment = new Map<string, { serviceId?: string; supervisorId?: string; confirmed: boolean }>();
+useCompanyStore.subscribe((company) => {
+  const student = useStore.getState();
+  const notices: Notification[] = [];
+  for (const app of student.applications) {
+    if (app.status !== "confirmee" || !app.candidateId) continue;
+    const intern = company.interns.find((entry) => entry.candidateId === app.candidateId);
+    if (!intern) continue;
+    const now = { serviceId: intern.serviceId, supervisorId: intern.supervisorId, confirmed: intern.confirmed };
+    const before = seenAssignment.get(intern.id);
+    seenAssignment.set(intern.id, now);
+    if (!before) continue;
+    const stamp = nowIso();
+    if (now.confirmed && (!before.confirmed || before.serviceId !== now.serviceId))
+      notices.push({
+        id: `n-affectation-${intern.id}-${Date.now()}`,
+        title: "Affectation validée",
+        body: `Service d'accueil : ${intern.service}. Les raisons sont dans « Suivi du stage ».`,
+        date: stamp,
+        read: false,
+        kind: "stage",
+      });
+    if (now.supervisorId && now.supervisorId !== before.supervisorId) {
+      const supervisor = company.supervisors.find((entry) => entry.id === now.supervisorId);
+      notices.push({
+        id: `n-encadreur-${intern.id}-${Date.now()}`,
+        title: "Encadreur désigné",
+        body: `${supervisor?.name ?? "Votre encadreur"} suivra votre stage.`,
+        date: stamp,
+        read: false,
+        kind: "stage",
+      });
+    }
+  }
+  if (notices.length) useStore.setState((state) => ({ notifications: [...notices, ...state.notifications] }));
+});
+
+// L'étudiant confirme son stage : on note l'état du dossier à cet instant (point de départ des notifications).
+useStore.subscribe((student) => {
+  const company = useCompanyStore.getState();
+  for (const app of student.applications) {
+    if (app.status !== "confirmee" || !app.candidateId) continue;
+    const intern = company.interns.find((entry) => entry.candidateId === app.candidateId);
+    if (intern && !seenAssignment.has(intern.id))
+      seenAssignment.set(intern.id, { serviceId: intern.serviceId, supervisorId: intern.supervisorId, confirmed: intern.confirmed });
+  }
+});
+
 /** Les offres que l'entreprise a publiées : l'étudiant ne voit ni les brouillons ni les offres clôturées. */
 export function usePublishedOffers(): Offer[] {
   const companyOffers = useCompanyStore((state) => state.offers);
@@ -205,4 +256,26 @@ export function usePublishedOffers(): Offer[] {
 /** Statut de publication d'une offre chez l'entreprise. */
 export function useOfferIsOpen(offerId: string) {
   return useCompanyStore((state) => state.offers.find((o) => o.id === offerId)?.status === "publiee");
+}
+
+/**
+ * Le dossier d'affectation de l'étudiant chez l'entreprise : analyse du système expert,
+ * décision validée, encadreur. Lecture seule ; l'entreprise reste seule à décider.
+ */
+export function useMyAssignment(candidateId?: string) {
+  const interns = useCompanyStore((state) => state.interns);
+  const expertRuns = useCompanyStore((state) => state.expertRuns);
+  const decisions = useCompanyStore((state) => state.decisions);
+  const supervisors = useCompanyStore((state) => state.supervisors);
+  return useMemo(() => {
+    if (!candidateId) return null;
+    const intern = interns.find((entry) => entry.candidateId === candidateId);
+    if (!intern) return null;
+    return {
+      intern,
+      run: latestRunFor(expertRuns, intern.id),
+      decision: decisions.find((entry) => entry.internId === intern.id),
+      supervisor: supervisors.find((entry) => entry.id === intern.supervisorId),
+    };
+  }, [candidateId, interns, expertRuns, decisions, supervisors]);
 }
