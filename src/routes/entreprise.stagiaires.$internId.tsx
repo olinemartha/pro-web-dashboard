@@ -89,6 +89,7 @@ function InternDossierPage() {
     setEvaluation,
     generateCertificate,
     validateCertificate,
+    supervisors,
   } = useCompanyStore();
 
   const intern = interns.find((entry) => entry.id === internId);
@@ -112,6 +113,7 @@ function InternDossierPage() {
   }
 
   const candidate = candidates.find((entry) => entry.id === intern.candidateId);
+  const supervisorName = supervisors.find((entry) => entry.id === intern.supervisorId)?.name ?? "";
   const offer = offers.find((entry) => entry.id === intern.offerId);
   const decision = decisions.find((entry) => entry.internId === intern.id);
   const pendingReports = intern.reports.filter((report) => report.status === "soumis").length;
@@ -167,8 +169,8 @@ function InternDossierPage() {
             </div>
             <div className="min-w-0 px-4">
               <dt className="text-xs text-muted-foreground">Encadreur</dt>
-              <dd className={cn("mt-0.5 truncate text-[13px] font-medium", !intern.supervisor && "text-warning")}>
-                {intern.supervisor || "À désigner"}
+              <dd className={cn("mt-0.5 truncate text-[13px] font-medium", !supervisorName && "text-warning")}>
+                {supervisorName || "À désigner"}
               </dd>
             </div>
             <div className="min-w-0 px-4">
@@ -458,11 +460,11 @@ function EvaluationSection({
 /* ------------------------------------------------------------------ */
 
 function ManualAdjust({ intern, run }: { intern: Intern; run?: ReturnType<typeof latestRunFor> }) {
-  const { services, updateIntern, validateAssignment } = useCompanyStore();
+  const { services, interns, supervisors, updateIntern, validateAssignment, assignSupervisor } = useCompanyStore();
 
   const [open, setOpen] = useState(false);
   const [serviceId, setServiceId] = useState(intern.serviceId ?? "");
-  const [supervisor, setSupervisor] = useState(intern.supervisor);
+  const [supervisor, setSupervisor] = useState(intern.supervisorId ?? "");
   const [start, setStart] = useState(intern.start);
   const [end, setEnd] = useState(intern.end);
   const [missions, setMissions] = useState(intern.missions);
@@ -481,7 +483,7 @@ function ManualAdjust({ intern, run }: { intern: Intern; run?: ReturnType<typeof
   /** Revenir aux valeurs enregistrées et refermer. */
   const cancel = () => {
     setServiceId(intern.serviceId ?? "");
-    setSupervisor(intern.supervisor);
+    setSupervisor(intern.supervisorId ?? "");
     setStart(intern.start);
     setEnd(intern.end);
     setMissions(intern.missions);
@@ -494,7 +496,7 @@ function ManualAdjust({ intern, run }: { intern: Intern; run?: ReturnType<typeof
   const save = () => {
     const next: Record<string, string> = {};
     if (!serviceId) next.service = "Choisissez un service d'accueil.";
-    if (!supervisor.trim()) next.supervisor = "Désignez l'encadreur du stagiaire.";
+    if (!supervisor) next.supervisor = "Désignez l'encadreur du stagiaire.";
     if (!start) next.start = "Choisissez la date de début.";
     if (!end) next.end = "Choisissez la date de fin.";
     else if (start && end < start) next.end = "La date de fin doit suivre la date de début.";
@@ -514,7 +516,15 @@ function ManualAdjust({ intern, run }: { intern: Intern; run?: ReturnType<typeof
       }
     }
 
-    updateIntern(intern.id, { supervisor: supervisor.trim(), start, end, missions, objectives });
+    if (supervisor !== intern.supervisorId || serviceChanged) {
+      const assigned = assignSupervisor(intern.id, supervisor);
+      if (!assigned.ok) {
+        setErrors({ supervisor: assigned.error ?? "L'encadreur n'a pas pu être désigné." });
+        document.getElementById(`intern-supervisor-${intern.id}`)?.focus();
+        return;
+      }
+    }
+    updateIntern(intern.id, { start, end, missions, objectives });
     setErrors({});
     setReason("");
     setOpen(false);
@@ -522,6 +532,14 @@ function ManualAdjust({ intern, run }: { intern: Intern; run?: ReturnType<typeof
   };
 
   const currentService = intern.confirmed ? intern.service : "";
+  const currentSupervisor = supervisors.find((entry) => entry.id === intern.supervisorId);
+  /** Encadreurs du service choisi, avec leur charge (hors ce stagiaire). */
+  const candidatesForService = supervisors
+    .filter((entry) => entry.serviceId === serviceId)
+    .map((entry) => ({
+      ...entry,
+      load: interns.filter((other) => other.supervisorId === entry.id && other.id !== intern.id).length,
+    }));
 
   return (
     <Reveal as="section" delay={40} className="card-surface overflow-hidden" aria-labelledby={`${panelId}-titre`}>
@@ -542,8 +560,8 @@ function ManualAdjust({ intern, run }: { intern: Intern; run?: ReturnType<typeof
             <div className="flex min-w-0 items-center gap-1.5">
               <dt className="sr-only">Encadreur</dt>
               <UserRound className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />
-              <dd className={cn("truncate font-medium", !intern.supervisor && "text-warning")}>
-                {intern.supervisor || "Encadreur à désigner"}
+              <dd className={cn("truncate font-medium", !currentSupervisor && "text-warning")}>
+                {currentSupervisor?.name || "Encadreur à désigner"}
               </dd>
             </div>
             <div className="flex items-center gap-1.5">
@@ -591,6 +609,8 @@ function ManualAdjust({ intern, run }: { intern: Intern; run?: ReturnType<typeof
                     onChange={(event) => {
                       setServiceId(event.target.value);
                       clear("service");
+                      // Un encadreur appartient à un service : on le redemande si le service change.
+                      if (supervisors.find((entry) => entry.id === supervisor)?.serviceId !== event.target.value) setSupervisor("");
                     }}
                   >
                     {services.map((service) => (
@@ -601,17 +621,35 @@ function ManualAdjust({ intern, run }: { intern: Intern; run?: ReturnType<typeof
                     ))}
                   </Select>
                 </Field>
-                <Field label="Encadreur" htmlFor={`intern-supervisor-${intern.id}`} required error={errors.supervisor}>
-                  <input
+                <Field
+                  label="Encadreur"
+                  htmlFor={`intern-supervisor-${intern.id}`}
+                  required
+                  error={errors.supervisor}
+                  hint={
+                    !serviceId
+                      ? "Choisissez d'abord le service d'accueil."
+                      : candidatesForService.length === 0
+                        ? "Aucun encadreur dans ce service : ajoutez-en un dans « Encadreurs »."
+                        : "Charge actuelle entre parenthèses."
+                  }
+                >
+                  <Select
                     id={`intern-supervisor-${intern.id}`}
-                    className={inputClass}
-                    placeholder="Ex. Marie Lukusa"
-                    value={supervisor}
+                    placeholder="Choisir un encadreur"
+                    value={candidatesForService.some((entry) => entry.id === supervisor) ? supervisor : ""}
+                    disabled={!serviceId || candidatesForService.length === 0}
                     onChange={(event) => {
                       setSupervisor(event.target.value);
                       clear("supervisor");
                     }}
-                  />
+                  >
+                    {candidatesForService.map((entry) => (
+                      <option key={entry.id} value={entry.id} disabled={entry.load >= entry.capacity}>
+                        {entry.name} ({entry.load} sur {entry.capacity}){entry.load >= entry.capacity ? " — complet" : ""}
+                      </option>
+                    ))}
+                  </Select>
                 </Field>
                 {requiresDecision && (
                   <Field

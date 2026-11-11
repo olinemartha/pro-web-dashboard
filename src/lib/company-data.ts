@@ -89,7 +89,8 @@ export interface Intern {
   offerId: string;
   serviceId?: string;
   service: string;
-  supervisor: string;
+  /** Encadreur désigné (absent : encadreur à désigner). */
+  supervisorId?: string;
   start: string;
   end: string;
   missions: string;
@@ -105,6 +106,20 @@ export interface Intern {
   certificate: "non_generee" | "generee" | "validee";
   certificateGeneratedAt?: string;
   certificateValidatedAt?: string;
+}
+
+/** Encadreur : un salarié qui suit un ou plusieurs stagiaires de son service. */
+export interface Supervisor {
+  id: string;
+  name: string;
+  initials: string;
+  /** Fonction dans l'entreprise. */
+  role: string;
+  serviceId: string;
+  email: string;
+  phone: string;
+  /** Nombre maximum de stagiaires suivis en même temps. */
+  capacity: number;
 }
 
 export interface Service {
@@ -424,7 +439,7 @@ export const demoInterviews: Interview[] = [
 export const demoInterns: Intern[] = [
   {
     id: "s1", candidateId: "c1", name: "Grâce Mukendi", initials: "GM", offerId: "o1", serviceId: "sv1",
-    service: "Direction Crédit", supervisor: "M. Patrick Ilunga", start: "2026-10-05", end: "2027-01-05",
+    service: "Direction Crédit", supervisorId: "e1", start: "2026-10-05", end: "2027-01-05",
     missions: "Analyse des dossiers de crédit et visites terrain.",
     objectives: "Maîtriser le processus d'octroi de crédit.",
     confirmed: true,
@@ -441,7 +456,7 @@ export const demoInterns: Intern[] = [
   },
   {
     id: "s2", candidateId: "c5", name: "Sarah N'Goy", initials: "SN", offerId: "o2", serviceId: "sv2",
-    service: "Direction IT", supervisor: "Mme Alice Tshimanga", start: "2026-11-23", end: "2027-05-23",
+    service: "Direction IT", start: "2026-11-23", end: "2027-05-23",
     missions: "Développement d'outils internes.",
     objectives: "Livrer un module de gestion des demandes.",
     confirmed: false,
@@ -450,7 +465,7 @@ export const demoInterns: Intern[] = [
   },
   {
     id: "s3", candidateId: "c9", name: "Amina Bofane", initials: "AB", offerId: "o3", serviceId: "sv3",
-    service: "Communication & Marketing", supervisor: "Mme Chantal Mbala", start: "2026-10-01", end: "2027-01-31",
+    service: "Communication & Marketing", supervisorId: "e5", start: "2026-10-01", end: "2027-01-31",
     missions: "Animation des réseaux sociaux et création de contenus.",
     objectives: "Publier un calendrier éditorial mensuel.",
     confirmed: true,
@@ -526,3 +541,15 @@ export const interviewStatusLabels: Record<
   realise: { label: "Réalisé", tone: "success" },
   annule: { label: "Annulé", tone: "destructive" },
 };
+
+/* ------------------------------------------------------------------ */
+/* Encadreurs (fictifs)                                                */
+/* ------------------------------------------------------------------ */
+
+export const demoSupervisors: Supervisor[] = [
+  { id: "e1", name: "M. Patrick Ilunga", initials: "PI", role: "Responsable crédit", serviceId: "sv1", email: "p.ilunga@finca.cd", phone: "+243 81 200 1101", capacity: 3 },
+  { id: "e2", name: "Mme Nadine Kalonji", initials: "NK", role: "Analyste crédit senior", serviceId: "sv1", email: "n.kalonji@finca.cd", phone: "+243 81 200 1102", capacity: 2 },
+  { id: "e3", name: "Mme Alice Tshimanga", initials: "AT", role: "Responsable des applications", serviceId: "sv2", email: "a.tshimanga@finca.cd", phone: "+243 81 200 1201", capacity: 2 },
+  { id: "e4", name: "M. Jonathan Kabeya", initials: "JK", role: "Administrateur des données", serviceId: "sv2", email: "j.kabeya@finca.cd", phone: "+243 81 200 1202", capacity: 1 },
+  { id: "e5", name: "Mme Chantal Mbala", initials: "CM", role: "Chargée de communication", serviceId: "sv3", email: "c.mbala@finca.cd", phone: "+243 81 200 1301", capacity: 2 },
+];

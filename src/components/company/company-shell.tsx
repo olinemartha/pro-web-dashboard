@@ -1,4 +1,4 @@
-import { Briefcase, Building2, CalendarClock, GraduationCap, Layers, LayoutDashboard, Send, Settings, Users } from "lucide-react";
+import { Briefcase, Building2, CalendarClock, GraduationCap, Layers, LayoutDashboard, Send, Settings, UserRoundCheck, Users } from "lucide-react";
 import { CompanyLogo } from "@/components/company/company-logo";
 import { NotificationBell, SearchCommand } from "@/components/company/topbar";
 import { SpaceShell, type SpaceConfig } from "@/components/shell/space-shell";
@@ -16,6 +16,7 @@ const PAGE_TITLES: Record<string, string> = {
   "/entreprise/candidatures": "Candidatures",
   "/entreprise/entretiens": "Entretiens",
   "/entreprise/stagiaires": "Mes stagiaires",
+  "/entreprise/encadreurs": "Encadreurs",
   "/entreprise/services": "Services et besoins",
   "/entreprise/parametres": "Paramètres",
 };
@@ -37,6 +38,7 @@ const companyConfig: SpaceConfig = {
       title: "Suivi des stages",
       items: [
         { href: "/entreprise/stagiaires", label: "Mes stagiaires", icon: Users, motion: "bounce", count: "stagiaires" },
+        { href: "/entreprise/encadreurs", label: "Encadreurs", icon: UserRoundCheck, motion: "bounce", count: "encadreurs" },
         { href: "/entreprise/services", label: "Services et besoins", icon: Layers, motion: "stack" },
       ],
     },
@@ -55,6 +57,8 @@ const companyConfig: SpaceConfig = {
       candidatures: candidates.filter((c) => c.status === "en_attente" || c.status === "examen").length,
       entretiens: interviews.filter((i) => i.status === "programme").length,
       stagiaires: interns.filter((i) => !i.confirmed).length,
+      // Stagiaires affectés à un service mais sans encadreur.
+      encadreurs: interns.filter((i) => i.confirmed && !i.supervisorId).length,
     };
   },
   pageTitle: (pathname) => {

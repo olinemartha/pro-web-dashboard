@@ -15,6 +15,7 @@ import {
   Scale,
   Users,
   UserSearch,
+  UserRoundCheck,
 } from "lucide-react";
 import {
   ARROW_NUDGE,
@@ -131,7 +132,7 @@ function Sparkline({ values, className }: { values: number[]; className?: string
 /* File « À traiter »                                                  */
 /* ------------------------------------------------------------------ */
 
-type TodoKind = "affectation" | "candidature" | "rapport" | "entretien" | "service";
+type TodoKind = "affectation" | "candidature" | "rapport" | "entretien" | "service" | "encadrement";
 
 type Todo = {
   kind: TodoKind;
@@ -169,6 +170,7 @@ const TODO_META: Record<
   rapport: { action: "Relire", icon: FileText, group: "stagiaires", motion: "lift" },
   entretien: { action: "Préparer", icon: CalendarClock, group: "recrutement", motion: "tilt" },
   service: { action: "Mettre à jour", icon: Layers, group: "services", motion: "stack" },
+  encadrement: { action: "Désigner", icon: UserRoundCheck, group: "stagiaires", motion: "bounce" },
 };
 
 const TODO_GROUPS: { key: TodoGroup | "tout"; label: string }[] = [
@@ -212,6 +214,12 @@ function TodoTarget({
           aria-label={label}
           className={className}
         >
+          {children}
+        </Link>
+      );
+    case "encadrement":
+      return (
+        <Link to="/entreprise/encadreurs" search={{ designer: todo.internId }} aria-label={label} className={className}>
           {children}
         </Link>
       );
@@ -527,7 +535,23 @@ function CompanyDashboard() {
       });
     }
   });
-  const KIND_ORDER: TodoKind[] = ["affectation", "entretien", "candidature", "rapport", "service"];
+  interns
+    .filter((intern) => intern.confirmed && !intern.supervisorId)
+    .forEach((intern) => {
+      todos.push({
+        kind: "encadrement",
+        id: `encadrement-${intern.id}`,
+        subject: intern.name,
+        task: "Encadreur à désigner",
+        context: intern.service,
+        when: "à désigner",
+        whenLong: "aucun encadreur désigné",
+        urgent: false,
+        score: 60,
+        internId: intern.id,
+      });
+    });
+  const KIND_ORDER: TodoKind[] = ["affectation", "encadrement", "entretien", "candidature", "rapport", "service"];
   todos.sort((a, b) => b.score - a.score || KIND_ORDER.indexOf(a.kind) - KIND_ORDER.indexOf(b.kind));
 
   const tabs = TODO_GROUPS.map((group) => ({

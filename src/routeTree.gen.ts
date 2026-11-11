@@ -20,6 +20,7 @@ import { Route as ProfilRouteImport } from './routes/profil'
 import { Route as StageRouteImport } from './routes/stage'
 import { Route as EntrepriseIndexRouteImport } from './routes/entreprise.index'
 import { Route as EntrepriseCandidaturesRouteImport } from './routes/entreprise.candidatures'
+import { Route as EntrepriseEncadreursRouteImport } from './routes/entreprise.encadreurs'
 import { Route as EntrepriseEntretiensRouteImport } from './routes/entreprise.entretiens'
 import { Route as EntrepriseOffresRouteImport } from './routes/entreprise.offres'
 import { Route as EntrepriseParametresRouteImport } from './routes/entreprise.parametres'
@@ -86,6 +87,11 @@ const EntrepriseCandidaturesRoute = EntrepriseCandidaturesRouteImport.update({
   path: '/candidatures',
   getParentRoute: () => EntrepriseRoute,
 } as any)
+const EntrepriseEncadreursRoute = EntrepriseEncadreursRouteImport.update({
+  id: '/encadreurs',
+  path: '/encadreurs',
+  getParentRoute: () => EntrepriseRoute,
+} as any)
 const EntrepriseEntretiensRoute = EntrepriseEntretiensRouteImport.update({
   id: '/entretiens',
   path: '/entretiens',
@@ -150,6 +156,7 @@ export interface FileRoutesByFullPath {
   '/profil': typeof ProfilRoute
   '/stage': typeof StageRoute
   '/entreprise/candidatures': typeof EntrepriseCandidaturesRoute
+  '/entreprise/encadreurs': typeof EntrepriseEncadreursRoute
   '/entreprise/entretiens': typeof EntrepriseEntretiensRoute
   '/entreprise/offres': typeof EntrepriseOffresRoute
   '/entreprise/parametres': typeof EntrepriseParametresRoute
@@ -172,6 +179,7 @@ export interface FileRoutesByTo {
   '/profil': typeof ProfilRoute
   '/stage': typeof StageRoute
   '/entreprise/candidatures': typeof EntrepriseCandidaturesRoute
+  '/entreprise/encadreurs': typeof EntrepriseEncadreursRoute
   '/entreprise/entretiens': typeof EntrepriseEntretiensRoute
   '/entreprise/offres': typeof EntrepriseOffresRoute
   '/entreprise/parametres': typeof EntrepriseParametresRoute
@@ -195,6 +203,7 @@ export interface FileRoutesById {
   '/profil': typeof ProfilRoute
   '/stage': typeof StageRoute
   '/entreprise/candidatures': typeof EntrepriseCandidaturesRoute
+  '/entreprise/encadreurs': typeof EntrepriseEncadreursRoute
   '/entreprise/entretiens': typeof EntrepriseEntretiensRoute
   '/entreprise/offres': typeof EntrepriseOffresRoute
   '/entreprise/parametres': typeof EntrepriseParametresRoute
@@ -220,6 +229,7 @@ export interface FileRouteTypes {
     | '/profil'
     | '/stage'
     | '/entreprise/candidatures'
+    | '/entreprise/encadreurs'
     | '/entreprise/entretiens'
     | '/entreprise/offres'
     | '/entreprise/parametres'
@@ -242,6 +252,7 @@ export interface FileRouteTypes {
     | '/profil'
     | '/stage'
     | '/entreprise/candidatures'
+    | '/entreprise/encadreurs'
     | '/entreprise/entretiens'
     | '/entreprise/offres'
     | '/entreprise/parametres'
@@ -264,6 +275,7 @@ export interface FileRouteTypes {
     | '/profil'
     | '/stage'
     | '/entreprise/candidatures'
+    | '/entreprise/encadreurs'
     | '/entreprise/entretiens'
     | '/entreprise/offres'
     | '/entreprise/parametres'
@@ -370,6 +382,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EntrepriseCandidaturesRouteImport
       parentRoute: typeof EntrepriseRoute
     }
+    '/entreprise/encadreurs': {
+      id: '/entreprise/encadreurs'
+      path: '/encadreurs'
+      fullPath: '/entreprise/encadreurs'
+      preLoaderRoute: typeof EntrepriseEncadreursRouteImport
+      parentRoute: typeof EntrepriseRoute
+    }
     '/entreprise/entretiens': {
       id: '/entreprise/entretiens'
       path: '/entretiens'
@@ -458,6 +477,7 @@ const EntrepriseStagiairesRouteWithChildren =
 
 interface EntrepriseRouteChildren {
   EntrepriseCandidaturesRoute: typeof EntrepriseCandidaturesRoute
+  EntrepriseEncadreursRoute: typeof EntrepriseEncadreursRoute
   EntrepriseEntretiensRoute: typeof EntrepriseEntretiensRoute
   EntrepriseOffresRoute: typeof EntrepriseOffresRoute
   EntrepriseParametresRoute: typeof EntrepriseParametresRoute
@@ -469,6 +489,7 @@ interface EntrepriseRouteChildren {
 
 const EntrepriseRouteChildren: EntrepriseRouteChildren = {
   EntrepriseCandidaturesRoute: EntrepriseCandidaturesRoute,
+  EntrepriseEncadreursRoute: EntrepriseEncadreursRoute,
   EntrepriseEntretiensRoute: EntrepriseEntretiensRoute,
   EntrepriseOffresRoute: EntrepriseOffresRoute,
   EntrepriseParametresRoute: EntrepriseParametresRoute,

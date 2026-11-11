@@ -6,6 +6,7 @@ import {
   demoInterviews,
   demoInterns,
   demoServices,
+  demoSupervisors,
   type AssignmentDecision,
   type AssignmentSource,
   type Candidate,
@@ -17,6 +18,7 @@ import {
   type Intern,
   type OfferStatus,
   type Service,
+  type Supervisor,
 } from "./company-data";
 import { localIsoDate } from "./dates";
 import {
@@ -121,6 +123,14 @@ interface CompanyState {
   addService: (s: Omit<Service, "id" | "updatedAt">) => void;
   updateService: (serviceId: string, patch: Partial<Omit<Service, "id">>) => void;
   removeService: (serviceId: string) => void;
+
+  supervisors: Supervisor[];
+  addSupervisor: (s: Omit<Supervisor, "id">) => void;
+  updateSupervisor: (supervisorId: string, patch: Partial<Omit<Supervisor, "id">>) => void;
+  /** Retire un encadreur sans stagiaire. Refusé s'il suit encore quelqu'un. */
+  removeSupervisor: (supervisorId: string) => ValidationResult;
+  /** Désigne l'encadreur d'un stagiaire : même service, capacité respectée. */
+  assignSupervisor: (internId: string, supervisorId: string) => ValidationResult;
 }
 
 export const useCompanyStore = create<CompanyState>((set, get) => ({
@@ -130,6 +140,7 @@ export const useCompanyStore = create<CompanyState>((set, get) => ({
   interviews: demoInterviews,
   interns: demoInterns,
   services: demoServices,
+  supervisors: demoSupervisors,
   expertRuns: seedRuns,
   decisions: seedDecisions,
   // Démo : les plus anciennes notifications sont déjà lues.
@@ -207,7 +218,6 @@ export const useCompanyStore = create<CompanyState>((set, get) => ({
       initials: candidate.initials,
       offerId: candidate.offerId,
       service: "À affecter",
-      supervisor: "",
       start,
       end: addMonths(start, 3),
       missions: "",
@@ -340,6 +350,10 @@ export const useCompanyStore = create<CompanyState>((set, get) => ({
               ...entry,
               service: service.name,
               serviceId: service.id,
+              supervisorId:
+                state.supervisors.find((s) => s.id === entry.supervisorId)?.serviceId === service.id
+                  ? entry.supervisorId
+                  : undefined,
               confirmed: true,
               assignmentSource: source,
               assignmentReason: motive,
@@ -434,4 +448,40 @@ export const useCompanyStore = create<CompanyState>((set, get) => ({
     set((state) => ({
       services: state.services.filter((service) => service.id !== serviceId),
     })),
+
+  addSupervisor: (supervisor) =>
+    set((state) => ({ supervisors: [...state.supervisors, { ...supervisor, id: `e-${Date.now()}` }] })),
+
+  updateSupervisor: (supervisorId, patch) =>
+    set((state) => ({
+      supervisors: state.supervisors.map((s) => (s.id === supervisorId ? { ...s, ...patch } : s)),
+    })),
+
+  removeSupervisor: (supervisorId) => {
+    const state = get();
+    const followed = state.interns.filter((intern) => intern.supervisorId === supervisorId).length;
+    if (followed > 0)
+      return { ok: false, error: `Cet encadreur suit encore ${followed} stagiaire${followed > 1 ? "s" : ""} : désignez-leur d'abord un autre encadreur.` };
+    set({ supervisors: state.supervisors.filter((s) => s.id !== supervisorId) });
+    return { ok: true };
+  },
+
+  assignSupervisor: (internId, supervisorId) => {
+    const state = get();
+    const intern = state.interns.find((entry) => entry.id === internId);
+    const supervisor = state.supervisors.find((entry) => entry.id === supervisorId);
+    if (!intern) return { ok: false, error: "Dossier stagiaire introuvable." };
+    if (!supervisor) return { ok: false, error: "Choisissez un encadreur." };
+    if (!intern.confirmed || !intern.serviceId)
+      return { ok: false, error: "Validez d'abord l'affectation du stagiaire à un service." };
+    if (supervisor.serviceId !== intern.serviceId)
+      return { ok: false, error: "L'encadreur doit appartenir au service d'accueil du stagiaire." };
+    const load = state.interns.filter((entry) => entry.supervisorId === supervisorId && entry.id !== internId).length;
+    if (load >= supervisor.capacity)
+      return { ok: false, error: `${supervisor.name} suit déjà ${load} stagiaire${load > 1 ? "s" : ""} sur ${supervisor.capacity} : capacité atteinte.` };
+    set({
+      interns: state.interns.map((entry) => (entry.id === internId ? { ...entry, supervisorId } : entry)),
+    });
+    return { ok: true };
+  },
 }));
