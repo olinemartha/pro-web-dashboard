@@ -20,6 +20,12 @@ import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as ParametresRouteImport } from './routes/parametres'
 import { Route as ProfilRouteImport } from './routes/profil'
 import { Route as StageRouteImport } from './routes/stage'
+import { Route as AdminIndexRouteImport } from './routes/admin.index'
+import { Route as AdminJournalRouteImport } from './routes/admin.journal'
+import { Route as AdminOffresRouteImport } from './routes/admin.offres'
+import { Route as AdminParametresRouteImport } from './routes/admin.parametres'
+import { Route as AdminSystemeExpertRouteImport } from './routes/admin.systeme-expert'
+import { Route as AdminUtilisateursRouteImport } from './routes/admin.utilisateurs'
 import { Route as EntrepriseIndexRouteImport } from './routes/entreprise.index'
 import { Route as EntrepriseCandidaturesRouteImport } from './routes/entreprise.candidatures'
 import { Route as EntrepriseEncadreursRouteImport } from './routes/entreprise.encadreurs'
@@ -87,6 +93,36 @@ const ProfilRoute = ProfilRouteImport.update({
 const StageRoute = StageRouteImport.update({
   id: '/stage',
   path: '/stage',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/admin/',
+  path: '/admin/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminJournalRoute = AdminJournalRouteImport.update({
+  id: '/admin/journal',
+  path: '/admin/journal',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminOffresRoute = AdminOffresRouteImport.update({
+  id: '/admin/offres',
+  path: '/admin/offres',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminParametresRoute = AdminParametresRouteImport.update({
+  id: '/admin/parametres',
+  path: '/admin/parametres',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminSystemeExpertRoute = AdminSystemeExpertRouteImport.update({
+  id: '/admin/systeme-expert',
+  path: '/admin/systeme-expert',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminUtilisateursRoute = AdminUtilisateursRouteImport.update({
+  id: '/admin/utilisateurs',
+  path: '/admin/utilisateurs',
   getParentRoute: () => rootRouteImport,
 } as any)
 const EntrepriseIndexRoute = EntrepriseIndexRouteImport.update({
@@ -169,6 +205,11 @@ export interface FileRoutesByFullPath {
   '/parametres': typeof ParametresRoute
   '/profil': typeof ProfilRoute
   '/stage': typeof StageRoute
+  '/admin/journal': typeof AdminJournalRoute
+  '/admin/offres': typeof AdminOffresRoute
+  '/admin/parametres': typeof AdminParametresRoute
+  '/admin/systeme-expert': typeof AdminSystemeExpertRoute
+  '/admin/utilisateurs': typeof AdminUtilisateursRoute
   '/entreprise/candidatures': typeof EntrepriseCandidaturesRoute
   '/entreprise/encadreurs': typeof EntrepriseEncadreursRoute
   '/entreprise/entretiens': typeof EntrepriseEntretiensRoute
@@ -178,6 +219,7 @@ export interface FileRoutesByFullPath {
   '/entreprise/services': typeof EntrepriseServicesRoute
   '/entreprise/stagiaires': typeof EntrepriseStagiairesRouteWithChildren
   '/offres/$id': typeof OffresIdRoute
+  '/admin/': typeof AdminIndexRoute
   '/entreprise/': typeof EntrepriseIndexRoute
   '/offres/': typeof OffresIndexRoute
   '/entreprise/stagiaires/$internId': typeof EntrepriseStagiairesInternIdRoute
@@ -194,6 +236,11 @@ export interface FileRoutesByTo {
   '/parametres': typeof ParametresRoute
   '/profil': typeof ProfilRoute
   '/stage': typeof StageRoute
+  '/admin/journal': typeof AdminJournalRoute
+  '/admin/offres': typeof AdminOffresRoute
+  '/admin/parametres': typeof AdminParametresRoute
+  '/admin/systeme-expert': typeof AdminSystemeExpertRoute
+  '/admin/utilisateurs': typeof AdminUtilisateursRoute
   '/entreprise/candidatures': typeof EntrepriseCandidaturesRoute
   '/entreprise/encadreurs': typeof EntrepriseEncadreursRoute
   '/entreprise/entretiens': typeof EntrepriseEntretiensRoute
@@ -202,6 +249,7 @@ export interface FileRoutesByTo {
   '/entreprise/profil': typeof EntrepriseProfilRoute
   '/entreprise/services': typeof EntrepriseServicesRoute
   '/offres/$id': typeof OffresIdRoute
+  '/admin': typeof AdminIndexRoute
   '/entreprise': typeof EntrepriseIndexRoute
   '/offres': typeof OffresIndexRoute
   '/entreprise/stagiaires/$internId': typeof EntrepriseStagiairesInternIdRoute
@@ -220,6 +268,11 @@ export interface FileRoutesById {
   '/parametres': typeof ParametresRoute
   '/profil': typeof ProfilRoute
   '/stage': typeof StageRoute
+  '/admin/journal': typeof AdminJournalRoute
+  '/admin/offres': typeof AdminOffresRoute
+  '/admin/parametres': typeof AdminParametresRoute
+  '/admin/systeme-expert': typeof AdminSystemeExpertRoute
+  '/admin/utilisateurs': typeof AdminUtilisateursRoute
   '/entreprise/candidatures': typeof EntrepriseCandidaturesRoute
   '/entreprise/encadreurs': typeof EntrepriseEncadreursRoute
   '/entreprise/entretiens': typeof EntrepriseEntretiensRoute
@@ -229,6 +282,7 @@ export interface FileRoutesById {
   '/entreprise/services': typeof EntrepriseServicesRoute
   '/entreprise/stagiaires': typeof EntrepriseStagiairesRouteWithChildren
   '/offres/$id': typeof OffresIdRoute
+  '/admin/': typeof AdminIndexRoute
   '/entreprise/': typeof EntrepriseIndexRoute
   '/offres/': typeof OffresIndexRoute
   '/entreprise/stagiaires/$internId': typeof EntrepriseStagiairesInternIdRoute
@@ -248,6 +302,11 @@ export interface FileRouteTypes {
     | '/parametres'
     | '/profil'
     | '/stage'
+    | '/admin/journal'
+    | '/admin/offres'
+    | '/admin/parametres'
+    | '/admin/systeme-expert'
+    | '/admin/utilisateurs'
     | '/entreprise/candidatures'
     | '/entreprise/encadreurs'
     | '/entreprise/entretiens'
@@ -257,6 +316,7 @@ export interface FileRouteTypes {
     | '/entreprise/services'
     | '/entreprise/stagiaires'
     | '/offres/$id'
+    | '/admin/'
     | '/entreprise/'
     | '/offres/'
     | '/entreprise/stagiaires/$internId'
@@ -273,6 +333,11 @@ export interface FileRouteTypes {
     | '/parametres'
     | '/profil'
     | '/stage'
+    | '/admin/journal'
+    | '/admin/offres'
+    | '/admin/parametres'
+    | '/admin/systeme-expert'
+    | '/admin/utilisateurs'
     | '/entreprise/candidatures'
     | '/entreprise/encadreurs'
     | '/entreprise/entretiens'
@@ -281,6 +346,7 @@ export interface FileRouteTypes {
     | '/entreprise/profil'
     | '/entreprise/services'
     | '/offres/$id'
+    | '/admin'
     | '/entreprise'
     | '/offres'
     | '/entreprise/stagiaires/$internId'
@@ -298,6 +364,11 @@ export interface FileRouteTypes {
     | '/parametres'
     | '/profil'
     | '/stage'
+    | '/admin/journal'
+    | '/admin/offres'
+    | '/admin/parametres'
+    | '/admin/systeme-expert'
+    | '/admin/utilisateurs'
     | '/entreprise/candidatures'
     | '/entreprise/encadreurs'
     | '/entreprise/entretiens'
@@ -307,6 +378,7 @@ export interface FileRouteTypes {
     | '/entreprise/services'
     | '/entreprise/stagiaires'
     | '/offres/$id'
+    | '/admin/'
     | '/entreprise/'
     | '/offres/'
     | '/entreprise/stagiaires/$internId'
@@ -325,7 +397,13 @@ export interface RootRouteChildren {
   ParametresRoute: typeof ParametresRoute
   ProfilRoute: typeof ProfilRoute
   StageRoute: typeof StageRoute
+  AdminJournalRoute: typeof AdminJournalRoute
+  AdminOffresRoute: typeof AdminOffresRoute
+  AdminParametresRoute: typeof AdminParametresRoute
+  AdminSystemeExpertRoute: typeof AdminSystemeExpertRoute
+  AdminUtilisateursRoute: typeof AdminUtilisateursRoute
   OffresIdRoute: typeof OffresIdRoute
+  AdminIndexRoute: typeof AdminIndexRoute
   OffresIndexRoute: typeof OffresIndexRoute
 }
 
@@ -406,6 +484,48 @@ declare module '@tanstack/react-router' {
       path: '/stage'
       fullPath: '/stage'
       preLoaderRoute: typeof StageRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/': {
+      id: '/admin/'
+      path: '/admin'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/journal': {
+      id: '/admin/journal'
+      path: '/admin/journal'
+      fullPath: '/admin/journal'
+      preLoaderRoute: typeof AdminJournalRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/offres': {
+      id: '/admin/offres'
+      path: '/admin/offres'
+      fullPath: '/admin/offres'
+      preLoaderRoute: typeof AdminOffresRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/parametres': {
+      id: '/admin/parametres'
+      path: '/admin/parametres'
+      fullPath: '/admin/parametres'
+      preLoaderRoute: typeof AdminParametresRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/systeme-expert': {
+      id: '/admin/systeme-expert'
+      path: '/admin/systeme-expert'
+      fullPath: '/admin/systeme-expert'
+      preLoaderRoute: typeof AdminSystemeExpertRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/utilisateurs': {
+      id: '/admin/utilisateurs'
+      path: '/admin/utilisateurs'
+      fullPath: '/admin/utilisateurs'
+      preLoaderRoute: typeof AdminUtilisateursRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/entreprise/': {
@@ -555,7 +675,13 @@ const rootRouteChildren: RootRouteChildren = {
   ParametresRoute: ParametresRoute,
   ProfilRoute: ProfilRoute,
   StageRoute: StageRoute,
+  AdminJournalRoute: AdminJournalRoute,
+  AdminOffresRoute: AdminOffresRoute,
+  AdminParametresRoute: AdminParametresRoute,
+  AdminSystemeExpertRoute: AdminSystemeExpertRoute,
+  AdminUtilisateursRoute: AdminUtilisateursRoute,
   OffresIdRoute: OffresIdRoute,
+  AdminIndexRoute: AdminIndexRoute,
   OffresIndexRoute: OffresIndexRoute,
 }
 export const routeTree = rootRouteImport

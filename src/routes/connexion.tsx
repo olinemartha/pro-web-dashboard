@@ -6,7 +6,7 @@ import { AuthBrand, AuthPreview, PasswordInput } from "@/components/auth/auth-ui
 import { ARROW_NUDGE, Field, inputClass, type IconMotion } from "@/components/company/ui";
 import { Button } from "@/components/ui/button";
 import { Reveal } from "@/components/ui/motion";
-import { ROLE_HOME, useAuth, type Role } from "@/lib/auth";
+import { DEMO_ACCOUNTS, DEMO_PASSWORD, ROLE_HOME, useAuth, type Role } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/connexion")({
@@ -27,7 +27,7 @@ const DEMO: { role: Role; label: string; icon: React.ComponentType<{ className?:
 
 function LoginPage() {
   const navigate = useNavigate();
-  const { signIn, signInDemo } = useAuth();
+  const { signIn } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
@@ -58,8 +58,13 @@ function LoginPage() {
     if (session) navigate({ to: session.onboarded ? ROLE_HOME[session.role] : "/inscription" });
   };
 
-  const demo = (role: Role, label: string) => {
-    signInDemo(role);
+  // Même chemin que la connexion normale : un compte suspendu reste bloqué.
+  const demo = async (role: Role, label: string) => {
+    const result = await signIn(DEMO_ACCOUNTS[role].email, DEMO_PASSWORD);
+    if (!result.ok) {
+      toast.error("Connexion refusée", { description: result.error });
+      return;
+    }
     toast.success("Connexion de démonstration", { description: label });
     navigate({ to: ROLE_HOME[role] });
   };

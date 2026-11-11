@@ -4,6 +4,8 @@
  * Le PRD exige que chaque action d'administration soit tracée et motivée.
  */
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
+import { localIsoDateTime } from "./dates";
 
 export type AdminAction = {
   id: string;
@@ -24,9 +26,9 @@ type AdminState = {
   markNoticesRead: (ids: string[]) => void;
 };
 
-const now = () => new Date().toISOString().slice(0, 19);
+const now = () => localIsoDateTime();
 
-export const useAdminStore = create<AdminState>((set) => ({
+export const useAdminStore = create<AdminState>()(persist((set) => ({
   suspended: [],
   actions: [],
   readNotices: [],
@@ -45,4 +47,4 @@ export const useAdminStore = create<AdminState>((set) => ({
       actions: [{ id: `ad-${Date.now()}`, date: now(), kind: "retrait_offre", target, reason }, ...state.actions],
     })),
   markNoticesRead: (ids) => set((state) => ({ readNotices: [...new Set([...state.readNotices, ...ids])] })),
-}));
+}), { name: "sm.admin" }));

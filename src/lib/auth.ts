@@ -10,6 +10,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { Profile } from "./rules";
 import type { CompanyProfile } from "./company-data";
+import { useAdminStore } from "./admin-store";
 
 export type Role = "etudiant" | "entreprise" | "admin";
 
@@ -97,6 +98,8 @@ export const useAuth = create<AuthState>()(
 
       signIn: async (email, password) => {
         const key = normalizeEmail(email);
+        if (useAdminStore.getState().suspended.includes(key))
+          return { ok: false, error: "Ce compte est suspendu. Contactez l'administrateur de la plateforme.", field: "email" };
         const demo = (Object.entries(DEMO_ACCOUNTS) as [Role, { email: string; name: string }][]).find(
           ([, account]) => account.email === key
         );

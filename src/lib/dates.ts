@@ -6,6 +6,12 @@
 
 export const DAY_MS = 86_400_000;
 
+/** AAAA-MM-JJTHH:MM:SS en heure locale (horodatage des notifications et du journal). */
+export function localIsoDateTime(date = new Date()) {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${localIsoDate(date)}T${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+}
+
 /** AAAA-MM-JJ en heure locale. */
 export function localIsoDate(date = new Date()) {
   const pad = (n: number) => String(n).padStart(2, "0");

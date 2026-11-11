@@ -16,7 +16,7 @@ import {
 } from "./mock-data";
 import { useCompanyStore } from "./company-store";
 import type { CandidateStatus } from "./company-data";
-import { fmtDate, localIsoDate } from "./dates";
+import { fmtDate, localIsoDate, localIsoDateTime } from "./dates";
 import { latestRunFor } from "./expert-engine";
 
 interface AppState {
@@ -41,7 +41,7 @@ interface AppState {
   startFresh: (profile: Partial<Profile>) => void;
 }
 
-const nowIso = () => new Date().toISOString().slice(0, 19);
+const nowIso = () => localIsoDateTime();
 
 export const useStore = create<AppState>((set, get) => ({
   profile: demoProfile,
