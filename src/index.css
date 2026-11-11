@@ -649,7 +649,7 @@
 .expert-border {
   /* Remplissage de la carte : blanc par défaut, redéfini par les variantes ci-dessous. */
   --expert-fill: linear-gradient(hsl(var(--card)), hsl(var(--card)));
-  border-width: 1.5px;
+  border-width: 2.5px;
   border-style: solid;
   border-color: transparent !important;
   background:
@@ -688,8 +688,8 @@
 .expert-badge::before {
   content: "";
   position: absolute;
-  inset: -1px;
-  padding: 1px;
+  inset: -1.5px;
+  padding: 1.5px;
   border-radius: inherit;
   background: conic-gradient(
     from var(--expert-angle),
