@@ -73,7 +73,7 @@ export function TagInput({
                 remove(entry);
               }}
               aria-label={`Retirer ${entry}`}
-              className="grid size-5 place-items-center rounded-full text-primary/70 transition-colors hover:bg-primary hover:text-primary-foreground"
+              className="relative grid size-5 place-items-center rounded-full text-primary/70 transition-colors after:absolute after:-inset-1.5 after:content-[''] hover:bg-primary hover:text-primary-foreground"
             >
               <X className="size-3" />
             </button>

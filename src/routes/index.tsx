@@ -27,7 +27,7 @@ import { AnimatedNumber, Reveal } from "@/components/ui/motion";
 import { daysFromToday, fmtDate, relativeDay } from "@/lib/dates";
 import { companyOf, internshipExtras, offerOf } from "@/lib/mock-data";
 import { missingFields } from "@/lib/rules";
-import { usePublishedOffers, useStore } from "@/lib/store";
+import { useMyAssignment, usePublishedOffers, useStore } from "@/lib/store";
 import { rankOffers, VERDICT_LABELS } from "@/lib/offer-matching";
 import { cn } from "@/lib/utils";
 
@@ -74,6 +74,8 @@ function Dashboard() {
   const interviews = applications.filter((a) => a.status === "entretien");
   const inProgress = applications.filter((a) => ["envoyee", "examen", "preselectionnee", "entretien"].includes(a.status));
   const confirmedApp = applications.find((a) => a.status === "confirmee");
+  // Le dossier de l'entreprise fait foi pour la date de début et l'encadreur.
+  const assignment = useMyAssignment(confirmedApp?.candidateId);
 
   /* ---- À faire : ce qui attend l'étudiant ---- */
   const todos: Todo[] = [];
@@ -93,14 +95,15 @@ function Dashboard() {
     });
   }
   if (confirmedApp) {
-    const start = daysFromToday(internshipExtras.start);
+    const start = daysFromToday(assignment?.intern.start ?? internshipExtras.start);
+    const supervisorName = assignment ? assignment.supervisor?.name : internshipExtras.supervisor.name;
     todos.push({
       id: "stage",
       icon: GraduationCap,
       motion: "tilt",
       subject: offerOf(confirmedApp.offerId).title,
       task: start > 0 ? "Stage confirmé" : "Stage en cours",
-      context: `Encadreur : ${internshipExtras.supervisor.name}`,
+      context: supervisorName ? `Encadreur : ${supervisorName}` : "Encadreur à désigner par l'entreprise",
       when: start > 0 ? `début dans ${start} j` : "en cours",
       urgent: false,
       action: "Mon stage",

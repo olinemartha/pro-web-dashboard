@@ -40,7 +40,7 @@ function BackLink() {
     <Link
       to="/offres"
       search={offersReturn.current}
-      className="press group inline-flex items-center gap-1.5 rounded-lg text-[13px] font-medium text-muted-foreground transition-colors hover:text-foreground"
+      className="press group -my-2 py-2 inline-flex items-center gap-1.5 rounded-lg text-[13px] font-medium text-muted-foreground transition-colors hover:text-foreground"
     >
       <ArrowLeft className="size-4 transition-transform duration-300 [transition-timing-function:var(--ease-soft)] group-hover:-translate-x-1 motion-reduce:transition-none" />
       Offres de stage

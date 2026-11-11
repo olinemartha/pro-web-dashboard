@@ -687,7 +687,7 @@ function CompanyDashboard() {
           <Reveal
             as="section"
             delay={140}
-            className="card-surface flex flex-col overflow-hidden xl:flex-1"
+            className="card-surface order-first flex flex-col overflow-hidden xl:order-none xl:flex-1"
             aria-labelledby="todo-title"
           >
             <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2.5 border-b px-5 pb-3.5 pt-4">
@@ -1097,7 +1097,7 @@ function CompanyDashboard() {
                                 <Link
                                   to="/entreprise/stagiaires/$internId"
                                   params={{ internId: intern.id }}
-                                  className="block truncate font-medium text-primary underline-offset-4 hover:underline"
+                                  className="-my-2 py-2 block truncate font-medium text-primary underline-offset-4 hover:underline"
                                 >
                                   {intern.name}
                                 </Link>
@@ -1128,7 +1128,7 @@ function CompanyDashboard() {
                             <Link
                               to="/entreprise/stagiaires/$internId"
                               params={{ internId: intern.id }}
-                              className="block truncate text-sm font-medium text-primary underline-offset-4 hover:underline"
+                              className="-my-2 py-2 block truncate text-sm font-medium text-primary underline-offset-4 hover:underline"
                             >
                               {intern.name}
                             </Link>

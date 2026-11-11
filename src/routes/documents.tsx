@@ -16,7 +16,7 @@ import {
 import { Reveal } from "@/components/ui/motion";
 import { fmtDate } from "@/lib/dates";
 import { internshipExtras } from "@/lib/mock-data";
-import { useStore } from "@/lib/store";
+import { useMyAssignment, useStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/documents")({
@@ -36,7 +36,10 @@ type DocRow = { id: string; name: string; category: Exclude<Category, "tous">; s
 function DocumentsPage() {
   const { profile, applications } = useStore();
   const [filter, setFilter] = useState<Category>("tous");
-  const confirmed = applications.some((a) => a.status === "confirmee");
+  const confirmedApp = applications.find((a) => a.status === "confirmee");
+  const confirmed = Boolean(confirmedApp);
+  const assignment = useMyAssignment(confirmedApp?.candidateId);
+  const end = assignment?.intern.end ?? internshipExtras.end;
 
   const docs: DocRow[] = [
     ...(profile.cv
@@ -134,7 +137,7 @@ function DocumentsPage() {
               <Award className="mt-0.5 size-[18px] shrink-0 text-muted-foreground" />
               <p className="max-w-[68ch] text-pretty text-[13px] leading-relaxed text-muted-foreground">
                 {confirmed
-                  ? `Disponible ici après l'évaluation finale du ${fmtDate(internshipExtras.end)} et sa validation par l'entreprise.`
+                  ? `Disponible ici après l'évaluation finale du ${fmtDate(end)} et sa validation par l'entreprise.`
                   : "Elle sera disponible ici à la fin de votre stage, après validation par l'entreprise."}
               </p>
             </div>

@@ -20,7 +20,7 @@ const FAQ: { q: string; a: React.ReactNode }[] = [
     q: "Comment postuler à une offre ?",
     a: (
       <>
-        Ouvrez <Link to="/offres" className="font-medium text-primary underline-offset-2 hover:underline">Offres de stage</Link>, choisissez une offre,
+        Ouvrez <Link to="/offres" className="py-2 font-medium text-primary underline-offset-2 hover:underline">Offres de stage</Link>, choisissez une offre,
         puis « Postuler à cette offre ». L'entreprise reçoit votre profil, vos compétences et votre CV. Vous suivez ensuite la réponse dans
         « Mes candidatures ».
       </>

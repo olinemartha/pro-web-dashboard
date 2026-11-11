@@ -175,7 +175,7 @@ export function ExpertHint({ candidateId, offerTitle }: { candidateId?: string; 
             <button
               type="button"
               onClick={() => setOpen(true)}
-              className="relative z-10 font-medium text-primary underline-offset-2 hover:underline"
+              className="relative z-10 -my-2 py-2 font-medium text-primary underline-offset-2 hover:underline"
             >
               Voir l'analyse
             </button>

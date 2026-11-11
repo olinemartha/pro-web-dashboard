@@ -184,10 +184,10 @@ function InternDossierPage() {
 
           {candidate && (
             <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-xs">
-              <a href={`mailto:${candidate.email}`} className="inline-flex items-center gap-1.5 text-muted-foreground transition-colors hover:text-primary">
+              <a href={`mailto:${candidate.email}`} className="-my-2 py-2 inline-flex items-center gap-1.5 text-muted-foreground transition-colors hover:text-primary">
                 <Mail className="size-3.5" /> {candidate.email}
               </a>
-              <a href={`tel:${candidate.phone.replace(/\s/g, "")}`} className="inline-flex items-center gap-1.5 text-muted-foreground transition-colors hover:text-primary">
+              <a href={`tel:${candidate.phone.replace(/\s/g, "")}`} className="-my-2 py-2 inline-flex items-center gap-1.5 text-muted-foreground transition-colors hover:text-primary">
                 <Phone className="size-3.5" /> {candidate.phone}
               </a>
             </div>
@@ -206,7 +206,7 @@ function InternDossierPage() {
               {tab.badge && (
                 <span
                   className={cn(
-                    "grid h-4 min-w-4 place-items-center rounded-full px-1 text-[10px] font-semibold tabular-nums",
+                    "grid h-[18px] min-w-[18px] place-items-center rounded-full px-1 text-[10px] font-semibold tabular-nums",
                     tab.badge === "!" ? "bg-warning-soft text-warning" : "bg-primary text-primary-foreground"
                   )}
                 >

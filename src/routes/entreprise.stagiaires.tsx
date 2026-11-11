@@ -58,7 +58,7 @@ function CompanyInternsLayout() {
         <Reveal as="section" className="card-surface flex flex-wrap items-center gap-x-4 gap-y-2.5 px-4 py-3" aria-label="Changer de dossier">
           <Link
             to="/entreprise/stagiaires"
-            className="group inline-flex shrink-0 items-center gap-1.5 text-[13px] font-medium text-muted-foreground transition-colors hover:text-foreground"
+            className="group -my-2 py-2 inline-flex shrink-0 items-center gap-1.5 text-[13px] font-medium text-muted-foreground transition-colors hover:text-foreground"
           >
             <ArrowLeft className="size-4 transition-transform duration-300 [transition-timing-function:var(--ease-soft)] group-hover:-translate-x-1 motion-reduce:transition-none" />
             Tous les dossiers
@@ -79,14 +79,14 @@ function CompanyInternsLayout() {
                     active ? "bg-primary-soft font-semibold text-primary" : "font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
                   )}
                 >
-                  <AvatarInitials initials={intern.initials} className="size-6 text-[10px]" />
+                  <AvatarInitials initials={intern.initials} className="size-6 text-[11px]" />
                   {intern.name}
                   {!intern.confirmed && (
                     <span className="size-1.5 rounded-full bg-warning" aria-label="affectation à confirmer" />
                   )}
                   {reports > 0 && (
                     <span
-                      className="grid h-4 min-w-4 place-items-center rounded-full bg-primary px-1 text-[10px] font-semibold tabular-nums text-primary-foreground"
+                      className="grid h-[18px] min-w-[18px] place-items-center rounded-full bg-primary px-1 text-[10px] font-semibold tabular-nums text-primary-foreground"
                       aria-label={`${reports} rapport${reports > 1 ? "s" : ""} à relire`}
                     >
                       {reports}

@@ -125,7 +125,7 @@ export const EXPERT_BORDER = "expert-border";
 export function PageIntro({ desc, action }: { desc: string; action?: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-      <p className="max-w-[68ch] text-pretty text-sm leading-relaxed text-muted-foreground">{desc}</p>
+      <p className="line-clamp-2 max-w-[68ch] text-pretty text-sm leading-relaxed text-muted-foreground sm:line-clamp-none">{desc}</p>
       {action && <div className="shrink-0">{action}</div>}
     </div>
   );
@@ -167,7 +167,8 @@ export function SectionLabel({
 export const inputClass =
   "h-10 w-full rounded-md border border-input bg-background px-3 text-base text-foreground outline-none transition placeholder:text-muted-foreground hover:border-foreground/25 focus-visible:border-accent focus-visible:ring-[3px] focus-visible:ring-ring/15 aria-[invalid=true]:border-destructive aria-[invalid=true]:ring-[3px] aria-[invalid=true]:ring-destructive/10 disabled:cursor-not-allowed disabled:opacity-50 sm:text-sm";
 
-export const textareaClass = cn(inputClass, "h-auto min-h-[90px] py-2 leading-relaxed");
+/** Zone de texte : grandit avec son contenu (pas de barre de défilement dans une carte). */
+export const textareaClass = cn(inputClass, "h-auto min-h-[90px] py-2 leading-relaxed [field-sizing:content]");
 
 export function Field({
   label,
@@ -760,7 +761,7 @@ export function StatCard({
   aside?: React.ReactNode;
 }) {
   // Lien seulement sur le tableau de bord ; ailleurs, un simple indicateur (les filtres sont dans les puces).
-  const shell = cn(to ? CARD_INTERACTIVE : "card-surface", "flex h-full w-full flex-col gap-4 p-4 text-left sm:p-5");
+  const shell = cn(to ? CARD_INTERACTIVE : "card-surface", "flex h-full w-full flex-col gap-3 p-3.5 text-left sm:gap-4 sm:p-5");
   const body = (
     <>
       <div className="flex items-start justify-between gap-2.5">
@@ -772,14 +773,15 @@ export function StatCard({
         </span>
       </div>
       <div className="flex items-end justify-between gap-2">
-        <p className="text-[30px] font-semibold leading-none tracking-tight">
+        <p className="text-2xl font-semibold leading-none tracking-tight sm:text-[30px]">
           <AnimatedNumber value={value} suffix={suffix} />
         </p>
         {aside}
       </div>
       <p
         className={cn(
-          "mt-auto flex items-center gap-1 border-t pt-3 text-xs",
+          "mt-auto items-center gap-1 border-t pt-3 text-xs",
+          tone === "neutral" ? "hidden sm:flex" : "flex",
           tone === "trend" ? "font-medium text-success-ink" : tone === "alert" ? "font-medium text-warning" : "text-muted-foreground"
         )}
       >
@@ -882,8 +884,27 @@ export function FilterChips<T extends string>({
   onChange: (value: T) => void;
   className?: string;
 }) {
+  // Plus de 4 filtres : sur téléphone, une liste déroulante remplace les puces (elles passeraient sur 3 lignes).
+  const collapse = options.length > 4;
   return (
-    <div role="group" aria-label={label} className={cn("flex flex-wrap gap-0.5 sm:gap-1", className)}>
+    <>
+      {collapse && (
+        <div className={cn("w-full sm:hidden", className)}>
+          <Select aria-label={label} value={value} onChange={(event) => onChange(event.target.value as T)} className="h-9">
+            {options.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+                {option.count !== undefined ? ` (${option.count})` : ""}
+              </option>
+            ))}
+          </Select>
+        </div>
+      )}
+      <div
+        role="group"
+        aria-label={label}
+        className={cn("flex-wrap gap-0.5 sm:gap-1", collapse ? "hidden sm:flex" : "flex", className)}
+      >
       {options.map((option) => {
         const active = option.value === value;
         return (
@@ -909,7 +930,8 @@ export function FilterChips<T extends string>({
           </button>
         );
       })}
-    </div>
+      </div>
+    </>
   );
 }
 

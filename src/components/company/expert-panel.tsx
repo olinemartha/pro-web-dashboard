@@ -200,10 +200,10 @@ function AnalyzedProfile({
 
       {candidate && (
         <div className="mt-auto space-y-1.5 border-t pt-4 text-xs">
-          <a href={`mailto:${candidate.email}`} className="flex items-center gap-2 text-muted-foreground transition-colors hover:text-primary">
+          <a href={`mailto:${candidate.email}`} className="-my-2 flex items-center gap-2 py-2 text-muted-foreground transition-colors hover:text-primary">
             <Mail className="size-3.5 shrink-0" /> <span className="truncate">{candidate.email}</span>
           </a>
-          <a href={`tel:${candidate.phone.replace(/\s/g, "")}`} className="flex items-center gap-2 text-muted-foreground transition-colors hover:text-primary">
+          <a href={`tel:${candidate.phone.replace(/\s/g, "")}`} className="-my-2 flex items-center gap-2 py-2 text-muted-foreground transition-colors hover:text-primary">
             <Phone className="size-3.5 shrink-0" /> {candidate.phone}
           </a>
         </div>
