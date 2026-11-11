@@ -43,13 +43,38 @@ function StagePage() {
               ? `Vous avez ${accepted > 1 ? `${accepted} propositions acceptées` : "une proposition acceptée"} : confirmez votre choix pour ouvrir le suivi du stage.`
               : "Le suivi s'ouvre dès que vous confirmez une proposition acceptée par une entreprise."
           }
-          className="py-12"
+          className="pb-6 pt-12"
         />
-        <div className="-mt-6 flex justify-center pb-10">
+        <div className="flex justify-center pb-10">
           <Link to={accepted ? "/candidatures" : "/offres"} className={SECTION_LINK}>
             {accepted ? "Choisir mon stage" : "Parcourir les offres"}
             <ArrowRight className={cn("size-3.5", ARROW_NUDGE)} />
           </Link>
+        </div>
+        <div className="border-t px-5 py-5 sm:px-6">
+          <h2 className="text-[13px] font-semibold">Ce qui se passe ensuite</h2>
+          <ol className="mt-3 grid gap-4 sm:grid-cols-3">
+            {[
+              { title: "Vous confirmez votre stage", desc: "Une seule proposition acceptée ; les autres sont déclinées." },
+              { title: "L'entreprise vous affecte", desc: "Elle choisit votre service, aidée par le système expert." },
+              { title: "Le suivi s'ouvre ici", desc: "Calendrier, encadreur, présence et documents du stage." },
+            ].map((step, index) => (
+              <li key={step.title} className="flex gap-3">
+                <span
+                  className={cn(
+                    "grid size-6 shrink-0 place-items-center rounded-full text-[11px] font-semibold tabular-nums",
+                    index === 0 && accepted ? "bg-primary text-primary-foreground" : "bg-primary-soft text-primary"
+                  )}
+                >
+                  {index + 1}
+                </span>
+                <span className="min-w-0">
+                  <span className="block text-[13px] font-semibold">{step.title}</span>
+                  <span className="mt-0.5 block text-pretty text-xs leading-relaxed text-muted-foreground">{step.desc}</span>
+                </span>
+              </li>
+            ))}
+          </ol>
         </div>
       </Reveal>
     );

@@ -130,6 +130,10 @@ function Dashboard() {
     .sort((a, b) => b.match - a.match || a.offer.deadline.localeCompare(b.offer.deadline))
     .slice(0, 3);
 
+  const upcoming = applications
+    .filter((a) => a.status === "entretien" && a.interview && daysFromToday(a.interview.date) >= 0)
+    .sort((a, b) => a.interview!.date.localeCompare(b.interview!.date));
+
   const recent = [...applications].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 4);
 
   const stats: {
@@ -256,7 +260,7 @@ function Dashboard() {
           <Reveal as="section" delay={140} className="card-surface p-5">
             <SectionHeader
               title="Offres recommandées"
-              description="Les offres ouvertes qui partagent le plus de compétences avec votre profil"
+              description="Ouvertes et proches de vos compétences"
               to="/offres"
               linkLabel="Toutes les offres"
             />
@@ -375,8 +379,55 @@ function Dashboard() {
             </div>
           </Reveal>
 
+          {/* Entretiens à venir : la date d'abord, comme l'agenda de l'espace entreprise */}
+          <Reveal delay={180} className="card-surface p-5">
+            <SectionHeader title="Entretiens à venir" count={upcoming.length} />
+            {upcoming.length === 0 ? (
+              <EmptyNote
+                icon={CalendarClock}
+                title="Aucun entretien programmé"
+                desc="Les entretiens fixés par les entreprises apparaîtront ici."
+                className="mt-4 rounded-lg border border-dashed"
+              />
+            ) : (
+              <ul className="mt-4 space-y-2">
+                {upcoming.map((a, index) => {
+                  const offer = offerOf(a.offerId);
+                  const date = new Date(`${a.interview!.date}T00:00:00`);
+                  const first = index === 0;
+                  const inDays = daysFromToday(a.interview!.date);
+                  return (
+                    <li key={a.id} className={cn("flex items-center gap-3 rounded-xl p-2.5", first && "bg-primary-soft/70")}>
+                      <span
+                        className={cn(
+                          "flex w-11 shrink-0 flex-col items-center rounded-lg py-1.5 leading-none",
+                          first ? "bg-primary text-primary-foreground" : "border bg-card"
+                        )}
+                      >
+                        <span className={cn("text-[11px] font-medium uppercase", first ? "text-primary-foreground/75" : "text-muted-foreground")}>
+                          {date.toLocaleDateString("fr-FR", { month: "short" }).replace(".", "")}
+                        </span>
+                        <span className="mt-0.5 text-base font-semibold tabular-nums">{date.getDate()}</span>
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-[13px] font-semibold">{offer.title.replace(/^Stagiaire\s+/i, "")}</p>
+                        <p className="truncate text-xs text-muted-foreground">{a.interview!.place}</p>
+                        <p className={cn("text-xs", inDays <= 1 ? "font-medium text-warning" : "text-muted-foreground")}>
+                          {inDays <= 0 ? "Aujourd'hui" : inDays === 1 ? "Demain" : `Dans ${inDays} jours`}
+                        </p>
+                      </div>
+                      <span className="shrink-0 rounded-md bg-card px-1.5 py-0.5 text-xs font-medium tabular-nums ring-1 ring-border">
+                        {a.interview!.time}
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </Reveal>
+
           {/* Activité récente */}
-          <Reveal delay={180} className="card-surface p-5 xl:flex-1">
+          <Reveal delay={240} className="card-surface p-5 lg:col-span-2 xl:col-span-1 xl:flex-1">
             <SectionHeader title="Activité récente" />
             {activity.length === 0 ? (
               <EmptyNote icon={UserRound} title="Aucune activité" className="mt-4 rounded-lg border border-dashed" />

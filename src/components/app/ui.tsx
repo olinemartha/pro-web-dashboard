@@ -26,6 +26,19 @@ export function ShellPageTitleProvider({ title, children }: { title: string | nu
 }
 
 /* ------------------------------------------------------------------ */
+/* Retour à la liste des offres                                        */
+/* ------------------------------------------------------------------ */
+
+export type OffersSearch = {
+  q?: string;
+  filtre?: "toutes" | "pour_vous" | "enregistrees" | "postulees";
+  tri?: "recentes" | "cloture" | "competences";
+};
+
+/** Dernière recherche de la page Offres : le lien « ← Offres de stage » y ramène. */
+export const offersReturn: { current: OffersSearch } = { current: {} };
+
+/* ------------------------------------------------------------------ */
 /* Statuts de candidature                                              */
 /* ------------------------------------------------------------------ */
 

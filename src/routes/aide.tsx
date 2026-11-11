@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, ChevronDown, FileText, Lock, ShieldCheck, Users } from "lucide-react";
+import { ArrowRight, ChevronDown, FileText, Lock, ShieldCheck, UserCheck, Users } from "lucide-react";
 import { useState } from "react";
 import { ARROW_NUDGE, PageIntro, SectionHeader } from "@/components/company/ui";
 import { Reveal } from "@/components/ui/motion";
@@ -46,6 +46,7 @@ const FAQ: { q: string; a: React.ReactNode }[] = [
 
 const PRIVACY = [
   { icon: Lock, text: "Votre e-mail et votre téléphone restent privés par défaut." },
+  { icon: UserCheck, text: "Votre numéro de téléphone n'est communiqué à une entreprise qu'après votre sélection et votre confirmation." },
   { icon: FileText, text: "Votre CV n'est accessible qu'aux entreprises auxquelles vous avez postulé." },
   { icon: Users, text: "Les données de chaque entreprise sont isolées : une entreprise ne voit pas celles d'une autre." },
 ];
@@ -64,7 +65,7 @@ function AidePage() {
     <div className="space-y-6">
       <PageIntro desc="Les réponses aux questions les plus fréquentes sur la recherche et le suivi de votre stage." />
 
-      <div className="grid grid-cols-[minmax(0,1fr)] gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
+      <div className="flex flex-col gap-6">
         <Reveal as="section" className="card-surface overflow-hidden" aria-labelledby="faq-title">
           <div className="border-b px-5 pb-3.5 pt-4">
             <h2 id="faq-title" className="text-[15px] font-semibold tracking-tight">
@@ -102,7 +103,7 @@ function AidePage() {
           </ul>
         </Reveal>
 
-        <aside className="grid min-w-0 grid-cols-[minmax(0,1fr)] content-start gap-6 lg:grid-cols-2 xl:flex xl:flex-col">
+        <aside className="order-first grid min-w-0 grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-2">
           <Reveal delay={80} className="card-surface p-5">
             <SectionHeader title="Votre parcours" description="Les quatre étapes, dans l'ordre" />
             <ol className="-mx-5 mt-4 divide-y border-t">
@@ -123,7 +124,7 @@ function AidePage() {
             </ol>
           </Reveal>
 
-          <Reveal delay={140} className="card-surface p-5 xl:flex-1">
+          <Reveal delay={140} className="card-surface p-5">
             <SectionHeader title="Confidentialité" />
             <ul className="mt-4 space-y-3">
               {PRIVACY.map((item) => (

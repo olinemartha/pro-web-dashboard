@@ -268,7 +268,7 @@ function ProfilePage() {
         </Reveal>
 
         {/* ============================ Colonne latérale ============================ */}
-        <aside className="order-first grid min-w-0 grid-cols-[minmax(0,1fr)] content-start gap-6 lg:grid-cols-2 xl:order-none xl:flex xl:flex-col">
+        <aside className="order-first grid min-w-0 grid-cols-[minmax(0,1fr)] content-start gap-6 lg:grid-cols-2 xl:sticky xl:top-[96px] xl:order-none xl:flex xl:flex-col xl:self-start">
           <Reveal delay={80} className="card-surface p-5">
             <SectionHeader title="Profil complété" />
             <p className="mt-3 text-[30px] font-semibold leading-none tracking-tight">
@@ -328,7 +328,7 @@ function ProfilePage() {
             <input ref={cvRef} type="file" accept="application/pdf" hidden onChange={(event) => onCv(event.target.files?.[0])} />
           </Reveal>
 
-          <Reveal delay={200} className="card-surface p-5 xl:flex-1">
+          <Reveal delay={200} className="card-surface p-5 lg:col-span-2 xl:col-span-1">
             <SectionHeader title="Visibilité" />
             <div className="mt-4 flex items-start justify-between gap-3">
               <div className="min-w-0">

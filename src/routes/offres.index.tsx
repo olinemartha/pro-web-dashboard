@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Bookmark, Briefcase, CalendarClock, Sparkles } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { StudentOfferCard } from "@/components/app/ui";
+import { StudentOfferCard, offersReturn } from "@/components/app/ui";
 import {
   EmptyNote,
   FilterChips,
@@ -45,6 +45,7 @@ const plural = (n: number, word: string) => `${n} ${word}${n > 1 ? "s" : ""}`;
 function Offers() {
   const { q = "", filtre: filter = "toutes", tri: sort = "recentes" } = Route.useSearch();
   const navigate = useNavigate({ from: "/offres/" });
+  offersReturn.current = Route.useSearch();
   const { saved, applications, profile } = useStore();
   // Le texte tapé reste local (saisie fluide) et se recopie dans l'adresse.
   const [search, setSearchText] = useState(q);

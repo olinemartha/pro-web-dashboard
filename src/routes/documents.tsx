@@ -63,7 +63,7 @@ function DocumentsPage() {
     <div className="space-y-6">
       <PageIntro desc="Retrouvez vos pièces personnelles, les documents envoyés par l'entreprise et, à la fin du stage, votre attestation." />
 
-      <div className="grid grid-cols-[minmax(0,1fr)] gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
+      <div className="flex flex-col gap-6">
         <Reveal as="section" className="card-surface overflow-hidden" aria-labelledby="docs-title">
           <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2.5 border-b px-5 pb-3.5 pt-4">
             <h2 id="docs-title" className="flex items-center gap-2 text-[15px] font-semibold tracking-tight">
@@ -132,7 +132,7 @@ function DocumentsPage() {
             <SectionHeader title="Attestation de fin de stage" />
             <div className="mt-4 flex items-start gap-3">
               <Award className="mt-0.5 size-[18px] shrink-0 text-muted-foreground" />
-              <p className="text-pretty text-[13px] leading-relaxed text-muted-foreground">
+              <p className="max-w-[68ch] text-pretty text-[13px] leading-relaxed text-muted-foreground">
                 {confirmed
                   ? `Disponible ici après l'évaluation finale du ${fmtDate(internshipExtras.end)} et sa validation par l'entreprise.`
                   : "Elle sera disponible ici à la fin de votre stage, après validation par l'entreprise."}
@@ -140,7 +140,7 @@ function DocumentsPage() {
             </div>
             <div className="mt-3 flex items-start gap-3">
               <QrCode className="mt-0.5 size-[18px] shrink-0 text-muted-foreground" />
-              <p className="text-pretty text-[13px] leading-relaxed text-muted-foreground">
+              <p className="max-w-[68ch] text-pretty text-[13px] leading-relaxed text-muted-foreground">
                 Chaque attestation porte une référence unique et un code QR qui permet d'en vérifier l'authenticité.
               </p>
             </div>

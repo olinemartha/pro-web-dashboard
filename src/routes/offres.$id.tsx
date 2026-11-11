@@ -2,12 +2,12 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft, ArrowRight, Bookmark, Building2, CalendarClock, Check, Send, UserRound } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { CompanyMark, StatusBadge, deadlineLabel } from "@/components/app/ui";
-import { ARROW_NUDGE, Badge, EmptyNote, Modal, SECTION_LINK, iconMotion } from "@/components/company/ui";
+import { CompanyMark, StatusBadge, deadlineLabel, offersReturn } from "@/components/app/ui";
+import { ARROW_NUDGE, Badge, EmptyNote, Modal, SECTION_LINK, StatusDot, iconMotion } from "@/components/company/ui";
 import { Button } from "@/components/ui/button";
 import { Reveal } from "@/components/ui/motion";
-import { fmtDate, localIsoDate } from "@/lib/dates";
-import { companyOf, offerOf } from "@/lib/mock-data";
+import { daysFromToday, fmtDate, localIsoDate } from "@/lib/dates";
+import { companyOf, offerOf, offers } from "@/lib/mock-data";
 import { COMPLETION_FIELDS, canApply, missingEssentials } from "@/lib/rules";
 import { useStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
@@ -25,10 +25,19 @@ export const Route = createFileRoute("/offres/$id")({
   component: OfferDetail,
 });
 
+/** Les étapes du recrutement, aux couleurs du pipeline (mêmes statuts que dans « Mes candidatures »). */
+const RECRUITMENT_STEPS = [
+  { title: "Envoyée", desc: "L'entreprise reçoit votre profil et votre CV.", dot: "en_attente" },
+  { title: "En examen", desc: "Elle étudie votre profil.", dot: "examen" },
+  { title: "Entretien", desc: "Si votre profil est retenu.", dot: "entretien" },
+  { title: "Réponse", desc: "Vous confirmez ou non le stage.", dot: "acceptee" },
+] as const;
+
 function BackLink() {
   return (
     <Link
       to="/offres"
+      search={offersReturn.current}
       className="press group inline-flex items-center gap-1.5 rounded-lg text-[13px] font-medium text-muted-foreground transition-colors hover:text-foreground"
     >
       <ArrowLeft className="size-4 transition-transform duration-300 [transition-timing-function:var(--ease-soft)] group-hover:-translate-x-1 motion-reduce:transition-none" />
@@ -128,29 +137,18 @@ function OfferDetail() {
               <p className="mt-1.5 max-w-[68ch] text-pretty text-sm leading-relaxed text-muted-foreground">{offer.profile}</p>
             </div>
             <div>
-              <h3 className="flex items-baseline justify-between gap-3 text-[13px] font-semibold">
-                Compétences demandées
-                <span className="text-xs font-normal tabular-nums text-muted-foreground">
-                  {matching}/{offer.skills.length} en commun avec votre profil
-                </span>
-              </h3>
-              <div className="mt-2 flex flex-wrap gap-1.5">
-                {offer.skills.map((skill) => {
-                  const hit = mine.has(skill.toLowerCase());
-                  return (
-                    <span
-                      key={skill}
-                      className={cn(
-                        "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs",
-                        hit ? "bg-primary-soft font-medium text-primary" : "bg-muted text-muted-foreground"
-                      )}
-                    >
-                      {hit && <Check className="size-3" aria-label="Vous possédez cette compétence" />}
-                      {skill}
+              <h3 className="text-[13px] font-semibold">Après votre candidature</h3>
+              <ol className="mt-3 grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-4">
+                {RECRUITMENT_STEPS.map((step) => (
+                  <li key={step.title} className="min-w-0 border-t pt-2.5">
+                    <span className="flex items-center gap-1.5 text-[13px] font-medium">
+                      <StatusDot status={step.dot} />
+                      {step.title}
                     </span>
-                  );
-                })}
-              </div>
+                    <span className="mt-0.5 block text-pretty text-xs leading-relaxed text-muted-foreground">{step.desc}</span>
+                  </li>
+                ))}
+              </ol>
             </div>
           </div>
         </Reveal>
@@ -159,6 +157,46 @@ function OfferDetail() {
         <aside className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-2 xl:flex xl:flex-col">
           <Reveal delay={80} className="card-surface p-5">
             <h2 className="text-[15px] font-semibold tracking-tight">Votre candidature</h2>
+            <div className="mt-4 border-b pb-4">
+              <div className="flex items-baseline justify-between gap-3">
+                <h3 className="text-[13px] font-semibold">Vos compétences</h3>
+                <span className="text-[13px] font-semibold tabular-nums">
+                  {matching}/{offer.skills.length}
+                  <span className="sr-only"> compétences demandées en commun avec votre profil</span>
+                </span>
+              </div>
+              <div className="mt-3 flex h-1.5 gap-0.5 overflow-hidden rounded-full bg-muted" aria-hidden>
+                {offer.skills.map((skill, index) => (
+                  <span
+                    key={skill}
+                    className={cn(
+                      "animate-grow-x h-full flex-1 first:rounded-l-full last:rounded-r-full",
+                      index < matching ? (matching === offer.skills.length ? "bg-success" : "bg-primary") : "bg-transparent"
+                    )}
+                    style={{ ["--delay" as string]: `${200 + index * 80}ms` }}
+                  />
+                ))}
+              </div>
+              <ul className="mt-4 space-y-2">
+                {[...offer.skills]
+                  .sort((a, b) => Number(mine.has(b.toLowerCase())) - Number(mine.has(a.toLowerCase())))
+                  .map((skill) => {
+                    const hit = mine.has(skill.toLowerCase());
+                    return (
+                      <li key={skill} className="flex items-center justify-between gap-3 text-[13px]">
+                        <span className={cn(hit ? "font-medium" : "text-muted-foreground")}>{skill}</span>
+                        {hit ? (
+                          <span className="inline-flex items-center gap-1 text-xs font-medium text-success-ink">
+                            <Check className="size-3.5" /> Dans votre profil
+                          </span>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">À développer</span>
+                        )}
+                      </li>
+                    );
+                  })}
+              </ul>
+            </div>
             {application ? (
               <div className="mt-4 space-y-3">
                 <div className="flex items-center justify-between gap-3">
@@ -180,9 +218,9 @@ function OfferDetail() {
                 </Link>
               </div>
             ) : deadline.closed ? (
-              <p className="mt-3 text-[13px] text-muted-foreground">Les candidatures sont closes depuis le {fmtDate(offer.deadline)}.</p>
+              <p className="mt-4 text-[13px] text-muted-foreground">Les candidatures sont closes depuis le {fmtDate(offer.deadline)}.</p>
             ) : (
-              <div className="mt-3 space-y-3">
+              <div className="mt-4 space-y-3">
                 <p className={cn("text-[13px]", deadline.urgent ? "font-medium text-warning" : "text-muted-foreground")}>
                   {deadline.label} · {fmtDate(offer.deadline)}
                 </p>
@@ -234,6 +272,18 @@ function OfferDetail() {
               </div>
             </div>
             <p className="mt-3 text-pretty text-[13px] leading-relaxed text-muted-foreground">{company.about}</p>
+            <dl className="mt-4 grid grid-cols-2 divide-x rounded-xl border py-3">
+              <div className="px-3.5">
+                <dt className="text-[11px] font-medium text-muted-foreground">Offres ouvertes</dt>
+                <dd className="mt-0.5 text-[13px] font-semibold tabular-nums">
+                  {offers.filter((o) => o.companyId === offer.companyId && daysFromToday(o.deadline) >= 0).length}
+                </dd>
+              </div>
+              <div className="min-w-0 px-3.5">
+                <dt className="text-[11px] font-medium text-muted-foreground">Service</dt>
+                <dd className="mt-0.5 truncate text-[13px] font-semibold">{offer.department}</dd>
+              </div>
+            </dl>
           </Reveal>
         </aside>
       </div>
