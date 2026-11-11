@@ -12,8 +12,10 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AideRouteImport } from './routes/aide'
 import { Route as CandidaturesRouteImport } from './routes/candidatures'
+import { Route as ConnexionRouteImport } from './routes/connexion'
 import { Route as DocumentsRouteImport } from './routes/documents'
 import { Route as EntrepriseRouteImport } from './routes/entreprise'
+import { Route as InscriptionRouteImport } from './routes/inscription'
 import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as ParametresRouteImport } from './routes/parametres'
 import { Route as ProfilRouteImport } from './routes/profil'
@@ -47,6 +49,11 @@ const CandidaturesRoute = CandidaturesRouteImport.update({
   path: '/candidatures',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ConnexionRoute = ConnexionRouteImport.update({
+  id: '/connexion',
+  path: '/connexion',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DocumentsRoute = DocumentsRouteImport.update({
   id: '/documents',
   path: '/documents',
@@ -55,6 +62,11 @@ const DocumentsRoute = DocumentsRouteImport.update({
 const EntrepriseRoute = EntrepriseRouteImport.update({
   id: '/entreprise',
   path: '/entreprise',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InscriptionRoute = InscriptionRouteImport.update({
+  id: '/inscription',
+  path: '/inscription',
   getParentRoute: () => rootRouteImport,
 } as any)
 const NotificationsRoute = NotificationsRouteImport.update({
@@ -149,8 +161,10 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/aide': typeof AideRoute
   '/candidatures': typeof CandidaturesRoute
+  '/connexion': typeof ConnexionRoute
   '/documents': typeof DocumentsRoute
   '/entreprise': typeof EntrepriseRouteWithChildren
+  '/inscription': typeof InscriptionRoute
   '/notifications': typeof NotificationsRoute
   '/parametres': typeof ParametresRoute
   '/profil': typeof ProfilRoute
@@ -173,7 +187,9 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/aide': typeof AideRoute
   '/candidatures': typeof CandidaturesRoute
+  '/connexion': typeof ConnexionRoute
   '/documents': typeof DocumentsRoute
+  '/inscription': typeof InscriptionRoute
   '/notifications': typeof NotificationsRoute
   '/parametres': typeof ParametresRoute
   '/profil': typeof ProfilRoute
@@ -196,8 +212,10 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/aide': typeof AideRoute
   '/candidatures': typeof CandidaturesRoute
+  '/connexion': typeof ConnexionRoute
   '/documents': typeof DocumentsRoute
   '/entreprise': typeof EntrepriseRouteWithChildren
+  '/inscription': typeof InscriptionRoute
   '/notifications': typeof NotificationsRoute
   '/parametres': typeof ParametresRoute
   '/profil': typeof ProfilRoute
@@ -222,8 +240,10 @@ export interface FileRouteTypes {
     | '/'
     | '/aide'
     | '/candidatures'
+    | '/connexion'
     | '/documents'
     | '/entreprise'
+    | '/inscription'
     | '/notifications'
     | '/parametres'
     | '/profil'
@@ -246,7 +266,9 @@ export interface FileRouteTypes {
     | '/'
     | '/aide'
     | '/candidatures'
+    | '/connexion'
     | '/documents'
+    | '/inscription'
     | '/notifications'
     | '/parametres'
     | '/profil'
@@ -268,8 +290,10 @@ export interface FileRouteTypes {
     | '/'
     | '/aide'
     | '/candidatures'
+    | '/connexion'
     | '/documents'
     | '/entreprise'
+    | '/inscription'
     | '/notifications'
     | '/parametres'
     | '/profil'
@@ -293,8 +317,10 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AideRoute: typeof AideRoute
   CandidaturesRoute: typeof CandidaturesRoute
+  ConnexionRoute: typeof ConnexionRoute
   DocumentsRoute: typeof DocumentsRoute
   EntrepriseRoute: typeof EntrepriseRouteWithChildren
+  InscriptionRoute: typeof InscriptionRoute
   NotificationsRoute: typeof NotificationsRoute
   ParametresRoute: typeof ParametresRoute
   ProfilRoute: typeof ProfilRoute
@@ -326,6 +352,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CandidaturesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/connexion': {
+      id: '/connexion'
+      path: '/connexion'
+      fullPath: '/connexion'
+      preLoaderRoute: typeof ConnexionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/documents': {
       id: '/documents'
       path: '/documents'
@@ -338,6 +371,13 @@ declare module '@tanstack/react-router' {
       path: '/entreprise'
       fullPath: '/entreprise'
       preLoaderRoute: typeof EntrepriseRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/inscription': {
+      id: '/inscription'
+      path: '/inscription'
+      fullPath: '/inscription'
+      preLoaderRoute: typeof InscriptionRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/notifications': {
@@ -507,8 +547,10 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AideRoute: AideRoute,
   CandidaturesRoute: CandidaturesRoute,
+  ConnexionRoute: ConnexionRoute,
   DocumentsRoute: DocumentsRoute,
   EntrepriseRoute: EntrepriseRouteWithChildren,
+  InscriptionRoute: InscriptionRoute,
   NotificationsRoute: NotificationsRoute,
   ParametresRoute: ParametresRoute,
   ProfilRoute: ProfilRoute,

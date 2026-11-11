@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { ArrowRight, CalendarClock, CheckCircle2, KeyRound, LogOut, Save, Sparkles, UserRound, UserX } from "lucide-react";
 import { toast } from "sonner";
@@ -7,6 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { Reveal } from "@/components/ui/motion";
 import { ARROW_NUDGE, Badge, Field, Modal, PageIntro, SECTION_LINK, iconMotion, inputClass, type IconMotion } from "@/components/company/ui";
 import { useStore } from "@/lib/store";
+import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/parametres")({
@@ -62,6 +63,8 @@ type PasswordErrors = Partial<Record<"current" | "next" | "confirm", string>>;
 
 function SettingsPage() {
   const { profile, updateProfile } = useStore();
+  const signOut = useAuth((state) => state.signOut);
+  const navigate = useNavigate();
 
   const [email, setEmail] = useState(profile.email);
   const [emailError, setEmailError] = useState<string>();
@@ -222,7 +225,10 @@ function SettingsPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => toast.info("Déconnexion indisponible", { description: "Elle sera active avec les comptes utilisateurs." })}
+                  onClick={() => {
+                    signOut();
+                    navigate({ to: "/connexion" });
+                  }}
                 >
                   Se déconnecter
                 </Button>

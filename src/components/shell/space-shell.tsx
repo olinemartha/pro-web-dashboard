@@ -1,7 +1,8 @@
-import { Link, useRouterState } from "@tanstack/react-router";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { ArrowLeftRight, ChevronsUpDown, LogOut, Menu, PanelLeftClose, PanelLeftOpen, Plus, X } from "lucide-react";
+import { ChevronsUpDown, LogOut, Menu, PanelLeftClose, PanelLeftOpen, Plus, X } from "lucide-react";
 import { ShellPageTitleProvider } from "@/components/app/ui";
+import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 
 /**
@@ -38,7 +39,6 @@ export type SpaceConfig = {
   useGreetingName: () => string;
   /** Hook : compte connecté (bas de la barre latérale). */
   useAccount: () => SpaceAccount;
-  switchTo: { to: string; label: string; icon: Icon; motion: IconMotion };
   search: React.ComponentType<{ compact?: boolean }>;
   bell: React.ComponentType;
   primaryAction?: { to: string; search?: Record<string, unknown>; label: string; icon?: Icon; hideOn: (pathname: string) => boolean };
@@ -234,36 +234,13 @@ function SidebarNav({
 }
 
 /* ------------------------------------------------------------------ */
-/* Compte et changement d'espace                                       */
+/* Compte                                                              */
 /* ------------------------------------------------------------------ */
-
-/** Lien de démonstration : une fois l'authentification en place, chaque compte n'accède qu'à son espace. */
-function SwitchSpaceLink({ config, collapsed = false, onNavigate }: { config: SpaceConfig; collapsed?: boolean; onNavigate?: () => void }) {
-  const { to, label, icon: Icon, motion } = config.switchTo;
-  return (
-    <Link
-      to={to}
-      onClick={onNavigate}
-      aria-label={collapsed ? label : undefined}
-      className={cn(
-        "group relative flex h-9 items-center gap-3 rounded-lg border px-2.5 text-[13.5px] font-medium text-foreground transition-colors duration-200 hover:border-foreground/20 hover:bg-muted/70",
-        collapsed && "justify-center px-0"
-      )}
-    >
-      <Icon className={`nav-icon nav-icon--${motion} size-[18px] shrink-0 text-muted-foreground group-hover:text-foreground`} />
-      {!collapsed && (
-        <>
-          <span className="min-w-0 flex-1 truncate">{label}</span>
-          <ArrowLeftRight className="size-3.5 shrink-0 text-muted-foreground transition-transform duration-500 [transition-timing-function:var(--ease-soft)] group-hover:rotate-180 group-hover:text-foreground motion-reduce:transition-none" />
-        </>
-      )}
-      {collapsed && <Tooltip>{label}</Tooltip>}
-    </Link>
-  );
-}
 
 function AccountMenu({ config, collapsed = false, onNavigate }: { config: SpaceConfig; collapsed?: boolean; onNavigate?: () => void }) {
   const account = config.useAccount();
+  const signOut = useAuth((state) => state.signOut);
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -332,7 +309,16 @@ function AccountMenu({ config, collapsed = false, onNavigate }: { config: SpaceC
             </Link>
           ))}
           <div className="my-1 h-px bg-border" />
-          <button type="button" role="menuitem" onClick={close} className={cn(itemClass, "text-destructive-ink hover:bg-destructive-soft")}>
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              close();
+              signOut();
+              navigate({ to: "/connexion" });
+            }}
+            className={cn(itemClass, "text-destructive-ink hover:bg-destructive-soft")}
+          >
             <LogOut className="nav-icon nav-icon--fly size-4" /> Déconnexion
           </button>
         </div>
@@ -456,7 +442,6 @@ function MobileBar({ config, pathname }: { config: SpaceConfig; pathname: string
               <SidebarNav config={config} pathname={pathname} onNavigate={() => setOpen(false)} />
             </div>
             <div className="space-y-1 border-t p-3">
-              <SwitchSpaceLink config={config} onNavigate={() => setOpen(false)} />
               <AccountMenu config={config} onNavigate={() => setOpen(false)} />
             </div>
           </aside>
@@ -539,7 +524,6 @@ export function SpaceShell({ config, children }: { config: SpaceConfig; children
               <PanelLeftOpen className="size-[18px]" />
             </button>
           )}
-          <SwitchSpaceLink config={config} collapsed={collapsed} />
           <AccountMenu config={config} collapsed={collapsed} />
         </div>
       </aside>

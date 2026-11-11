@@ -37,6 +37,8 @@ interface AppState {
   withdraw: (appId: string) => void;
   /** Marque des notifications comme lues. */
   markNotificationsRead: (ids: string[]) => void;
+  /** Nouveau compte : profil saisi à l'inscription, aucune candidature. */
+  startFresh: (profile: Partial<Profile>) => void;
 }
 
 const nowIso = () => new Date().toISOString().slice(0, 19);
@@ -93,6 +95,33 @@ export const useStore = create<AppState>((set, get) => ({
         ? state.saved.filter((id) => id !== offerId)
         : [...state.saved, offerId],
     })),
+
+  startFresh: (input) => {
+    const profile: Profile = {
+      nom: "", postnom: "", prenom: "", adresse: "", email: "", telephone: "", photo: null,
+      universite: "", faculte: "", filiere: "", niveau: "", competences: [], experiences: "",
+      projets: "", infos: "", cv: null, visible: true,
+      ...input,
+    };
+    set({
+      profile,
+      completion: profileCompletion(profile),
+      applications: [],
+      saved: [],
+      activity: [],
+      confirmed: false,
+      notifications: [
+        {
+          id: "n-bienvenue",
+          title: "Bienvenue sur StageManager",
+          body: "Complétez votre profil et ajoutez votre CV : le système expert vous recommandera les offres qui vous correspondent.",
+          date: nowIso(),
+          read: false,
+          kind: "offre",
+        },
+      ],
+    });
+  },
 
   markNotificationsRead: (ids) =>
     set((state) => ({

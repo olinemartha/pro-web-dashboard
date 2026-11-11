@@ -1,4 +1,4 @@
-import { Briefcase, Building2, CalendarClock, GraduationCap, Layers, LayoutDashboard, Send, Settings, UserRoundCheck, Users } from "lucide-react";
+import { Briefcase, Building2, CalendarClock, Layers, LayoutDashboard, Send, Settings, UserRoundCheck, Users } from "lucide-react";
 import { CompanyLogo } from "@/components/company/company-logo";
 import { NotificationBell, SearchCommand } from "@/components/company/topbar";
 import { SpaceShell, type SpaceConfig } from "@/components/shell/space-shell";
@@ -79,7 +79,6 @@ const companyConfig: SpaceConfig = {
       ],
     };
   },
-  switchTo: { to: "/", label: "Espace étudiant", icon: GraduationCap, motion: "tilt" },
   search: SearchCommand,
   bell: () => <NotificationBell />,
   primaryAction: {

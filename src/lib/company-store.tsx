@@ -21,6 +21,7 @@ import {
   type Supervisor,
 } from "./company-data";
 import { localIsoDate } from "./dates";
+import type { HostingProfile } from "./auth";
 import {
   buildExpertRun,
   EXPERT_ENGINE_VERSION,
@@ -130,6 +131,9 @@ interface CompanyState {
   studentWithdraw: (candidateId: string, note: string) => void;
 
   supervisors: Supervisor[];
+  /** Réponses de l'entreprise à l'inscription : types de stagiaires, critères d'affectation… */
+  hosting: HostingProfile | null;
+  setHosting: (hosting: HostingProfile) => void;
   addSupervisor: (s: Omit<Supervisor, "id">) => void;
   updateSupervisor: (supervisorId: string, patch: Partial<Omit<Supervisor, "id">>) => void;
   /** Retire un encadreur sans stagiaire. Refusé s'il suit encore quelqu'un. */
@@ -146,6 +150,8 @@ export const useCompanyStore = create<CompanyState>((set, get) => ({
   interns: demoInterns,
   services: demoServices,
   supervisors: demoSupervisors,
+  hosting: null,
+  setHosting: (hosting) => set({ hosting }),
   expertRuns: seedRuns,
   decisions: seedDecisions,
   // Démo : les plus anciennes notifications sont déjà lues.

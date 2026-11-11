@@ -2,7 +2,6 @@ import { useMemo } from "react";
 import {
   Bell,
   Briefcase,
-  Building2,
   CalendarClock,
   CheckCircle2,
   FileText,
@@ -184,7 +183,6 @@ const studentConfig: SpaceConfig = {
       ],
     };
   },
-  switchTo: { to: "/entreprise", label: "Espace entreprise", icon: Building2, motion: "lift" },
   search: StudentSearch,
   bell: StudentBell,
   primaryAction: {

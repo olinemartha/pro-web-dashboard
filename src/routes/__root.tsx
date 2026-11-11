@@ -3,17 +3,34 @@ import {
   Outlet,
   Link,
   createRootRouteWithContext,
+  useNavigate,
   useRouter,
   useRouterState,
   type ErrorComponentProps,
 } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 import "../index.css";
 import { AppShell } from "../components/app/app-shell";
 import { CompanyShell } from "../components/company/company-shell";
+import { AdminShell } from "../components/admin/admin-shell";
+import { ROLE_HOME, isPublicPath, roleForPath, useAuth } from "../lib/auth";
+import { useStore } from "../lib/store";
+import { useCompanyStore } from "../lib/company-store";
 import { Toaster } from "../components/ui/sonner";
 import { queryClient } from "../lib/query-client";
+
+function HomeLink() {
+  const session = useAuth((state) => state.session);
+  return (
+    <Link
+      to={session ? ROLE_HOME[session.role] : "/connexion"}
+      className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover"
+    >
+      {session ? "Retour à l'accueil" : "Se connecter"}
+    </Link>
+  );
+}
 
 function NotFoundComponent() {
   return (
@@ -25,18 +42,7 @@ function NotFoundComponent() {
           La page que vous recherchez n'existe pas ou a été déplacée.
         </p>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
-          <Link
-            to="/"
-            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-          >
-            Espace étudiant
-          </Link>
-          <Link
-            to="/entreprise"
-            className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
-          >
-            Espace entreprise
-          </Link>
+          <HomeLink />
         </div>
       </div>
     </div>
@@ -94,21 +100,69 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   errorComponent: ErrorComponent,
 });
 
+/**
+ * Où doit aller la personne ? Sans session : connexion. Inscription inachevée : onboarding.
+ * Connectée : uniquement l'espace de son rôle (le changement d'espace n'existe plus).
+ */
+function useRedirect(pathname: string) {
+  const session = useAuth((state) => state.session);
+  const isPublic = isPublicPath(pathname);
+  if (!session) return isPublic ? null : "/connexion";
+  if (!session.onboarded) return pathname === "/inscription" ? null : "/inscription";
+  if (isPublic) return ROLE_HOME[session.role];
+  if (roleForPath(pathname) !== session.role) return ROLE_HOME[session.role];
+  return null;
+}
+
+/** Comptes créés à l'inscription : on recharge leur profil (les données d'exemple restent pour la démonstration). */
+function useRestoreAccount() {
+  const session = useAuth((state) => state.session);
+  const accountFor = useAuth((state) => state.accountFor);
+  const restored = useRef<string | null>(null);
+  useEffect(() => {
+    if (!session || session.demo || !session.onboarded || restored.current === session.email) return;
+    restored.current = session.email;
+    const account = accountFor(session.email);
+    if (session.role === "etudiant" && account?.profile) useStore.getState().startFresh(account.profile);
+    if (session.role === "entreprise" && account?.company) {
+      useCompanyStore.getState().updateProfile(account.company.profile);
+      useCompanyStore.getState().setHosting(account.company.hosting);
+    }
+  }, [session, accountFor]);
+}
+
 function RootComponent() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const isCompanySpace = pathname.startsWith("/entreprise");
+  const navigate = useNavigate();
+  const redirect = useRedirect(pathname);
+  useRestoreAccount();
+
+  useEffect(() => {
+    if (redirect) navigate({ to: redirect, replace: true });
+  }, [redirect, navigate]);
+
+  const space = roleForPath(pathname);
+  const content = redirect ? (
+    <div className="min-h-screen bg-background" aria-busy="true" />
+  ) : isPublicPath(pathname) ? (
+    <Outlet />
+  ) : space === "admin" ? (
+    <AdminShell>
+      <Outlet />
+    </AdminShell>
+  ) : space === "entreprise" ? (
+    <CompanyShell>
+      <Outlet />
+    </CompanyShell>
+  ) : (
+    <AppShell>
+      <Outlet />
+    </AppShell>
+  );
 
   return (
     <QueryClientProvider client={queryClient}>
-      {isCompanySpace ? (
-        <CompanyShell>
-          <Outlet />
-        </CompanyShell>
-      ) : (
-        <AppShell>
-          <Outlet />
-        </AppShell>
-      )}
+      {content}
       <Toaster position="top-right" />
     </QueryClientProvider>
   );
