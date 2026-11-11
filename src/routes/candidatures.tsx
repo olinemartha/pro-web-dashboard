@@ -3,6 +3,7 @@ import { ArrowRight, CalendarClock, CheckCircle2, Send, Undo2, UserSearch } from
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { CompanyMark, STUDENT_STATUS, StatusBadge } from "@/components/app/ui";
+import { ExpertHint } from "@/components/app/assignment";
 import {
   ARROW_NUDGE,
   ActionMenu,
@@ -190,6 +191,7 @@ function Applications() {
                     <p className="mt-0.5 truncate text-xs text-muted-foreground">
                       {offer.department} · {offer.location} · {offer.duration}
                     </p>
+                    <ExpertHint candidateId={a.candidateId} offerTitle={offer.title} />
                   </div>
                   <button
                     type="button"
