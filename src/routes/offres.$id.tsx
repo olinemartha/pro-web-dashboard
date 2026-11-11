@@ -1,8 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowLeft, ArrowRight, Bookmark, Building2, CalendarClock, Check, Send, UserRound } from "lucide-react";
+import { ArrowLeft, ArrowRight, Bookmark, Building2, CalendarClock, Send, Sparkles, UserRound } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { CompanyMark, StatusBadge, deadlineLabel, offersReturn } from "@/components/app/ui";
+import { CriteriaList } from "@/components/app/assignment";
+import { matchOffer, VERDICT_LABELS } from "@/lib/offer-matching";
 import { ARROW_NUDGE, Badge, EmptyNote, Modal, SECTION_LINK, StatusDot, iconMotion } from "@/components/company/ui";
 import { Button } from "@/components/ui/button";
 import { Reveal } from "@/components/ui/motion";
@@ -72,8 +74,8 @@ function OfferDetail() {
   const deadline = deadlineLabel(offer.deadline);
   const closed = deadline.closed || !isOpen;
   const isSaved = saved.includes(offer.id);
-  const mine = new Set(profile.competences.map((skill) => skill.toLowerCase()));
-  const matching = offer.skills.filter((skill) => mine.has(skill.toLowerCase())).length;
+  // Système expert : ce profil correspond-il à cette offre ? (règles O1 à O4, expliquées)
+  const match = matchOffer(profile, offer);
   const missing = missingEssentials(profile).map((key) => COMPLETION_FIELDS.find((f) => f.key === key)?.label ?? key);
 
   const send = () => {
@@ -163,44 +165,23 @@ function OfferDetail() {
           <Reveal delay={80} className="card-surface p-5">
             <h2 className="text-[15px] font-semibold tracking-tight">Votre candidature</h2>
             <div className="mt-4 border-b pb-4">
-              <div className="flex items-baseline justify-between gap-3">
-                <h3 className="text-[13px] font-semibold">Vos compétences</h3>
-                <span className="text-[13px] font-semibold tabular-nums">
-                  {matching}/{offer.skills.length}
-                  <span className="sr-only"> compétences demandées en commun avec votre profil</span>
-                </span>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h3 className="flex items-center gap-1.5 text-[13px] font-semibold">
+                  <Sparkles className="size-3.5 text-primary" aria-hidden />
+                  Analyse du système expert
+                </h3>
+                <Badge
+                  label={`${VERDICT_LABELS[match.verdict]} · ${match.met}/4`}
+                  tone={match.verdict === "recommandee" ? "primary" : "muted"}
+                  className="text-[11px]"
+                />
               </div>
-              <div className="mt-3 flex h-1.5 gap-0.5 overflow-hidden rounded-full bg-muted" aria-hidden>
-                {offer.skills.map((skill, index) => (
-                  <span
-                    key={skill}
-                    className={cn(
-                      "animate-grow-x h-full flex-1 first:rounded-l-full last:rounded-r-full",
-                      index < matching ? (matching === offer.skills.length ? "bg-success" : "bg-primary") : "bg-transparent"
-                    )}
-                    style={{ ["--delay" as string]: `${200 + index * 80}ms` }}
-                  />
-                ))}
+              <p className="mt-1 text-pretty text-xs text-muted-foreground">
+                Votre profil comparé à cette offre, règle par règle.
+              </p>
+              <div className="mt-3">
+                <CriteriaList criteria={match.criteria} />
               </div>
-              <ul className="mt-4 space-y-2">
-                {[...offer.skills]
-                  .sort((a, b) => Number(mine.has(b.toLowerCase())) - Number(mine.has(a.toLowerCase())))
-                  .map((skill) => {
-                    const hit = mine.has(skill.toLowerCase());
-                    return (
-                      <li key={skill} className="flex items-center justify-between gap-3 text-[13px]">
-                        <span className={cn(hit ? "font-medium" : "text-muted-foreground")}>{skill}</span>
-                        {hit ? (
-                          <span className="inline-flex items-center gap-1 text-xs font-medium text-success-ink">
-                            <Check className="size-3.5" /> Dans votre profil
-                          </span>
-                        ) : (
-                          <span className="text-xs text-muted-foreground">À développer</span>
-                        )}
-                      </li>
-                    );
-                  })}
-              </ul>
             </div>
             {application ? (
               <div className="mt-4 space-y-3">

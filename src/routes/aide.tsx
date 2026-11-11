@@ -36,7 +36,7 @@ const FAQ: { q: string; a: React.ReactNode }[] = [
   },
   {
     q: "Comment fonctionne le système expert ?",
-    a: "Une fois votre stage confirmé, le système expert compare votre profil (filière, niveau, compétences) aux besoins des services de l'entreprise et propose une affectation, avec son explication. La décision finale appartient toujours à l'entreprise.",
+    a: "Il intervient deux fois. D'abord, il compare votre profil à chaque offre (niveau d'études, formation, compétences, date limite) et vous recommande celles qui satisfont au moins 3 de ces 4 règles : la raison est détaillée sur chaque offre. Ensuite, quand une entreprise accepte votre candidature, il compare votre profil aux besoins de ses services et propose un service d'accueil, avec son explication. Il recommande seulement : vous restez libre de postuler, et l'affectation est décidée par l'entreprise.",
   },
   {
     q: "Où trouver mon attestation de fin de stage ?",

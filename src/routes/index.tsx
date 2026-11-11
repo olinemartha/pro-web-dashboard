@@ -26,6 +26,7 @@ import { daysFromToday, fmtDate, relativeDay } from "@/lib/dates";
 import { companyOf, internshipExtras, offerOf } from "@/lib/mock-data";
 import { missingFields } from "@/lib/rules";
 import { usePublishedOffers, useStore } from "@/lib/store";
+import { rankOffers, VERDICT_LABELS } from "@/lib/offer-matching";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/")({
@@ -122,13 +123,13 @@ function Dashboard() {
     });
   });
 
-  /* ---- Offres recommandées : le plus de compétences en commun, encore ouvertes ---- */
-  const mine = new Set(profile.competences.map((skill) => skill.toLowerCase()));
+  /* ---- Offres recommandées par le système expert, encore ouvertes, pas encore postulées ---- */
   const appliedIds = new Set(applications.map((a) => a.offerId));
-  const recommended = offers
-    .filter((o) => !appliedIds.has(o.id) && daysFromToday(o.deadline) >= 0)
-    .map((o) => ({ offer: o, match: o.skills.filter((skill) => mine.has(skill.toLowerCase())).length }))
-    .sort((a, b) => b.match - a.match || a.offer.deadline.localeCompare(b.offer.deadline))
+  const recommended = rankOffers(
+    profile,
+    offers.filter((o) => !appliedIds.has(o.id))
+  )
+    .filter(({ match }) => match.verdict === "recommandee" || match.verdict === "partielle")
     .slice(0, 3);
 
   const upcoming = applications
@@ -261,7 +262,7 @@ function Dashboard() {
           <Reveal as="section" delay={140} className="card-surface p-5">
             <SectionHeader
               title="Offres recommandées"
-              description="Ouvertes et proches de vos compétences"
+              description="Proposées par le système expert pour votre profil"
               to="/offres"
               linkLabel="Toutes les offres"
             />
@@ -278,10 +279,12 @@ function Dashboard() {
                         <p className="line-clamp-2 text-[13px] font-semibold sm:line-clamp-1">{offer.title}</p>
                         <p className="mt-0.5 truncate text-xs text-muted-foreground">
                           {offer.department}
-                          <span className="hidden tabular-nums sm:inline"> · {match}/{offer.skills.length} compétences en commun</span>
+                          <span className={cn("hidden sm:inline", match.verdict === "recommandee" && "font-medium text-primary")}>
+                            {" "}· {VERDICT_LABELS[match.verdict]} ({match.met}/4 critères)
+                          </span>
                         </p>
                         <p className="mt-0.5 truncate text-xs tabular-nums text-muted-foreground sm:hidden">
-                          {match}/{offer.skills.length} en commun ·{" "}
+                          <span className={cn(match.verdict === "recommandee" && "font-medium text-primary")}>{match.met}/4 critères</span> ·{" "}
                           <span className={cn(deadline.urgent && "font-medium text-warning")}>{deadline.label}</span>
                         </p>
                       </div>

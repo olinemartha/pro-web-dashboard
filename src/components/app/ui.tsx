@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Link } from "@tanstack/react-router";
-import { Bookmark, Check, Clock, GraduationCap, MapPin } from "lucide-react";
+import { Bookmark, Check, Clock, GraduationCap, MapPin, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { Badge, CARD_INTERACTIVE, type Tone } from "@/components/company/ui";
 import type { CandidateStatus } from "@/lib/company-data";
@@ -8,6 +8,7 @@ import { daysFromToday, fmtDate } from "@/lib/dates";
 import { companyOf, type Offer } from "@/lib/mock-data";
 import type { AppStatus } from "@/lib/rules";
 import { STATUS_LABELS } from "@/lib/rules";
+import { matchOffer } from "@/lib/offer-matching";
 import { useStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
 
@@ -98,7 +99,7 @@ export function StudentOfferCard({ offer, applied }: { offer: Offer; applied?: A
   const { saved, toggleSave, profile } = useStore();
   const isSaved = saved.includes(offer.id);
   const mine = new Set(profile.competences.map((skill) => skill.toLowerCase()));
-  const matching = offer.skills.filter((skill) => mine.has(skill.toLowerCase())).length;
+  const match = matchOffer(profile, offer);
   const deadline = deadlineLabel(offer.deadline);
 
   return (
@@ -172,9 +173,16 @@ export function StudentOfferCard({ offer, applied }: { offer: Offer; applied?: A
         {applied ? (
           <StatusBadge status={applied} />
         ) : (
-          <span className="tabular-nums text-muted-foreground">
-            <span className="font-semibold text-foreground">{matching}</span>/{offer.skills.length} compétences en commun
-          </span>
+          match.verdict === "recommandee" ? (
+            <span className="inline-flex items-center gap-1 font-semibold text-primary">
+              <Sparkles className="size-3.5" aria-hidden />
+              Recommandée pour vous
+            </span>
+          ) : (
+            <span className="tabular-nums text-muted-foreground" title="Règles du système expert satisfaites">
+              <span className="font-semibold text-foreground">{match.met}</span>/4 critères du système expert
+            </span>
+          )
         )}
         <span
           className={cn(

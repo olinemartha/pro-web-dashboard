@@ -14,6 +14,7 @@ import {
 import { Reveal } from "@/components/ui/motion";
 import { daysFromToday } from "@/lib/dates";
 import { usePublishedOffers, useStore } from "@/lib/store";
+import { matchOffer, rankOffers } from "@/lib/offer-matching";
 
 type Filter = "toutes" | "pour_vous" | "enregistrees" | "postulees";
 type Sort = "recentes" | "cloture" | "competences";
@@ -68,14 +69,14 @@ function Offers() {
   const setFilter = (value: Filter) => update({ filtre: value });
   const setSort = (value: Sort) => update({ tri: value });
 
-  const mine = useMemo(() => new Set(profile.competences.map((skill) => skill.toLowerCase())), [profile.competences]);
   const appliedBy = useMemo(() => new Map(applications.map((a) => [a.offerId, a.status])), [applications]);
-  const matchOf = (skills: string[]) => skills.filter((skill) => mine.has(skill.toLowerCase())).length;
 
   // Les offres publiées par l'entreprise : un brouillon ou une offre clôturée n'apparaît pas.
   const offers = usePublishedOffers();
   const open = offers.filter((o) => daysFromToday(o.deadline) >= 0);
-  const forYou = open.filter((o) => matchOf(o.skills) >= 2 && !appliedBy.has(o.id));
+  // « Pour vous » : les offres que le système expert recommande, auxquelles l'étudiant n'a pas encore postulé.
+  const forYou = open.filter((o) => !appliedBy.has(o.id) && matchOffer(profile, o).verdict === "recommandee");
+  const rank = new Map(rankOffers(profile, offers).map((entry, index) => [entry.offer.id, index]));
   const closingSoon = open.filter((o) => daysFromToday(o.deadline) <= CLOSING_DAYS);
 
   const inFilter = (id: string) =>
@@ -90,7 +91,7 @@ function Offers() {
     .filter((o) => !query || `${o.title} ${o.department} ${o.location} ${o.level} ${o.skills.join(" ")}`.toLowerCase().includes(query))
     .sort((a, b) => {
       if (sort === "cloture") return a.deadline.localeCompare(b.deadline);
-      if (sort === "competences") return matchOf(b.skills) - matchOf(a.skills) || b.published.localeCompare(a.published);
+      if (sort === "competences") return (rank.get(a.id) ?? 0) - (rank.get(b.id) ?? 0);
       return b.published.localeCompare(a.published);
     });
 
@@ -106,7 +107,7 @@ function Offers() {
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 lg:gap-6">
         {[
           <StatCard key="ouvertes" label="Offres ouvertes" value={open.length} icon={Briefcase} motion="lift" foot={`sur ${plural(offers.length, "offre")} publiée${offers.length > 1 ? "s" : ""} par FINCA RDC`} />,
-          <StatCard key="pour-vous" label="Pour votre profil" value={forYou.length} icon={Sparkles} motion="pop" foot="au moins 2 compétences en commun" />,
+          <StatCard key="pour-vous" label="Pour votre profil" value={forYou.length} icon={Sparkles} motion="pop" foot="recommandées par le système expert" />,
           <StatCard key="enregistrees" label="Offres enregistrées" value={saved.length} icon={Bookmark} motion="lift" foot={saved.length ? "à relire avant de postuler" : "aucune pour le moment"} />,
           <StatCard
             key="cloture"
@@ -153,7 +154,7 @@ function Offers() {
           >
             <option value="recentes">Plus récentes</option>
             <option value="cloture">Clôture la plus proche</option>
-            <option value="competences">Plus de compétences en commun</option>
+            <option value="competences">Pertinence (système expert)</option>
           </Select>
         </div>
       </div>
@@ -162,7 +163,7 @@ function Offers() {
       </p>
       {filter === "pour_vous" && (
         <p className="-mt-3 text-pretty text-xs text-muted-foreground">
-          Offres encore ouvertes, auxquelles vous n'avez pas postulé, qui demandent au moins 2 de vos compétences.
+          Le système expert compare votre profil à chaque offre : niveau d'études, formation, compétences et date limite. Il recommande les offres ouvertes qui satisfont au moins 3 de ces 4 règles.
         </p>
       )}
 
