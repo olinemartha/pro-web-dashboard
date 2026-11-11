@@ -124,6 +124,11 @@ interface CompanyState {
   updateService: (serviceId: string, patch: Partial<Omit<Service, "id">>) => void;
   removeService: (serviceId: string) => void;
 
+  /** Une candidature arrive de l'espace étudiant : elle devient un candidat « En attente ». */
+  receiveApplication: (input: Omit<Candidate, "id" | "status" | "history">) => string;
+  /** L'étudiant retire sa candidature ou décline la proposition. */
+  studentWithdraw: (candidateId: string, note: string) => void;
+
   supervisors: Supervisor[];
   addSupervisor: (s: Omit<Supervisor, "id">) => void;
   updateSupervisor: (supervisorId: string, patch: Partial<Omit<Supervisor, "id">>) => void;
@@ -447,6 +452,29 @@ export const useCompanyStore = create<CompanyState>((set, get) => ({
   removeService: (serviceId) =>
     set((state) => ({
       services: state.services.filter((service) => service.id !== serviceId),
+    })),
+
+  receiveApplication: (input) => {
+    const id = `c-${Date.now()}`;
+    set((state) => ({
+      candidates: [{ ...input, id, status: "en_attente", history: [historyEntry("en_attente", "Candidature reçue")] }, ...state.candidates],
+      offers: state.offers.map((offer) =>
+        offer.id === input.offerId ? { ...offer, applicationsCount: offer.applicationsCount + 1 } : offer
+      ),
+    }));
+    return id;
+  },
+
+  studentWithdraw: (candidateId, note) =>
+    set((state) => ({
+      interviews: cancelPendingInterviews(state.interviews, candidateId),
+      // Un dossier pas encore validé n'a plus lieu d'être : l'étudiant ne fera pas ce stage.
+      interns: state.interns.filter((intern) => intern.candidateId !== candidateId || intern.confirmed),
+      candidates: state.candidates.map((candidate) =>
+        candidate.id === candidateId && candidate.status !== "retiree"
+          ? { ...candidate, status: "retiree", history: [...candidate.history, historyEntry("retiree", note)] }
+          : candidate
+      ),
     })),
 
   addSupervisor: (supervisor) =>

@@ -1,5 +1,7 @@
 // Données de démonstration — fictives, à remplacer par Supabase plus tard.
 import type { Application, Profile } from "./rules";
+import type { CompanyOffer } from "./company-data";
+import { useCompanyStore } from "./company-store";
 
 export interface Company { id: string; name: string; initials: string; about: string; }
 export interface Offer {
@@ -83,4 +85,29 @@ export const internshipExtras = {
 };
 
 export const companyOf = (id: string) => companies.find((c) => c.id === id)!;
-export const offerOf = (id: string) => offers.find((o) => o.id === id)!;
+/** Offre de l'entreprise vue par l'étudiant (le profil recherché vient du détail de démonstration). */
+export function toStudentOffer(offer: CompanyOffer): Offer {
+  const detail = offers.find((o) => o.id === offer.id);
+  return {
+    id: offer.id,
+    companyId: "finca",
+    title: offer.title,
+    department: offer.department,
+    location: offer.location,
+    type: offer.type,
+    duration: offer.duration,
+    level: offer.level,
+    deadline: offer.deadline,
+    published: offer.published,
+    description: offer.description,
+    missions: offer.missions,
+    profile: detail?.profile ?? "",
+    skills: offer.skills,
+  };
+}
+
+/** L'offre telle que l'entreprise la publie ; à défaut, la fiche de démonstration. */
+export const offerOf = (id: string): Offer => {
+  const live = useCompanyStore.getState().offers.find((o) => o.id === id);
+  return live ? toStudentOffer(live) : offers.find((o) => o.id === id)!;
+};

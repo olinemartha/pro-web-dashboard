@@ -23,9 +23,9 @@ import {
 } from "@/components/company/ui";
 import { AnimatedNumber, Reveal } from "@/components/ui/motion";
 import { daysFromToday, fmtDate, relativeDay } from "@/lib/dates";
-import { companyOf, internshipExtras, offerOf, offers } from "@/lib/mock-data";
+import { companyOf, internshipExtras, offerOf } from "@/lib/mock-data";
 import { missingFields } from "@/lib/rules";
-import { useStore } from "@/lib/store";
+import { usePublishedOffers, useStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/")({
@@ -65,6 +65,7 @@ type Todo = {
 
 function Dashboard() {
   const { profile, applications, saved, activity, completion, confirmed } = useStore();
+  const offers = usePublishedOffers();
   const missing = missingFields(profile);
   const accepted = applications.filter((a) => a.status === "acceptee");
   const interviews = applications.filter((a) => a.status === "entretien");

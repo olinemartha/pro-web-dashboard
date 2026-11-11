@@ -57,6 +57,8 @@ export interface Candidate {
   status: CandidateStatus;
   history: CandidateHistoryEntry[];
   refusalReason?: string;
+  /** Candidature déposée depuis l'espace étudiant (lien entre les deux espaces). */
+  studentAppId?: string;
 }
 
 export type InterviewStatus = "programme" | "realise" | "annule";
@@ -299,7 +301,7 @@ export const demoCompanyOffers: CompanyOffer[] = [
   {
     id: "o4", title: "Stagiaire Ressources Humaines", department: "Ressources Humaines",
     location: "Kinshasa, Gombe", type: "Stage académique", duration: "4 mois", level: "Licence (L3)",
-    deadline: "2026-12-12", published: "2026-10-28", status: "brouillon",
+    deadline: "2026-12-12", published: "2026-10-28", status: "publiee",
     description: "Accompagnez l'équipe RH dans le recrutement et l'administration du personnel.",
     missions: ["Trier les candidatures", "Organiser les entretiens", "Mettre à jour les dossiers"],
     skills: ["Communication", "Organisation", "Excel"], applicationsCount: 0,
@@ -311,6 +313,14 @@ export const demoCompanyOffers: CompanyOffer[] = [
     description: "Évaluez les processus des agences.",
     missions: ["Contrôles en agence", "Rédiger des rapports", "Suivre les recommandations"],
     skills: ["Comptabilité", "Analyse", "Rédaction"], applicationsCount: 0,
+  },
+  {
+    id: "o6", title: "Stagiaire Data Analyst", department: "Direction IT",
+    location: "Kinshasa, Gombe", type: "Stage professionnel", duration: "5 mois", level: "Master (M1)",
+    deadline: "2026-12-15", published: "2026-11-02", status: "publiee",
+    description: "Exploitez les données clients pour produire des tableaux de bord décisionnels.",
+    missions: ["Nettoyer et préparer les données", "Construire des tableaux de bord", "Présenter les analyses"],
+    skills: ["SQL", "Excel", "Python"], applicationsCount: 0,
   },
 ];
 

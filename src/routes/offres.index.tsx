@@ -13,8 +13,7 @@ import {
 } from "@/components/company/ui";
 import { Reveal } from "@/components/ui/motion";
 import { daysFromToday } from "@/lib/dates";
-import { offers } from "@/lib/mock-data";
-import { useStore } from "@/lib/store";
+import { usePublishedOffers, useStore } from "@/lib/store";
 
 type Filter = "toutes" | "pour_vous" | "enregistrees" | "postulees";
 type Sort = "recentes" | "cloture" | "competences";
@@ -73,6 +72,8 @@ function Offers() {
   const appliedBy = useMemo(() => new Map(applications.map((a) => [a.offerId, a.status])), [applications]);
   const matchOf = (skills: string[]) => skills.filter((skill) => mine.has(skill.toLowerCase())).length;
 
+  // Les offres publiées par l'entreprise : un brouillon ou une offre clôturée n'apparaît pas.
+  const offers = usePublishedOffers();
   const open = offers.filter((o) => daysFromToday(o.deadline) >= 0);
   const forYou = open.filter((o) => matchOf(o.skills) >= 2 && !appliedBy.has(o.id));
   const closingSoon = open.filter((o) => daysFromToday(o.deadline) <= CLOSING_DAYS);
@@ -104,7 +105,7 @@ function Offers() {
 
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 lg:gap-6">
         {[
-          <StatCard key="ouvertes" label="Offres ouvertes" value={open.length} icon={Briefcase} motion="lift" foot={`sur ${plural(offers.length, "offre")} publiée${offers.length > 1 ? "s" : ""}`} />,
+          <StatCard key="ouvertes" label="Offres ouvertes" value={open.length} icon={Briefcase} motion="lift" foot={`sur ${plural(offers.length, "offre")} publiée${offers.length > 1 ? "s" : ""} par FINCA RDC`} />,
           <StatCard key="pour-vous" label="Pour votre profil" value={forYou.length} icon={Sparkles} motion="pop" foot="au moins 2 compétences en commun" />,
           <StatCard key="enregistrees" label="Offres enregistrées" value={saved.length} icon={Bookmark} motion="lift" foot={saved.length ? "à relire avant de postuler" : "aucune pour le moment"} />,
           <StatCard

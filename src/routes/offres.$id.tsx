@@ -6,10 +6,10 @@ import { CompanyMark, StatusBadge, deadlineLabel, offersReturn } from "@/compone
 import { ARROW_NUDGE, Badge, EmptyNote, Modal, SECTION_LINK, StatusDot, iconMotion } from "@/components/company/ui";
 import { Button } from "@/components/ui/button";
 import { Reveal } from "@/components/ui/motion";
-import { daysFromToday, fmtDate, localIsoDate } from "@/lib/dates";
-import { companyOf, offerOf, offers } from "@/lib/mock-data";
+import { daysFromToday, fmtDate } from "@/lib/dates";
+import { companyOf, offerOf } from "@/lib/mock-data";
 import { COMPLETION_FIELDS, canApply, missingEssentials } from "@/lib/rules";
-import { useStore } from "@/lib/store";
+import { useOfferIsOpen, usePublishedOffers, useStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/offres/$id")({
@@ -47,8 +47,12 @@ function BackLink() {
 }
 
 function OfferDetail() {
-  const { profile, applications, addApplication, saved, toggleSave } = useStore();
-  const offer = offerOf(Route.useParams().id);
+  const { profile, applications, apply, saved, toggleSave } = useStore();
+  const published = usePublishedOffers();
+  const offerId = Route.useParams().id;
+  const offer = offerOf(offerId);
+  // L'entreprise peut clôturer ou désactiver l'offre : on ne peut plus y postuler.
+  const isOpen = useOfferIsOpen(offerId);
   const [confirming, setConfirming] = useState(false);
 
   if (!offer) {
@@ -66,13 +70,14 @@ function OfferDetail() {
   const application = applications.find((a) => a.offerId === offer.id);
   const can = canApply(profile, applications, offer.id);
   const deadline = deadlineLabel(offer.deadline);
+  const closed = deadline.closed || !isOpen;
   const isSaved = saved.includes(offer.id);
   const mine = new Set(profile.competences.map((skill) => skill.toLowerCase()));
   const matching = offer.skills.filter((skill) => mine.has(skill.toLowerCase())).length;
   const missing = missingEssentials(profile).map((key) => COMPLETION_FIELDS.find((f) => f.key === key)?.label ?? key);
 
   const send = () => {
-    addApplication({ id: `a-${Date.now()}`, offerId: offer.id, date: localIsoDate(), status: "envoyee" });
+    apply(offer.id);
     setConfirming(false);
     toast.success("Candidature envoyée", { description: `${company.name} a reçu votre profil et votre CV.` });
   };
@@ -217,8 +222,12 @@ function OfferDetail() {
                   <ArrowRight className={cn("size-3.5", ARROW_NUDGE)} />
                 </Link>
               </div>
-            ) : deadline.closed ? (
-              <p className="mt-4 text-[13px] text-muted-foreground">Les candidatures sont closes depuis le {fmtDate(offer.deadline)}.</p>
+            ) : closed ? (
+              <p className="mt-4 text-[13px] text-muted-foreground">
+                {deadline.closed
+                  ? `Les candidatures sont closes depuis le ${fmtDate(offer.deadline)}.`
+                  : "L'entreprise a clôturé cette offre : elle n'accepte plus de candidatures."}
+              </p>
             ) : (
               <div className="mt-4 space-y-3">
                 <p className={cn("text-[13px]", deadline.urgent ? "font-medium text-warning" : "text-muted-foreground")}>
@@ -276,7 +285,7 @@ function OfferDetail() {
               <div className="px-3.5">
                 <dt className="text-[11px] font-medium text-muted-foreground">Offres ouvertes</dt>
                 <dd className="mt-0.5 text-[13px] font-semibold tabular-nums">
-                  {offers.filter((o) => o.companyId === offer.companyId && daysFromToday(o.deadline) >= 0).length}
+                  {published.filter((o) => o.companyId === offer.companyId && daysFromToday(o.deadline) >= 0).length}
                 </dd>
               </div>
               <div className="min-w-0 px-3.5">
@@ -289,7 +298,7 @@ function OfferDetail() {
       </div>
 
       {/* Téléphone et tablette : l'action reste à portée de pouce pendant la lecture de l'offre */}
-      {!application && !deadline.closed && (
+      {!application && !closed && (
         <div className="sticky bottom-3 z-20 xl:hidden">
           <div className="flex items-center gap-3 rounded-xl border bg-popover px-4 py-3 shadow-lg">
             <div className="min-w-0 flex-1">

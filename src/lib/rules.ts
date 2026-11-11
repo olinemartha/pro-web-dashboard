@@ -61,6 +61,8 @@ export interface Application {
   offerId: string;
   date: string;
   status: AppStatus;
+  /** Candidat correspondant dans l'espace entreprise. */
+  candidateId?: string;
   /** Entretien programmé par l'entreprise (statut « entretien »). */
   interview?: { date: string; time: string; place: string };
 }

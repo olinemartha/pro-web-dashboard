@@ -17,9 +17,9 @@ import {
 import { AvatarInitials } from "@/components/company/ui";
 import { SpaceShell, type SpaceConfig } from "@/components/shell/space-shell";
 import { NoticeBell, SearchBox, type Notice, type SearchTarget } from "@/components/shell/topbar-widgets";
-import { offerOf, offers } from "@/lib/mock-data";
+import { offerOf } from "@/lib/mock-data";
 import { STATUS_LABELS } from "@/lib/rules";
-import { useStore } from "@/lib/store";
+import { usePublishedOffers, useStore } from "@/lib/store";
 
 /**
  * Espace étudiant : la même coque que l'espace entreprise.
@@ -55,6 +55,7 @@ const initialsOf = (prenom: string, nom: string) => `${prenom[0] ?? ""}${nom[0] 
 
 function useStudentResults(query: string): SearchTarget[] {
   const { applications } = useStore();
+  const offers = usePublishedOffers();
   return useMemo(() => {
     if (!query) return [];
     const jobs: SearchTarget[] = offers
@@ -72,7 +73,7 @@ function useStudentResults(query: string): SearchTarget[] {
         to: "/candidatures",
       }));
     return [...jobs, ...mine];
-  }, [query, applications]);
+  }, [query, applications, offers]);
 }
 
 function StudentSearch({ compact = false }: { compact?: boolean }) {
