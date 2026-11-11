@@ -2,7 +2,7 @@ import * as React from "react";
 import { Link } from "@tanstack/react-router";
 import { Bookmark, Check, Clock, GraduationCap, MapPin } from "lucide-react";
 import { toast } from "sonner";
-import { Badge, CARD_INTERACTIVE, EXPERT_CARD, ExpertBadge, RuleMeter, type Tone } from "@/components/company/ui";
+import { Badge, CARD_INTERACTIVE, EXPERT_BORDER, EXPERT_CARD, ExpertBadge, RuleMeter, type Tone } from "@/components/company/ui";
 import type { CandidateStatus } from "@/lib/company-data";
 import { daysFromToday, fmtDate } from "@/lib/dates";
 import { companyOf, type Offer } from "@/lib/mock-data";
@@ -106,7 +106,7 @@ export function StudentOfferCard({ offer, applied }: { offer: Offer; applied?: A
   const highlighted = match.verdict === "recommandee" && !applied;
 
   return (
-    <article className={cn(CARD_INTERACTIVE, highlighted && EXPERT_CARD, "relative flex h-full cursor-pointer flex-col p-5")}>
+    <article className={cn(CARD_INTERACTIVE, highlighted && cn(EXPERT_CARD, EXPERT_BORDER), "relative flex h-full cursor-pointer flex-col p-5")}>
       {highlighted && <ExpertBadge label="Recommandée pour vous par le système expert" className="-mt-1 mb-3 self-start" />}
       <div className="flex items-start gap-3">
         <CompanyMark id={offer.companyId} />

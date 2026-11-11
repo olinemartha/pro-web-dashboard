@@ -62,7 +62,12 @@ export function AssignmentCard({
   const titleId = `affectation-titre-${intern.id}`;
 
   return (
-    <Reveal as="section" delay={delay} className="card-surface overflow-hidden" aria-labelledby={titleId}>
+    <Reveal
+      as="section"
+      delay={delay}
+      className={cn("card-surface overflow-hidden", (decided ? Boolean(retained) : proposals.length > 0) && "expert-border")}
+      aria-labelledby={titleId}
+    >
       <div className="flex flex-wrap items-start justify-between gap-3 border-b px-5 pb-3.5 pt-4 sm:px-6">
         <div className="min-w-0">
           <h2 id={titleId} className="text-[15px] font-semibold tracking-tight">

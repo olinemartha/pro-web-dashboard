@@ -286,7 +286,10 @@ export function ExpertPanel({ intern }: { intern: Intern }) {
     <section id="affectation" className="scroll-mt-6">
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
         {/* ================= Le rapport ================= */}
-        <article className="card-surface flex flex-col overflow-hidden" aria-labelledby={`rapport-${intern.id}`}>
+        <article
+          className={cn("card-surface flex flex-col overflow-hidden", latestRun?.status === "prete" && latestRun.proposals.length > 0 && "expert-border")}
+          aria-labelledby={`rapport-${intern.id}`}
+        >
           {/* En-tête du document */}
           <header className="flex flex-col gap-4 border-b px-6 py-5 sm:flex-row sm:items-start sm:justify-between">
             <div className="min-w-0">

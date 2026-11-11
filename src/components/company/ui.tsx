@@ -111,6 +111,9 @@ export function RuleMeter({
 /** Carte d'un élément recommandé : filet bleu et haut glacier (index.css, .expert-card). */
 export const EXPERT_CARD = "expert-card";
 
+/** Bordure vivante : un filet de lumière tourne sans fin autour de l'élément recommandé (index.css, .expert-border). */
+export const EXPERT_BORDER = "expert-border";
+
 /* ------------------------------------------------------------------ */
 /* Entrée de page                                                      */
 /* ------------------------------------------------------------------ */

@@ -261,7 +261,11 @@ function Dashboard() {
           </Reveal>
 
           {/* Offres recommandées */}
-          <Reveal as="section" delay={140} className="card-surface p-5">
+          <Reveal
+            as="section"
+            delay={140}
+            className={cn("card-surface p-5", recommended.some(({ match }) => match.verdict === "recommandee") && "expert-border")}
+          >
             <SectionHeader
               title="Offres recommandées"
               description="Proposées par le système expert pour votre profil"

@@ -629,3 +629,87 @@
     animation: none;
   }
 }
+
+/* ------------------------------------------------------------------ */
+/* Bordure vivante des recommandations du système expert               */
+/* Un filet de lumière bleue tourne sans fin autour de la carte.        */
+/* Technique : fond opaque sur la padding-box, dégradé conique sur la   */
+/* border-box ; l'angle est une propriété enregistrée, donc animable.   */
+/* ------------------------------------------------------------------ */
+@property --expert-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+@keyframes expert-border-spin {
+  to {
+    --expert-angle: 360deg;
+  }
+}
+.expert-border {
+  /* Remplissage de la carte : blanc par défaut, redéfini par les variantes ci-dessous. */
+  --expert-fill: linear-gradient(hsl(var(--card)), hsl(var(--card)));
+  border-width: 1.5px;
+  border-style: solid;
+  border-color: transparent !important;
+  background:
+    var(--expert-fill) padding-box,
+    conic-gradient(
+        from var(--expert-angle),
+        hsl(var(--primary) / 0.18) 0deg,
+        hsl(var(--accent)) 50deg,
+        hsl(var(--primary)) 95deg,
+        hsl(var(--primary) / 0.18) 150deg,
+        hsl(var(--primary) / 0.18) 360deg
+      )
+      border-box;
+  /* design-ok: rotation continue ; la courbe unique (--ease-soft) marquerait une pause à chaque tour. */
+  animation: expert-border-spin 5s linear infinite;
+}
+/* Carte d'offre recommandée : garde son haut glacier. */
+.expert-card.expert-border {
+  --expert-fill: linear-gradient(180deg, hsl(var(--primary-soft)) 0, hsl(var(--card)) 112px);
+}
+/* Encadré glacier (analyse d'une offre). */
+.expert-border--soft {
+  --expert-fill: linear-gradient(hsl(var(--primary-soft)), hsl(var(--primary-soft)));
+}
+@media (prefers-reduced-motion: reduce) {
+  /* Bordure fixe : le dégradé reste, il ne tourne plus. */
+  .expert-border {
+    animation: none;
+  }
+}
+
+/* Le badge « Recommandé » porte la même lumière qui tourne, en filet fin. */
+.expert-badge {
+  position: relative;
+}
+.expert-badge::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  padding: 1px;
+  border-radius: inherit;
+  background: conic-gradient(
+    from var(--expert-angle),
+    hsl(var(--primary) / 0) 0deg,
+    hsl(var(--accent)) 60deg,
+    hsl(var(--primary)) 110deg,
+    hsl(var(--primary) / 0) 170deg,
+    hsl(var(--primary) / 0) 360deg
+  );
+  -webkit-mask:
+    linear-gradient(black 0 0) content-box,
+    linear-gradient(black 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  /* design-ok: rotation continue, même exception que .expert-border. */
+  animation: expert-border-spin 4s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .expert-badge::before {
+    animation: none;
+  }
+}

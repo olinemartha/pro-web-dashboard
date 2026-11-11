@@ -168,7 +168,7 @@ function OfferDetail() {
               className={cn(
                 "mt-4",
                 match.verdict === "recommandee"
-                  ? "rounded-xl border border-primary/25 bg-primary-soft/50 p-3.5"
+                  ? "expert-border expert-border--soft rounded-xl p-3.5"
                   : "border-b pb-4"
               )}
             >
