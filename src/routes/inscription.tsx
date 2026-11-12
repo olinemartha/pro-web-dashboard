@@ -71,25 +71,27 @@ function Stepper({ steps, current }: { steps: string[]; current: number }) {
           const active = index === current;
           return (
             <li key={label} className="relative flex flex-1 flex-col items-center" aria-current={active ? "step" : undefined}>
+              {/* Trait entre deux étapes : il se remplit de gauche à droite quand on avance. */}
               {index > 0 && (
-                <span
-                  className={cn(
-                    "absolute right-1/2 top-[11px] h-px w-full -translate-x-3 transition-colors duration-500",
-                    index <= current ? "bg-primary" : "bg-border"
-                  )}
-                  aria-hidden
-                />
+                <span className="absolute right-1/2 top-[11px] h-px w-full -translate-x-3 overflow-hidden bg-border" aria-hidden>
+                  <span
+                    className={cn(
+                      "block h-full origin-left bg-primary transition-transform duration-700 [transition-timing-function:var(--ease-soft)] motion-reduce:transition-none",
+                      index <= current ? "scale-x-100" : "scale-x-0"
+                    )}
+                  />
+                </span>
               )}
               <span
                 className={cn(
-                  "relative z-10 grid size-6 place-items-center rounded-full border-2 bg-card transition-all duration-300 [transition-timing-function:var(--ease-soft)]",
+                  "relative z-10 grid size-6 place-items-center rounded-full border-2 bg-card transition-all duration-500 [transition-timing-function:var(--ease-soft)]",
                   done && "border-primary bg-primary text-primary-foreground",
-                  active && "border-primary ring-4 ring-primary-soft",
+                  active && "step-active border-primary",
                   !done && !active && "border-border"
                 )}
               >
-                {done && <Check className="size-3.5" strokeWidth={3} />}
-                {active && <span className="size-2 rounded-full bg-primary" />}
+                {done && <Check key="done" className="animate-scale-in size-3.5" strokeWidth={3} />}
+                {active && <span key="active" className="animate-scale-in size-2 rounded-full bg-primary" />}
               </span>
               <span
                 className={cn(
@@ -340,12 +342,12 @@ function SignUpPage() {
           {/* ---------------- Étape 0 : rôle ---------------- */}
           {step === 0 && (
             <div>
-              <StepTitle title="Comment pouvons-nous vous aider ?" desc="Votre espace s'ouvre selon votre profil. Vous ne pourrez pas en changer ensuite." />
+              <StepTitle title="Bienvenue sur StageManager" desc="Dites-nous qui vous êtes : nous préparons l'espace qui vous correspond." />
               <div className="mt-10 space-y-3">
                 {(
                   [
-                    { value: "etudiant", title: "Je cherche un stage", desc: "Profil, offres recommandées par le système expert, candidatures, suivi du stage.", icon: GraduationCap, motion: "tilt" },
-                    { value: "entreprise", title: "J'accueille des stagiaires", desc: "Offres, candidatures, affectation par service avec le système expert, encadrement.", icon: Building2, motion: "lift" },
+                    { value: "etudiant", title: "Je cherche un stage", desc: "Trouvez le stage qui correspond à votre profil.", icon: GraduationCap, motion: "tilt" },
+                    { value: "entreprise", title: "Je représente une entreprise", desc: "Recrutez et affectez vos stagiaires au bon service.", icon: Building2, motion: "lift" },
                   ] as const
                 ).map((option) => (
                   <button
@@ -360,13 +362,14 @@ function SignUpPage() {
                     <option.icon className={`nav-icon nav-icon--${option.motion} size-6 shrink-0 text-muted-foreground group-hover:text-primary`} />
                     <span className="min-w-0 flex-1">
                       <span className="block text-[15px] font-semibold group-hover:text-primary">{option.title}</span>
-                      <span className="block text-pretty text-xs text-muted-foreground">{option.desc}</span>
+                      <span className="block text-pretty text-[13px] text-muted-foreground">{option.desc}</span>
                     </span>
                     <ArrowRight className={cn("size-4 shrink-0 text-muted-foreground group-hover:text-primary", ARROW_NUDGE)} />
                   </button>
                 ))}
               </div>
-              <p className="mt-10 text-center text-[13px] text-muted-foreground">
+              <p className="mt-4 text-center text-xs text-muted-foreground">Ce choix est définitif pour ce compte.</p>
+              <p className="mt-8 text-center text-[13px] text-muted-foreground">
                 Déjà un compte ?{" "}
                 <Link to="/connexion" className="-my-2 py-2 font-semibold text-primary underline-offset-2 hover:underline">
                   Se connecter
@@ -556,7 +559,16 @@ function SignUpPage() {
           {step > 0 && (
             <div className="mt-10 flex items-center justify-between gap-3">
               {canGoBack ? (
-                <Button variant="ghost" className="group" onClick={() => { setErrors({}); setStep((value) => value - 1); }}>
+                <Button
+                  variant="ghost"
+                  className="group"
+                  onClick={() => {
+                    setErrors({});
+                    // Retour au choix du profil : la barre d'étapes redevient générique.
+                    if (step === 1) setRole(null);
+                    setStep((value) => value - 1);
+                  }}
+                >
                   <ArrowLeft className="mr-2 size-4 transition-transform duration-300 [transition-timing-function:var(--ease-soft)] group-hover:-translate-x-1 motion-reduce:transition-none" />
                   Retour
                 </Button>

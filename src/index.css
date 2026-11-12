@@ -713,3 +713,23 @@
     animation: none;
   }
 }
+
+/* Étape en cours de l'inscription : un halo bleu glacier qui respire doucement. */
+@keyframes step-breathe {
+  0%,
+  100% {
+    box-shadow: 0 0 0 4px hsl(var(--primary-soft));
+  }
+  50% {
+    box-shadow: 0 0 0 7px hsl(var(--primary-soft) / 0.55);
+  }
+}
+.step-active {
+  box-shadow: 0 0 0 4px hsl(var(--primary-soft));
+  animation: step-breathe 2400ms var(--ease-soft) infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .step-active {
+    animation: none;
+  }
+}
