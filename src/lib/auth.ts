@@ -44,7 +44,7 @@ export type Session = {
   demo: false;
 };
 
-type Result = { ok: true; needsConfirmation?: boolean } | { ok: false; error: string; field?: "email" | "password" };
+type Result = { ok: true; needsConfirmation?: boolean; reactivated?: boolean } | { ok: false; error: string; field?: "email" | "password" };
 
 type AuthState = {
   session: Session | null;
@@ -60,6 +60,8 @@ type AuthState = {
     company?: { profile: Partial<CompanyProfile>; hosting: HostingProfile };
   }) => Promise<Result>;
   signOut: () => Promise<void>;
+  /** Le titulaire désactive son compte : profil masqué, session fermée. Se reconnecter le réactive. */
+  deactivate: () => Promise<Result>;
   refresh: () => Promise<void>;
 };
 
@@ -138,8 +140,15 @@ export const useAuth = create<AuthState>()((set, get) => ({
       await supabase.auth.signOut();
       return { ok: false, error: "Profil introuvable pour ce compte. Contactez l'administrateur de la plateforme." };
     }
+    // Compte désactivé par son titulaire : se reconnecter le réactive (comme annoncé à la désactivation).
+    const { data: row } = await supabase.from("profiles").select("deactivated_at").eq("id", session.userId).maybeSingle();
+    const reactivated = Boolean(row?.deactivated_at);
+    if (reactivated) {
+      await supabase.from("profiles").update({ deactivated_at: null }).eq("id", session.userId);
+      if (session.role === "etudiant") await supabase.from("student_profiles").update({ visible: true }).eq("id", session.userId);
+    }
     set({ session });
-    return { ok: true };
+    return { ok: true, reactivated };
   },
 
   signUp: async ({ role, email, password }) => {
@@ -197,6 +206,20 @@ export const useAuth = create<AuthState>()((set, get) => ({
   signOut: async () => {
     await supabase.auth.signOut();
     set({ session: null });
+  },
+
+  deactivate: async () => {
+    const session = get().session;
+    if (!session) return { ok: false, error: "Session expirée : reconnectez-vous." };
+    const { error } = await supabase.from("profiles").update({ deactivated_at: new Date().toISOString() }).eq("id", session.userId);
+    if (error) return { ok: false, ...translate(error.message) };
+    if (session.role === "etudiant") {
+      const { error: hideError } = await supabase.from("student_profiles").update({ visible: false }).eq("id", session.userId);
+      if (hideError) return { ok: false, ...translate(hideError.message) };
+    }
+    await supabase.auth.signOut();
+    set({ session: null });
+    return { ok: true };
   },
 }));
 

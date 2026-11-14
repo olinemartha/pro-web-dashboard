@@ -1,5 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
+import { toast } from "sonner";
 import { ArrowRight } from "lucide-react";
 import { AuthBrand, AuthPreview, PasswordInput } from "@/components/auth/auth-ui";
 import { ARROW_NUDGE, Field, inputClass } from "@/components/company/ui";
@@ -47,6 +48,7 @@ function LoginPage() {
       document.getElementById(field === "email" ? "login-email" : "login-password")?.focus();
       return;
     }
+    if (result.reactivated) toast.success("Compte réactivé", { description: "Votre profil est de nouveau visible par les entreprises." });
     const session = useAuth.getState().session;
     if (session) navigate({ to: session.onboarded ? ROLE_HOME[session.role] : "/inscription" });
   };

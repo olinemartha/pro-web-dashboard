@@ -64,6 +64,8 @@ type PasswordErrors = Partial<Record<"current" | "next" | "confirm", string>>;
 function SettingsPage() {
   const { profile, updateProfile } = useStore();
   const signOut = useAuth((state) => state.signOut);
+  const deactivate = useAuth((state) => state.deactivate);
+  const [deactivatingPending, setDeactivatingPending] = useState(false);
   const navigate = useNavigate();
 
   const [email, setEmail] = useState(profile.email);
@@ -256,12 +258,21 @@ function SettingsPage() {
             </Button>
             <Button
               variant="destructive"
-              onClick={() => {
+              disabled={deactivatingPending}
+              onClick={async () => {
+                setDeactivatingPending(true);
+                const result = await deactivate();
+                setDeactivatingPending(false);
+                if (!result.ok) {
+                  toast.error("Désactivation impossible", { description: result.error });
+                  return;
+                }
                 setDeactivating(false);
-                toast.info("Demande enregistrée", { description: "La désactivation sera active avec les comptes utilisateurs." });
+                toast.success("Compte désactivé", { description: "Reconnectez-vous quand vous voulez pour le réactiver." });
+                navigate({ to: "/connexion" });
               }}
             >
-              Désactiver le compte
+              {deactivatingPending ? "Désactivation…" : "Désactiver le compte"}
             </Button>
           </>
         }
