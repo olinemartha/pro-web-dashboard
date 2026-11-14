@@ -8,8 +8,6 @@ import { ARROW_NUDGE, Field, Select, inputClass } from "@/components/company/ui"
 import { Button } from "@/components/ui/button";
 import { Reveal } from "@/components/ui/motion";
 import { ROLE_HOME, useAuth, type HostingProfile } from "@/lib/auth";
-import { useCompanyStore } from "@/lib/company-store";
-import { useStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/inscription")({
@@ -193,6 +191,8 @@ function SignUpPage() {
   const [step, setStep] = useState(session && !session.onboarded ? 2 : 0);
   const [errors, setErrors] = useState<Errors>({});
   const [pending, setPending] = useState(false);
+  /** Adresse à confirmer (Supabase envoie un lien avant d'ouvrir la session). */
+  const [sentTo, setSentTo] = useState<string | null>(null);
 
   const [account, setAccount] = useState({ email: "", password: "", confirm: "" });
   const [student, setStudent] = useState({
@@ -268,8 +268,15 @@ function SignUpPage() {
     return true;
   };
 
-  const finish = () => {
+  const finish = async () => {
     if (!session) return;
+    const save = async (input: Parameters<typeof completeOnboarding>[0]) => {
+      setPending(true);
+      const result = await completeOnboarding(input);
+      setPending(false);
+      if (!result.ok) toast.error("Inscription non enregistrée", { description: result.error });
+      return result.ok;
+    };
     if (role === "etudiant") {
       const profile = {
         prenom: student.prenom.trim(),
@@ -284,8 +291,7 @@ function SignUpPage() {
         competences: student.competences,
       };
       const name = `${profile.prenom} ${profile.nom}`;
-      completeOnboarding({ name, profile });
-      useStore.getState().startFresh(profile);
+      if (!(await save({ name, profile }))) return;
       toast.success(`Bienvenue, ${profile.prenom}`, { description: "Le système expert a déjà comparé votre profil aux offres." });
       navigate({ to: ROLE_HOME.etudiant });
     } else {
@@ -301,9 +307,7 @@ function SignUpPage() {
         representativeEmail: session.email,
         representativePhone: company.representativePhone.trim(),
       };
-      completeOnboarding({ name: profile.name, company: { profile, hosting } });
-      useCompanyStore.getState().updateProfile(profile);
-      useCompanyStore.getState().setHosting(hosting);
+      if (!(await save({ name: profile.name, company: { profile, hosting } }))) return;
       toast.success(`Bienvenue, ${profile.name}`, { description: "Votre espace entreprise est prêt." });
       navigate({ to: ROLE_HOME.entreprise });
     }
@@ -317,6 +321,10 @@ function SignUpPage() {
       setPending(false);
       if (!result.ok) {
         fail({ [result.field === "password" ? "su-password" : "su-email"]: result.error }, ["su-email", "su-password"]);
+        return;
+      }
+      if (result.needsConfirmation) {
+        setSentTo(account.email.trim().toLowerCase());
         return;
       }
     }
@@ -338,6 +346,22 @@ function SignUpPage() {
       </header>
 
       <main className="mx-auto w-full max-w-xl px-4 pb-16 pt-8 sm:pt-12">
+        {sentTo ? (
+          <Reveal>
+            <StepTitle
+              title="Confirmez votre adresse e-mail"
+              desc={`Nous avons envoyé un lien à ${sentTo}. Ouvrez-le, puis connectez-vous : vous reprendrez l'inscription à l'étape suivante.`}
+            />
+            <div className="mt-10 flex justify-center">
+              <Button asChild className="group min-w-40">
+                <Link to="/connexion">
+                  Aller à la connexion
+                  <ArrowRight className={cn("ml-2 size-4", ARROW_NUDGE)} />
+                </Link>
+              </Button>
+            </div>
+          </Reveal>
+        ) : (
         <Reveal key={`${role}-${step}`}>
           {/* ---------------- Étape 0 : rôle ---------------- */}
           {step === 0 && (
@@ -576,12 +600,13 @@ function SignUpPage() {
                 <span />
               )}
               <Button className="group min-w-40" onClick={next} disabled={pending}>
-                {pending ? "Création du compte…" : last ? (role === "entreprise" ? "Ouvrir mon espace" : "Découvrir mes offres") : "Continuer"}
+                {pending ? (step === 1 ? "Création du compte…" : "Enregistrement…") : last ? (role === "entreprise" ? "Ouvrir mon espace" : "Découvrir mes offres") : "Continuer"}
                 {!pending && <ArrowRight className={cn("ml-2 size-4", ARROW_NUDGE)} />}
               </Button>
             </div>
           )}
         </Reveal>
+        )}
       </main>
     </div>
   );

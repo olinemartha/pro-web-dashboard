@@ -8,15 +8,14 @@ import {
   useRouterState,
   type ErrorComponentProps,
 } from "@tanstack/react-router";
-import { useEffect, useRef } from "react";
+import { useEffect, useState } from "react";
 
 import "../index.css";
 import { AppShell } from "../components/app/app-shell";
 import { CompanyShell } from "../components/company/company-shell";
 import { AdminShell } from "../components/admin/admin-shell";
 import { ROLE_HOME, isPublicPath, roleForPath, useAuth } from "../lib/auth";
-import { useStore } from "../lib/store";
-import { useCompanyStore } from "../lib/company-store";
+import { startRemote } from "../lib/remote";
 import { Toaster } from "../components/ui/sonner";
 import { queryClient } from "../lib/query-client";
 
@@ -114,35 +113,35 @@ function useRedirect(pathname: string) {
   return null;
 }
 
-/** Comptes créés à l'inscription : on recharge leur profil (les données d'exemple restent pour la démonstration). */
-function useRestoreAccount() {
+/** Compte connecté et inscrit : données chargées depuis Supabase, enregistrées et suivies en temps réel. */
+function useRemoteData() {
   const session = useAuth((state) => state.session);
-  const accountFor = useAuth((state) => state.accountFor);
-  const restored = useRef<string | null>(null);
+  const [loaded, setLoaded] = useState<string | null>(null);
+  const key = session?.onboarded ? `${session.userId}:${session.role}:${session.companyId ?? ""}` : null;
   useEffect(() => {
-    if (!session || session.demo || !session.onboarded || restored.current === session.email) return;
-    restored.current = session.email;
-    const account = accountFor(session.email);
-    if (session.role === "etudiant" && account?.profile) useStore.getState().startFresh(account.profile);
-    if (session.role === "entreprise" && account?.company) {
-      useCompanyStore.getState().updateProfile(account.company.profile);
-      useCompanyStore.getState().setHosting(account.company.hosting);
-    }
-  }, [session, accountFor]);
+    if (!session || !key) return;
+    return startRemote(session, () => setLoaded(key));
+    // La session ne change de sens que si la clé change (rôle, entreprise, compte).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key]);
+  return !key || loaded === key;
 }
 
 function RootComponent() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const navigate = useNavigate();
+  const ready = useAuth((state) => state.ready);
   const redirect = useRedirect(pathname);
-  useRestoreAccount();
+  const dataReady = useRemoteData();
+
+  useEffect(() => useAuth.getState().init(), []);
 
   useEffect(() => {
-    if (redirect) navigate({ to: redirect, replace: true });
-  }, [redirect, navigate]);
+    if (ready && redirect) navigate({ to: redirect, replace: true });
+  }, [ready, redirect, navigate]);
 
   const space = roleForPath(pathname);
-  const content = redirect ? (
+  const content = !ready || redirect || (!isPublicPath(pathname) && !dataReady) ? (
     <div className="min-h-screen bg-background" aria-busy="true" />
   ) : isPublicPath(pathname) ? (
     <Outlet />

@@ -20,7 +20,6 @@ import { Button } from "@/components/ui/button";
 import { Reveal } from "@/components/ui/motion";
 import { useAdminData } from "@/lib/admin-data";
 import { useAdminStore } from "@/lib/admin-store";
-import { useAuth } from "@/lib/auth";
 import { fmtDate } from "@/lib/dates";
 
 export const Route = createFileRoute("/admin/utilisateurs")({
@@ -37,8 +36,7 @@ const plural = (n: number, word: string) => `${n} ${word}${n > 1 ? "s" : ""}`;
 function UsersPage() {
   const data = useAdminData();
   const { q } = Route.useSearch();
-  const { suspend, reactivate, suspended } = useAdminStore();
-  const accounts = useAuth((state) => state.accounts);
+  const { suspend, reactivate } = useAdminStore();
   const [tab, setTab] = useState<Tab>("etudiants");
   const [search, setSearch] = useState(q ?? "");
   const [target, setTarget] = useState<Target | null>(null);
@@ -47,6 +45,7 @@ function UsersPage() {
 
   useEffect(() => setSearch(q ?? ""), [q]);
 
+  const suspendedCount = data.students.filter((s) => s.suspended).length + data.companies.filter((c) => c.suspended).length;
   const query = search.trim().toLowerCase();
   const students = data.students.filter((s) => !query || `${s.name} ${s.email} ${s.filiere} ${s.universite}`.toLowerCase().includes(query));
   const companies = data.companies.filter((c) => !query || `${c.name} ${c.email} ${c.sector}`.toLowerCase().includes(query));
@@ -72,8 +71,8 @@ function UsersPage() {
         {[
           <StatCard key="e" label="Étudiants" value={data.students.length} icon={Users} motion="bounce" foot={`${plural(data.students.filter((s) => s.applications > 0).length, "candidat")} actif${data.students.filter((s) => s.applications > 0).length > 1 ? "s" : ""}`} />,
           <StatCard key="c" label="Entreprises" value={data.companies.length} icon={Building2} motion="lift" foot="données isolées par entreprise" />,
-          <StatCard key="n" label="Inscrits sur la plateforme" value={accounts.filter((a) => a.onboarded).length} icon={UserPlus} motion="bounce" foot="comptes créés depuis l'inscription" />,
-          <StatCard key="s" label="Comptes suspendus" value={suspended.length} icon={Ban} motion="pop" foot={suspended.length ? "connexion bloquée" : "aucun compte suspendu"} tone={suspended.length ? "alert" : "neutral"} />,
+          <StatCard key="n" label="Inscrits sur la plateforme" value={data.registered} icon={UserPlus} motion="bounce" foot="comptes créés depuis l'inscription" />,
+          <StatCard key="s" label="Comptes suspendus" value={suspendedCount} icon={Ban} motion="pop" foot={suspendedCount ? "connexion bloquée" : "aucun compte suspendu"} tone={suspendedCount ? "alert" : "neutral"} />,
         ].map((card, index) => (
           <Reveal key={index} delay={index * 60} className="min-w-0">
             {card}

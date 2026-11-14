@@ -19,6 +19,8 @@ export interface CompanyOffer {
   missions: string[];
   skills: string[];
   applicationsCount: number;
+  /** Entreprise propriétaire (données Supabase ; utile à l'administrateur). */
+  companyId?: string;
 }
 
 /**

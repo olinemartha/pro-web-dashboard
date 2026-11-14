@@ -98,7 +98,7 @@ export function buildExpertRun({
   id,
   createdAt,
 }: BuildRunInput): ExpertRun {
-  const runId = id ?? `run-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+  const runId = id ?? crypto.randomUUID();
   const stamp = createdAt ?? new Date().toISOString();
 
   const facts = [

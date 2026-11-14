@@ -167,7 +167,7 @@ export const useCompanyStore = create<CompanyState>((set, get) => ({
       offers: [
         {
           ...o,
-          id: `o-${Date.now()}`,
+          id: crypto.randomUUID(),
           applicationsCount: 0,
           published: today(),
         },
@@ -221,7 +221,7 @@ export const useCompanyStore = create<CompanyState>((set, get) => ({
     }
 
     const start = today();
-    const internId = `s-${Date.now()}`;
+    const internId = crypto.randomUUID();
     const intern: Intern = {
       id: internId,
       candidateId,
@@ -282,7 +282,7 @@ export const useCompanyStore = create<CompanyState>((set, get) => ({
     set((state) => ({
       interviews: [
         ...state.interviews,
-        { id: `i-${Date.now()}`, candidateId, date, time, location, status: "programme" },
+        { id: crypto.randomUUID(), candidateId, date, time, location, status: "programme" },
       ],
       candidates: state.candidates.map((candidate) =>
         candidate.id === candidateId && candidate.status !== "entretien"
@@ -448,7 +448,7 @@ export const useCompanyStore = create<CompanyState>((set, get) => ({
     set((state) => ({
       services: [
         ...state.services,
-        { ...service, id: `sv-${Date.now()}`, updatedAt: today() },
+        { ...service, id: crypto.randomUUID(), updatedAt: today() },
       ],
     })),
 
@@ -465,7 +465,7 @@ export const useCompanyStore = create<CompanyState>((set, get) => ({
     })),
 
   receiveApplication: (input) => {
-    const id = `c-${Date.now()}`;
+    const id = crypto.randomUUID();
     set((state) => ({
       candidates: [{ ...input, id, status: "en_attente", history: [historyEntry("en_attente", "Candidature reçue")] }, ...state.candidates],
       offers: state.offers.map((offer) =>
@@ -488,7 +488,7 @@ export const useCompanyStore = create<CompanyState>((set, get) => ({
     })),
 
   addSupervisor: (supervisor) =>
-    set((state) => ({ supervisors: [...state.supervisors, { ...supervisor, id: `e-${Date.now()}` }] })),
+    set((state) => ({ supervisors: [...state.supervisors, { ...supervisor, id: crypto.randomUUID() }] })),
 
   updateSupervisor: (supervisorId, patch) =>
     set((state) => ({

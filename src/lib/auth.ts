@@ -1,16 +1,14 @@
 /**
- * Authentification locale de démonstration.
+ * Authentification : Supabase Auth.
  *
- * Elle tient la place de Supabase Auth en attendant la connexion au serveur :
- * comptes et session sont gardés dans le navigateur (localStorage), le mot de passe
- * n'est jamais stocké en clair (empreinte SHA-256). À remplacer par Supabase
- * (signUp, signInWithPassword, signOut) sans changer les écrans.
+ * Le compte (e-mail, mot de passe) est géré par Supabase ; le rôle, le nom et l'état
+ * de l'inscription sont dans la table `profiles`, créée par le serveur à l'inscription.
+ * Le rôle administrateur n'est jamais accordé par l'inscription publique.
  */
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
 import type { Profile } from "./rules";
 import type { CompanyProfile } from "./company-data";
-import { useAdminStore } from "./admin-store";
+import { supabase } from "./supabase";
 
 export type Role = "etudiant" | "entreprise" | "admin";
 
@@ -35,126 +33,171 @@ export type HostingProfile = {
   criteria: string[];
 };
 
-type Account = {
-  email: string;
-  passwordHash: string;
-  role: Role;
-  name: string;
-  onboarded: boolean;
-  /** Profil saisi à l'inscription (étudiant), rechargé à l'ouverture de l'application. */
-  profile?: Partial<Profile>;
-  /** Fiche et réponses de l'entreprise saisies à l'inscription. */
-  company?: { profile: Partial<CompanyProfile>; hosting: HostingProfile };
-};
-
 export type Session = {
+  userId: string;
   email: string;
   role: Role;
   name: string;
   onboarded: boolean;
-  /** Compte de démonstration : les données d'exemple restent en place. */
-  demo: boolean;
+  companyId: string | null;
+  /** Conservé pour compatibilité : il n'y a plus de compte de démonstration local. */
+  demo: false;
 };
 
-/** Comptes de démonstration (données d'exemple de l'application). Mot de passe commun : DEMO_PASSWORD. */
-export const DEMO_PASSWORD = "Demo2026!";
-export const DEMO_ACCOUNTS: Record<Role, { email: string; name: string }> = {
-  etudiant: { email: "grace.mukendi@exemple.cd", name: "Grâce Mukendi" },
-  entreprise: { email: "contact@finca.cd", name: "FINCA RDC" },
-  admin: { email: "admin@stagemanager.cd", name: "Administrateur StageManager" },
-};
-
-async function hash(value: string) {
-  const data = new TextEncoder().encode(value);
-  const digest = await crypto.subtle.digest("SHA-256", data);
-  return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
-}
-
-const normalizeEmail = (email: string) => email.trim().toLowerCase();
-
-type Result = { ok: true } | { ok: false; error: string; field?: "email" | "password" };
+type Result = { ok: true; needsConfirmation?: boolean } | { ok: false; error: string; field?: "email" | "password" };
 
 type AuthState = {
   session: Session | null;
-  accounts: Account[];
+  /** Vrai une fois la session Supabase lue (évite une redirection prématurée). */
+  ready: boolean;
+  init: () => void;
   signIn: (email: string, password: string) => Promise<Result>;
-  signInDemo: (role: Role) => void;
   signUp: (input: { role: Exclude<Role, "admin">; email: string; password: string }) => Promise<Result>;
-  /** Fin de l'onboarding : nom affiché et, pour l'étudiant, profil de départ. */
+  /** Fin de l'onboarding : profil étudiant ou fiche entreprise enregistrés en base. */
   completeOnboarding: (input: {
     name: string;
     profile?: Partial<Profile>;
     company?: { profile: Partial<CompanyProfile>; hosting: HostingProfile };
-  }) => void;
-  signOut: () => void;
-  accountFor: (email: string) => Account | undefined;
+  }) => Promise<Result>;
+  signOut: () => Promise<void>;
+  refresh: () => Promise<void>;
 };
 
-export const useAuth = create<AuthState>()(
-  persist(
-    (set, get) => ({
-      session: null,
-      accounts: [],
+/** Messages Supabase → français. */
+function translate(message: string): { error: string; field?: "email" | "password" } {
+  const m = message.toLowerCase();
+  if (m.includes("invalid login credentials")) return { error: "E-mail ou mot de passe incorrect.", field: "password" };
+  if (m.includes("email not confirmed")) return { error: "Confirmez d'abord votre adresse e-mail (lien reçu par e-mail).", field: "email" };
+  if (m.includes("already registered") || m.includes("already exists")) return { error: "Un compte existe déjà avec cette adresse e-mail.", field: "email" };
+  if (m.includes("password should be") || m.includes("weak password")) return { error: "Mot de passe trop faible : 8 caractères minimum.", field: "password" };
+  if (m.includes("rate limit")) return { error: "Trop de tentatives. Patientez quelques minutes avant de réessayer." };
+  if (m.includes("invalid") && m.includes("email")) return { error: "Adresse e-mail invalide.", field: "email" };
+  if (m.includes("failed to fetch") || m.includes("network")) return { error: "Connexion au serveur impossible. Vérifiez votre accès à Internet." };
+  return { error: message };
+}
 
-      signIn: async (email, password) => {
-        const key = normalizeEmail(email);
-        if (useAdminStore.getState().suspended.includes(key))
-          return { ok: false, error: "Ce compte est suspendu. Contactez l'administrateur de la plateforme.", field: "email" };
-        const demo = (Object.entries(DEMO_ACCOUNTS) as [Role, { email: string; name: string }][]).find(
-          ([, account]) => account.email === key
-        );
-        if (demo) {
-          if (password !== DEMO_PASSWORD) return { ok: false, error: "Mot de passe incorrect.", field: "password" };
-          get().signInDemo(demo[0]);
-          return { ok: true };
-        }
-        const account = get().accounts.find((entry) => entry.email === key);
-        if (!account) return { ok: false, error: "Aucun compte n'utilise cette adresse e-mail.", field: "email" };
-        if ((await hash(password)) !== account.passwordHash)
-          return { ok: false, error: "Mot de passe incorrect.", field: "password" };
-        set({ session: { email: account.email, role: account.role, name: account.name, onboarded: account.onboarded, demo: false } });
-        return { ok: true };
-      },
+let initialized = false;
 
-      signInDemo: (role) => {
-        const account = DEMO_ACCOUNTS[role];
-        set({ session: { email: account.email, role, name: account.name, onboarded: true, demo: true } });
-      },
+/** Lit le profil (rôle, nom, entreprise) du compte connecté. */
+async function loadProfile(userId: string, email: string): Promise<Session | "suspended" | null> {
+  const { data, error } = await supabase.from("profiles").select("*").eq("id", userId).maybeSingle();
+  if (error || !data) return null;
+  if (data.suspended) return "suspended";
+  return {
+    userId,
+    email: data.email || email,
+    role: data.role as Role,
+    name: data.full_name,
+    onboarded: data.onboarded,
+    companyId: data.company_id,
+    demo: false,
+  };
+}
 
-      signUp: async ({ role, email, password }) => {
-        const key = normalizeEmail(email);
-        const taken =
-          Object.values(DEMO_ACCOUNTS).some((account) => account.email === key) ||
-          get().accounts.some((account) => account.email === key);
-        if (taken) return { ok: false, error: "Un compte existe déjà avec cette adresse e-mail.", field: "email" };
-        const account: Account = { email: key, passwordHash: await hash(password), role, name: "", onboarded: false };
-        set((state) => ({
-          accounts: [...state.accounts, account],
-          session: { email: key, role, name: "", onboarded: false, demo: false },
-        }));
-        return { ok: true };
-      },
+export const useAuth = create<AuthState>()((set, get) => ({
+  session: null,
+  ready: false,
 
-      completeOnboarding: ({ name, profile, company }) => {
-        const session = get().session;
-        if (!session) return;
-        set((state) => ({
-          accounts: state.accounts.map((account) =>
-            account.email === session.email
-              ? { ...account, name, onboarded: true, profile: profile ?? account.profile, company: company ?? account.company }
-              : account
-          ),
-          session: { ...session, name, onboarded: true },
-        }));
-      },
+  init: () => {
+    if (initialized) return;
+    initialized = true;
+    supabase.auth.getSession().then(async ({ data }) => {
+      const user = data.session?.user;
+      const session = user ? await loadProfile(user.id, user.email ?? "") : null;
+      if (session === "suspended") await supabase.auth.signOut();
+      set({ session: session && session !== "suspended" ? session : null, ready: true });
+    });
+    supabase.auth.onAuthStateChange((event, authSession) => {
+      if (event === "SIGNED_OUT") set({ session: null });
+      // La connexion elle-même charge le profil (signIn) ; ici, seulement le renouvellement du jeton.
+      if (event === "TOKEN_REFRESHED" && authSession?.user && !get().session) {
+        void loadProfile(authSession.user.id, authSession.user.email ?? "").then((session) => {
+          if (session && session !== "suspended") set({ session });
+        });
+      }
+    });
+  },
 
-      signOut: () => set({ session: null }),
+  refresh: async () => {
+    const { data } = await supabase.auth.getUser();
+    if (!data.user) return set({ session: null });
+    const session = await loadProfile(data.user.id, data.user.email ?? "");
+    set({ session: session && session !== "suspended" ? session : null });
+  },
 
-      accountFor: (email) => get().accounts.find((account) => account.email === normalizeEmail(email)),
-    }),
-    { name: "sm.auth", partialize: (state) => ({ session: state.session, accounts: state.accounts }) }
-  )
-);
+  signIn: async (email, password) => {
+    const { data, error } = await supabase.auth.signInWithPassword({ email: email.trim().toLowerCase(), password });
+    if (error || !data.user) return { ok: false, ...translate(error?.message ?? "Connexion impossible.") };
+    const session = await loadProfile(data.user.id, data.user.email ?? "");
+    if (session === "suspended") {
+      await supabase.auth.signOut();
+      return { ok: false, error: "Ce compte est suspendu. Contactez l'administrateur de la plateforme.", field: "email" };
+    }
+    if (!session) {
+      await supabase.auth.signOut();
+      return { ok: false, error: "Profil introuvable pour ce compte. Contactez l'administrateur de la plateforme." };
+    }
+    set({ session });
+    return { ok: true };
+  },
+
+  signUp: async ({ role, email, password }) => {
+    const { data, error } = await supabase.auth.signUp({
+      email: email.trim().toLowerCase(),
+      password,
+      // Le lien de confirmation ramène à la connexion de ce site (adresse à autoriser dans Supabase).
+      options: { data: { role }, emailRedirectTo: `${window.location.origin}/connexion` },
+    });
+    if (error) return { ok: false, ...translate(error.message) };
+    // Supabase renvoie un utilisateur sans identités si l'adresse est déjà prise (protection anti-énumération).
+    if (data.user && data.user.identities && data.user.identities.length === 0)
+      return { ok: false, error: "Un compte existe déjà avec cette adresse e-mail.", field: "email" };
+    if (!data.session) return { ok: true, needsConfirmation: true };
+    const session = await loadProfile(data.user!.id, data.user!.email ?? "");
+    if (session && session !== "suspended") set({ session });
+    return { ok: true };
+  },
+
+  completeOnboarding: async ({ name, profile, company }) => {
+    const session = get().session;
+    if (!session) return { ok: false, error: "Session expirée : reconnectez-vous." };
+
+    if (session.role === "etudiant" && profile) {
+      const { error } = await supabase.from("student_profiles").upsert({
+        id: session.userId,
+        nom: profile.nom ?? "",
+        postnom: profile.postnom ?? "",
+        prenom: profile.prenom ?? "",
+        telephone: profile.telephone ?? "",
+        universite: profile.universite ?? "",
+        faculte: profile.faculte ?? "",
+        filiere: profile.filiere ?? "",
+        niveau: profile.niveau ?? "",
+        competences: profile.competences ?? [],
+      });
+      if (error) return { ok: false, ...translate(error.message) };
+      const { error: profileError } = await supabase.from("profiles").update({ full_name: name, onboarded: true }).eq("id", session.userId);
+      if (profileError) return { ok: false, ...translate(profileError.message) };
+      set({ session: { ...session, name, onboarded: true } });
+      return { ok: true };
+    }
+
+    if (session.role === "entreprise" && company) {
+      const { data: companyId, error } = await supabase.rpc("complete_company_onboarding", {
+        company: { ...company.profile, hosting: company.hosting },
+      });
+      if (error) return { ok: false, ...translate(error.message) };
+      set({ session: { ...session, name, onboarded: true, companyId: companyId ?? session.companyId } });
+      return { ok: true };
+    }
+    return { ok: false, error: "Informations d'inscription incomplètes." };
+  },
+
+  signOut: async () => {
+    await supabase.auth.signOut();
+    set({ session: null });
+  },
+}));
 
 /** Espace d'une adresse : /admin, /entreprise, sinon l'espace étudiant. */
 export function roleForPath(pathname: string): Role {

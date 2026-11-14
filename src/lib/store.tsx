@@ -15,6 +15,7 @@ import {
   type Offer,
 } from "./mock-data";
 import { useCompanyStore } from "./company-store";
+import { remoteState } from "./remote-flag";
 import type { CandidateStatus } from "./company-data";
 import { fmtDate, localIsoDate, localIsoDateTime } from "./dates";
 import { latestRunFor } from "./expert-engine";
@@ -62,9 +63,10 @@ export const useStore = create<AppState>((set, get) => ({
   apply: (offerId) => {
     const { profile } = get();
     const name = `${profile.prenom} ${profile.nom}`.trim();
-    const appId = `a-${Date.now()}`;
+    const appId = crypto.randomUUID();
     // Le profil part tel quel chez l'entreprise : c'est le dossier du candidat.
-    const candidateId = useCompanyStore.getState().receiveApplication({
+    // Connecté à Supabase, la candidature est enregistrée en base : l'entreprise la reçoit en temps réel.
+    const candidateId = remoteState.active ? appId : useCompanyStore.getState().receiveApplication({
       offerId,
       name,
       initials: `${profile.prenom[0] ?? ""}${profile.nom[0] ?? ""}`.toUpperCase(),
@@ -131,7 +133,7 @@ export const useStore = create<AppState>((set, get) => ({
   withdraw: (appId) => {
     const app = get().applications.find((a) => a.id === appId);
     set((state) => ({ applications: withdrawApplication(state.applications, appId) }));
-    if (app?.candidateId) useCompanyStore.getState().studentWithdraw(app.candidateId, "Candidature retirée par l'étudiant");
+    if (app?.candidateId && !remoteState.active) useCompanyStore.getState().studentWithdraw(app.candidateId, "Candidature retirée par l'étudiant");
   },
 
   confirm: (appId) => {
@@ -139,6 +141,7 @@ export const useStore = create<AppState>((set, get) => ({
     const apps = confirmOffer(before, appId);
     set({ applications: apps, confirmed: true });
     // Les propositions déclinées sont retirées chez l'entreprise.
+    if (remoteState.active) return;
     apps
       .filter((a) => a.status === "declinee" && before.find((b) => b.id === a.id)?.status !== "declinee" && a.candidateId)
       .forEach((a) => useCompanyStore.getState().studentWithdraw(a.candidateId!, "Proposition déclinée par l'étudiant"));
@@ -185,6 +188,7 @@ function noticeFor(status: AppStatus, title: string, interview?: Application["in
 // Chaque décision de l'entreprise (examen, entretien, acceptation, refus) se répercute
 // sur la candidature de l'étudiant, avec une notification.
 useCompanyStore.subscribe((company) => {
+  if (remoteState.active) return; // la base envoie elle-même les notifications
   const student = useStore.getState();
   const notices: Notification[] = [];
   const events: Activity[] = [];
@@ -230,6 +234,7 @@ useCompanyStore.subscribe((company) => {
 // On mémorise ce qui a déjà été vu pour ne notifier qu'un vrai changement.
 const seenAssignment = new Map<string, { serviceId?: string; supervisorId?: string; confirmed: boolean }>();
 useCompanyStore.subscribe((company) => {
+  if (remoteState.active) return;
   const student = useStore.getState();
   const notices: Notification[] = [];
   for (const app of student.applications) {
@@ -267,6 +272,7 @@ useCompanyStore.subscribe((company) => {
 
 // L'étudiant confirme son stage : on note l'état du dossier à cet instant (point de départ des notifications).
 useStore.subscribe((student) => {
+  if (remoteState.active) return;
   const company = useCompanyStore.getState();
   for (const app of student.applications) {
     if (app.status !== "confirmee" || !app.candidateId) continue;

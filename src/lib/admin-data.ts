@@ -4,7 +4,6 @@
  */
 import { useMemo } from "react";
 import { useAdminStore } from "./admin-store";
-import { useAuth } from "./auth";
 import type { CandidateStatus } from "./company-data";
 import { useCompanyStore } from "./company-store";
 import { DAY_MS, localIsoDate } from "./dates";
@@ -35,8 +34,7 @@ const initials = (name: string) =>
 
 export function useAdminData() {
   const { candidates, offers, interns, interviews, expertRuns, decisions, profile } = useCompanyStore();
-  const accounts = useAuth((state) => state.accounts);
-  const { suspended, actions } = useAdminStore();
+  const { suspended, actions, users, companies: companyRows } = useAdminStore();
 
   return useMemo(() => {
     /* ---------------- Étudiants : candidats connus et comptes inscrits ---------------- */
@@ -61,36 +59,57 @@ export function useAdminData() {
         });
       }
     }
-    for (const account of accounts.filter((a) => a.role === "etudiant" && a.onboarded)) {
-      if (byEmail.has(account.email)) continue;
+    for (const account of users.filter((u) => u.role === "etudiant" && u.onboarded)) {
+      const known = byEmail.get(account.email);
+      if (known) {
+        known.suspended = account.suspended || known.suspended;
+        continue;
+      }
       byEmail.set(account.email, {
         email: account.email,
         name: account.name,
         initials: initials(account.name),
-        filiere: account.profile?.filiere ?? "",
-        niveau: account.profile?.niveau ?? "",
-        universite: account.profile?.universite ?? "",
+        filiere: account.filiere,
+        niveau: account.niveau,
+        universite: account.universite,
         applications: 0,
-        lastActivity: localIsoDate(),
-        suspended: suspended.includes(account.email),
+        lastActivity: account.createdAt.slice(0, 10) || localIsoDate(),
+        suspended: account.suspended || suspended.includes(account.email),
       });
     }
     const students = [...byEmail.values()].sort((a, b) => b.lastActivity.localeCompare(a.lastActivity));
 
     /* ---------------- Entreprises ---------------- */
-    const companies = [
-      {
-        email: profile.email,
-        name: profile.name,
-        initials: profile.initials,
-        sector: profile.sector,
-        city: profile.city,
-        offers: offers.length,
-        published: offers.filter((o) => o.status === "publiee").length,
-        interns: interns.length,
-        suspended: suspended.includes(profile.email),
-      },
-    ];
+    const companySuspended = (id: string, email: string) =>
+      suspended.includes(email) || users.some((u) => u.companyId === id && u.role === "entreprise" && u.suspended);
+    const companies = companyRows.length
+      ? companyRows.map((c) => {
+          const own = offers.filter((o) => o.companyId === c.id);
+          return {
+            email: c.email,
+            name: c.name,
+            initials: c.initials,
+            sector: c.sector,
+            city: c.city,
+            offers: own.length,
+            published: own.filter((o) => o.status === "publiee").length,
+            interns: interns.filter((i) => own.some((o) => o.id === i.offerId)).length,
+            suspended: companySuspended(c.id, c.email),
+          };
+        })
+      : [
+          {
+            email: profile.email,
+            name: profile.name,
+            initials: profile.initials,
+            sector: profile.sector,
+            city: profile.city,
+            offers: offers.length,
+            published: offers.filter((o) => o.status === "publiee").length,
+            interns: interns.length,
+            suspended: suspended.includes(profile.email),
+          },
+        ];
 
     /* ---------------- Candidatures ---------------- */
     const today = localIsoDate();
@@ -178,6 +197,7 @@ export function useAdminData() {
     ].sort((a, b) => b.date.localeCompare(a.date));
 
     return {
+      registered: users.filter((u) => u.role !== "admin" && u.onboarded).length,
       students,
       companies,
       offers,
@@ -191,5 +211,5 @@ export function useAdminData() {
       interns,
       log,
     };
-  }, [candidates, offers, interns, interviews, expertRuns, decisions, profile, accounts, suspended, actions]);
+  }, [candidates, offers, interns, interviews, expertRuns, decisions, profile, users, companyRows, suspended, actions]);
 }

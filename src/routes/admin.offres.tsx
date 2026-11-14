@@ -58,7 +58,7 @@ function OffersPage() {
       return;
     }
     setOfferStatus(target.id, "desactivee");
-    logOfferWithdrawal(`${target.title} (${profile.name})`, reason.trim());
+    logOfferWithdrawal(`${target.title} (${profile.name})`, reason.trim(), target.id);
     toast.success("Offre retirée", { description: "Elle n'est plus visible par les étudiants." });
     setTarget(null);
   };
