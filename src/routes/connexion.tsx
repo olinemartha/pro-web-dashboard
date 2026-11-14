@@ -62,7 +62,7 @@ function LoginPage() {
               Bon retour sur <span className="text-primary">StageManager</span>
             </h1>
             <p className="mt-2 text-pretty text-sm leading-relaxed text-muted-foreground">
-              Connectez-vous avec l'adresse e-mail et le mot de passe de votre compte. Votre espace s'ouvre selon votre profil.
+              Connectez-vous avec votre adresse e-mail et le mot de passe créé à l'inscription sur StageManager. Votre espace s'ouvre selon votre profil.
             </p>
 
             <form className="mt-8 space-y-4" onSubmit={submit} noValidate>
@@ -81,7 +81,7 @@ function LoginPage() {
                   }}
                 />
               </Field>
-              <Field label="Mot de passe" htmlFor="login-password" error={errors.password}>
+              <Field label="Mot de passe StageManager" htmlFor="login-password" error={errors.password}>
                 <PasswordInput
                   id="login-password"
                   autoComplete="current-password"

@@ -425,11 +425,11 @@ function SignUpPage() {
                     }}
                   />
                 </Field>
-                <Field label="Mot de passe" htmlFor="su-password" required error={errors["su-password"]} hint="8 caractères minimum.">
+                <Field label="Mot de passe StageManager" htmlFor="su-password" required error={errors["su-password"]} hint="Un nouveau mot de passe, propre à StageManager : pas celui de votre messagerie. 8 caractères minimum.">
                   <PasswordInput
                     id="su-password"
                     autoComplete="new-password"
-                    placeholder="Choisissez un mot de passe"
+                    placeholder="Créez un mot de passe"
                     value={account.password}
                     onChange={(e) => {
                       setAccount({ ...account, password: e.target.value });
