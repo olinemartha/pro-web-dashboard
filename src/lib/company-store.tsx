@@ -134,6 +134,9 @@ interface CompanyState {
   /** Réponses de l'entreprise à l'inscription : types de stagiaires, critères d'affectation… */
   hosting: HostingProfile | null;
   setHosting: (hosting: HostingProfile) => void;
+  /** Espace en pause : les offres ne sont plus visibles par les étudiants (historique conservé). */
+  spaceActive: boolean;
+  setSpaceActive: (active: boolean) => void;
   addSupervisor: (s: Omit<Supervisor, "id">) => void;
   updateSupervisor: (supervisorId: string, patch: Partial<Omit<Supervisor, "id">>) => void;
   /** Retire un encadreur sans stagiaire. Refusé s'il suit encore quelqu'un. */
@@ -152,6 +155,8 @@ export const useCompanyStore = create<CompanyState>((set, get) => ({
   supervisors: demoSupervisors,
   hosting: null,
   setHosting: (hosting) => set({ hosting }),
+  spaceActive: true,
+  setSpaceActive: (spaceActive) => set({ spaceActive }),
   expertRuns: seedRuns,
   decisions: seedDecisions,
   // Démo : les plus anciennes notifications sont déjà lues.

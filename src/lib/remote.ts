@@ -310,6 +310,7 @@ async function loadCompanyOrAdmin(
   useCompanyStore.setState((state) => ({
     profile: company ? { ...state.profile, ...toCompanyProfile(company) } : state.profile,
     hosting: (company?.hosting as HostingProfile | null) ?? null,
+    spaceActive: !company?.deactivated_at,
     offers,
     candidates,
     interviews: interviews.map(
@@ -386,11 +387,14 @@ function removed<T extends { id: string }>(prev: T[], next: T[]) {
 
 let queue: Promise<unknown> = Promise.resolve();
 /** Les écritures partent dans l'ordre ; une erreur prévient et recharge l'état réel. */
-function push(label: string, run: () => PromiseLike<{ error: { message: string } | null }>, session: Session) {
+function push(label: string, run: () => PromiseLike<{ error: { message: string } | null; data?: unknown }>, session: Session) {
   queue = queue.then(async () => {
-    const { error } = await run();
-    if (error) {
-      toast.error("Enregistrement impossible", { description: `${label} : ${error.message}` });
+    const { error, data } = await run();
+    // Une mise à jour suivie de .select() qui ne renvoie aucune ligne a été refusée sans erreur (droits).
+    const refused = !error && Array.isArray(data) && data.length === 0;
+    if (error || refused) {
+      const reason = error?.message ?? "modification refusée (droits insuffisants)";
+      toast.error("Enregistrement impossible", { description: `${label} : ${reason}` });
       await loadForSession(session).catch(() => undefined);
     }
   });
@@ -410,11 +414,15 @@ function syncCompany(session: Session) {
           legal_refs: p.legalRefs, activities: p.activities, domains: p.domains, website: p.website,
           representative_name: p.representativeName, representative_role: p.representativeRole,
           representative_email: p.representativeEmail, representative_phone: p.representativePhone,
-        }).eq("id", companyId), session);
+        }).eq("id", companyId).select("id"), session);
+    }
+    if (next.spaceActive !== prev.spaceActive) {
+      const deactivated_at = next.spaceActive ? null : new Date().toISOString();
+      push("Espace entreprise", () => supabase.from("companies").update({ deactivated_at }).eq("id", companyId).select("id"), session);
     }
     if (next.hosting !== prev.hosting && next.hosting) {
       const hosting = next.hosting;
-      push("Accueil des stagiaires", () => supabase.from("companies").update({ hosting: hosting as unknown as Json }).eq("id", companyId), session);
+      push("Accueil des stagiaires", () => supabase.from("companies").update({ hosting: hosting as unknown as Json }).eq("id", companyId).select("id"), session);
     }
 
     for (const o of changed(prev.offers, next.offers))
@@ -532,6 +540,7 @@ export function startRemote(session: Session, onReady: () => void): () => void {
     .on("postgres_changes", { event: "*", schema: "public", table: "applications" }, reload)
     .on("postgres_changes", { event: "*", schema: "public", table: "interviews" }, reload)
     .on("postgres_changes", { event: "*", schema: "public", table: "offers" }, reload)
+    .on("postgres_changes", { event: "UPDATE", schema: "public", table: "companies" }, reload)
     .on("postgres_changes", { event: "INSERT", schema: "public", table: "notifications", filter: `user_id=eq.${session.userId}` }, (payload) => {
       const n = payload.new as Tables<"notifications">;
       toast(n.title, { description: n.body });

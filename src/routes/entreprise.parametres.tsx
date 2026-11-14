@@ -61,7 +61,7 @@ function SettingRow({
 type PasswordErrors = Partial<Record<"current" | "next" | "confirm", string>>;
 
 function CompanySettingsPage() {
-  const { profile, updateProfile } = useCompanyStore();
+  const { profile, updateProfile, spaceActive, setSpaceActive } = useCompanyStore();
   const signOut = useAuth((state) => state.signOut);
   const navigate = useNavigate();
 
@@ -76,7 +76,6 @@ function CompanySettingsPage() {
   const [passwordErrors, setPasswordErrors] = useState<PasswordErrors>({});
 
   const [notify, setNotify] = useState({ applications: true, interviews: true, reports: false });
-  const [spaceActive, setSpaceActive] = useState(true);
 
   const saveAccount = () => {
     const errors: typeof accountErrors = {};

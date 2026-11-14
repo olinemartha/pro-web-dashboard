@@ -85,6 +85,7 @@ export type Database = {
           address: string;
           city: string;
           created_at: string;
+          deactivated_at: string | null;
           description: string;
           domains: string;
           email: string;
