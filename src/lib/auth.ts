@@ -70,6 +70,7 @@ function translate(message: string): { error: string; field?: "email" | "passwor
   if (m.includes("email not confirmed")) return { error: "Confirmez d'abord votre adresse e-mail (lien reçu par e-mail).", field: "email" };
   if (m.includes("already registered") || m.includes("already exists")) return { error: "Un compte existe déjà avec cette adresse e-mail.", field: "email" };
   if (m.includes("password should be") || m.includes("weak password")) return { error: "Mot de passe trop faible : 8 caractères minimum.", field: "password" };
+  if (m.includes("email rate limit")) return { error: "L'e-mail de confirmation ne peut pas être envoyé pour le moment (limite d'envoi atteinte). Réessayez dans une heure.", field: "email" };
   if (m.includes("rate limit")) return { error: "Trop de tentatives. Patientez quelques minutes avant de réessayer." };
   if (m.includes("invalid") && m.includes("email")) return { error: "Adresse e-mail invalide.", field: "email" };
   if (m.includes("failed to fetch") || m.includes("network")) return { error: "Connexion au serveur impossible. Vérifiez votre accès à Internet." };
