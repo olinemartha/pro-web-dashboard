@@ -181,6 +181,8 @@ async function loadStudent(
     profile,
     completion: profileCompletion(profile),
     applications: apps,
+    // Les offres d'exemple gardées en mémoire n'existent pas en base : on ne garde que les vraies.
+    saved: useStore.getState().saved.filter((id) => offers.some((offer) => offer.id === id)),
     confirmed: apps.some((a) => a.status === "confirmee"),
     notifications: notifications.map((n) => ({
       id: n.id,
