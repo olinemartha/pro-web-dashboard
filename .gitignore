@@ -28,5 +28,3 @@ Thumbs.db
 .idea/
 *.log
 
-# Scripts SQL locaux (mots de passe de démonstration)
-supabase/*.local.sql
