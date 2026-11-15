@@ -44,7 +44,11 @@ export type Session = {
   demo: false;
 };
 
-type Result = { ok: true; needsConfirmation?: boolean; reactivated?: boolean } | { ok: false; error: string; field?: "email" | "password" };
+type Result =
+  | { ok: true; needsConfirmation?: boolean; reactivated?: boolean; /** L'adresse avait déjà un compte : il a été ouvert. */ existing?: boolean }
+  | { ok: false; error: string; field?: "email" | "password" };
+
+const WRONG_CREDENTIALS = "E-mail ou mot de passe incorrect.";
 
 type AuthState = {
   session: Session | null;
@@ -68,7 +72,7 @@ type AuthState = {
 /** Messages Supabase → français. */
 function translate(message: string): { error: string; field?: "email" | "password" } {
   const m = message.toLowerCase();
-  if (m.includes("invalid login credentials")) return { error: "E-mail ou mot de passe incorrect.", field: "password" };
+  if (m.includes("invalid login credentials")) return { error: WRONG_CREDENTIALS, field: "password" };
   if (m.includes("email not confirmed")) return { error: "Confirmez d'abord votre adresse e-mail (lien reçu par e-mail).", field: "email" };
   if (m.includes("already registered") || m.includes("already exists")) return { error: "Un compte existe déjà avec cette adresse e-mail.", field: "email" };
   if (m.includes("password should be") || m.includes("weak password")) return { error: "Mot de passe trop faible : 8 caractères minimum.", field: "password" };
@@ -152,16 +156,33 @@ export const useAuth = create<AuthState>()((set, get) => ({
   },
 
   signUp: async ({ role, email, password }) => {
+    const address = email.trim().toLowerCase();
+    // Adresse déjà inscrite (compte actif ou désactivé par son titulaire) : avec le bon mot de passe,
+    // on ouvre ce compte (la connexion réactive un compte désactivé) au lieu de bloquer l'inscription.
+    const openExisting = async (): Promise<Result> => {
+      const result = await get().signIn(address, password);
+      if (result.ok) return { ...result, existing: true };
+      if (result.error === WRONG_CREDENTIALS)
+        return {
+          ok: false,
+          error: "Un compte existe déjà avec cette adresse. Connectez-vous avec son mot de passe StageManager : la connexion réactive aussi un compte désactivé.",
+          field: "email",
+        };
+      return result;
+    };
     const { data, error } = await supabase.auth.signUp({
-      email: email.trim().toLowerCase(),
+      email: address,
       password,
       // Le lien de confirmation ramène à la connexion de ce site (adresse à autoriser dans Supabase).
       options: { data: { role }, emailRedirectTo: `${window.location.origin}/connexion` },
     });
-    if (error) return { ok: false, ...translate(error.message) };
+    if (error) {
+      const translated = translate(error.message);
+      if (translated.error === "Un compte existe déjà avec cette adresse e-mail.") return openExisting();
+      return { ok: false, ...translated };
+    }
     // Supabase renvoie un utilisateur sans identités si l'adresse est déjà prise (protection anti-énumération).
-    if (data.user && data.user.identities && data.user.identities.length === 0)
-      return { ok: false, error: "Un compte existe déjà avec cette adresse e-mail.", field: "email" };
+    if (data.user && data.user.identities && data.user.identities.length === 0) return openExisting();
     if (!data.session) return { ok: true, needsConfirmation: true };
     const session = await loadProfile(data.user!.id, data.user!.email ?? "");
     if (session && session !== "suspended") set({ session });

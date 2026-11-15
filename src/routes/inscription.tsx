@@ -327,6 +327,21 @@ function SignUpPage() {
         setSentTo(account.email.trim().toLowerCase());
         return;
       }
+      // L'adresse avait déjà un compte, ouvert avec ce mot de passe : on y va directement.
+      const opened = useAuth.getState().session;
+      if (result.existing && opened) {
+        toast.success(result.reactivated ? "Compte réactivé" : "Vous avez déjà un compte", {
+          description: result.reactivated ? "Bon retour sur StageManager : votre compte est de nouveau actif." : "Nous avons ouvert votre compte existant.",
+        });
+        if (opened.onboarded) {
+          navigate({ to: ROLE_HOME[opened.role] });
+          return;
+        }
+        if (opened.role !== "admin") setRole(opened.role);
+        setErrors({});
+        setStep(2);
+        return;
+      }
     }
     if (last) return finish();
     setErrors({});
