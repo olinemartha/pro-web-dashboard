@@ -66,6 +66,8 @@ type AuthState = {
   signOut: () => Promise<void>;
   /** Le titulaire désactive son compte : profil masqué, session fermée. Se reconnecter le réactive. */
   deactivate: () => Promise<Result>;
+  /** Suppression définitive (compte étudiant) : compte, profil et candidatures effacés ; l'adresse redevient libre. */
+  deleteAccount: () => Promise<Result>;
   refresh: () => Promise<void>;
 };
 
@@ -239,6 +241,16 @@ export const useAuth = create<AuthState>()((set, get) => ({
       if (hideError) return { ok: false, ...translate(hideError.message) };
     }
     await supabase.auth.signOut();
+    set({ session: null });
+    return { ok: true };
+  },
+
+  deleteAccount: async () => {
+    if (!get().session) return { ok: false, error: "Session expirée : reconnectez-vous." };
+    const { error } = await supabase.rpc("delete_my_account");
+    if (error) return { ok: false, ...translate(error.message) };
+    // Le compte n'existe plus côté serveur : on efface seulement la session de ce navigateur.
+    await supabase.auth.signOut({ scope: "local" });
     set({ session: null });
     return { ok: true };
   },

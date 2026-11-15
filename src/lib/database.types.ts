@@ -281,7 +281,10 @@ export type Database = {
       };
     };
     Views: { [_ in never]: never };
-    Functions: { complete_company_onboarding: { Args: { company: Json }; Returns: string } };
+    Functions: {
+      complete_company_onboarding: { Args: { company: Json }; Returns: string };
+      delete_my_account: { Args: Record<PropertyKey, never>; Returns: undefined };
+    };
     Enums: { [_ in never]: never };
     CompositeTypes: { [_ in never]: never };
   };

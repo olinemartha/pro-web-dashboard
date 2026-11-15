@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { ArrowRight, CalendarClock, CheckCircle2, KeyRound, LogOut, Save, Sparkles, UserRound, UserX } from "lucide-react";
+import { ArrowRight, CalendarClock, CheckCircle2, KeyRound, LogOut, Save, Sparkles, Trash2, UserRound, UserX } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -66,7 +66,36 @@ function SettingsPage() {
   const signOut = useAuth((state) => state.signOut);
   const deactivate = useAuth((state) => state.deactivate);
   const [deactivatingPending, setDeactivatingPending] = useState(false);
+  const deleteAccount = useAuth((state) => state.deleteAccount);
+  const [deleting, setDeleting] = useState(false);
+  const [deletingPending, setDeletingPending] = useState(false);
+  const [deleteWord, setDeleteWord] = useState("");
+  const [deleteError, setDeleteError] = useState<string>();
   const navigate = useNavigate();
+
+  const closeDelete = () => {
+    setDeleting(false);
+    setDeleteWord("");
+    setDeleteError(undefined);
+  };
+
+  const confirmDelete = async () => {
+    if (deleteWord.trim().toUpperCase() !== "SUPPRIMER") {
+      setDeleteError("Saisissez SUPPRIMER pour confirmer.");
+      document.getElementById("delete-confirm")?.focus();
+      return;
+    }
+    setDeletingPending(true);
+    const result = await deleteAccount();
+    setDeletingPending(false);
+    if (!result.ok) {
+      toast.error("Suppression impossible", { description: result.error });
+      return;
+    }
+    closeDelete();
+    toast.success("Compte supprimé", { description: "Vos données ont été effacées. Vous pouvez vous réinscrire avec la même adresse." });
+    navigate({ to: "/connexion" });
+  };
 
   const [email, setEmail] = useState(profile.email);
   const [emailError, setEmailError] = useState<string>();
@@ -240,6 +269,11 @@ function SettingsPage() {
                   Désactiver
                 </Button>
               </SettingRow>
+              <SettingRow icon={Trash2} motion="pop" title="Supprimer le compte" desc="Efface définitivement le compte, le profil et les candidatures.">
+                <Button variant="outline" size="sm" onClick={() => setDeleting(true)}>
+                  Supprimer
+                </Button>
+              </SettingRow>
             </div>
           </Reveal>
         </div>
@@ -282,6 +316,45 @@ function SettingsPage() {
           <li>Vos candidatures en cours restent visibles par les entreprises concernées.</li>
           <li>Vos documents et votre historique sont conservés selon les règles de conservation des données.</li>
         </ul>
+      </Modal>
+
+      <Modal
+        open={deleting}
+        onClose={closeDelete}
+        icon={Trash2}
+        title="Supprimer définitivement votre compte ?"
+        description="Cette action est irréversible."
+        footer={
+          <>
+            <Button variant="outline" onClick={closeDelete}>
+              Annuler
+            </Button>
+            <Button variant="destructive" disabled={deletingPending} onClick={confirmDelete}>
+              {deletingPending ? "Suppression…" : "Supprimer le compte"}
+            </Button>
+          </>
+        }
+      >
+        <ul className="space-y-2 text-[13px] leading-relaxed text-muted-foreground">
+          <li>Votre compte, votre profil et vos candidatures sont effacés, y compris chez les entreprises.</li>
+          <li>Vos entretiens et votre suivi de stage disparaissent aussi.</li>
+          <li>L'adresse e-mail redevient libre : vous pourrez créer un nouveau compte avec elle.</li>
+        </ul>
+        <Field label="Pour confirmer, saisissez SUPPRIMER" htmlFor="delete-confirm" required error={deleteError} className="mt-4">
+          <input
+            id="delete-confirm"
+            className={inputClass}
+            autoComplete="off"
+            value={deleteWord}
+            onChange={(event) => {
+              setDeleteWord(event.target.value);
+              setDeleteError(undefined);
+            }}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") void confirmDelete();
+            }}
+          />
+        </Field>
       </Modal>
     </div>
   );
