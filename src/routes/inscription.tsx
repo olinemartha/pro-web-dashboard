@@ -4,10 +4,10 @@ import { ArrowLeft, ArrowRight, Building2, Check, GraduationCap } from "lucide-r
 import { toast } from "sonner";
 import { AuthBrand, PasswordInput } from "@/components/auth/auth-ui";
 import { TagInput } from "@/components/company/tag-input";
-import { ARROW_NUDGE, Field, Select, inputClass } from "@/components/company/ui";
+import { ARROW_NUDGE, Field, SECTION_LINK, Select, inputClass } from "@/components/company/ui";
 import { Button } from "@/components/ui/button";
 import { Reveal } from "@/components/ui/motion";
-import { ROLE_HOME, useAuth, type HostingProfile } from "@/lib/auth";
+import { ACCOUNT_EXISTS, COMPANY_TAKEN, PHONE_TAKEN, ROLE_HOME, identityTaken, useAuth, type HostingProfile } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/inscription")({
@@ -327,19 +327,16 @@ function SignUpPage() {
         setSentTo(account.email.trim().toLowerCase());
         return;
       }
-      // L'adresse avait déjà un compte, ouvert avec ce mot de passe : on y va directement.
-      const opened = useAuth.getState().session;
-      if (result.existing && opened) {
-        toast.success(result.reactivated ? "Compte réactivé" : "Vous avez déjà un compte", {
-          description: result.reactivated ? "Bon retour sur StageManager : votre compte est de nouveau actif." : "Nous avons ouvert votre compte existant.",
-        });
-        if (opened.onboarded) {
-          navigate({ to: ROLE_HOME[opened.role] });
-          return;
-        }
-        if (opened.role !== "admin") setRole(opened.role);
-        setErrors({});
-        setStep(2);
+    }
+    // Une personne = un compte : téléphone (étudiant) ou nom (entreprise) déjà pris par un autre compte.
+    if (step === 2 && (role === "etudiant" || role === "entreprise")) {
+      const [kind, value, field] =
+        role === "etudiant" ? (["telephone", student.telephone, "st-telephone"] as const) : (["entreprise", company.name, "co-name"] as const);
+      setPending(true);
+      const taken = await identityTaken(kind, value);
+      setPending(false);
+      if (taken) {
+        fail({ [field]: role === "etudiant" ? PHONE_TAKEN : COMPANY_TAKEN }, [field]);
         return;
       }
     }
@@ -440,6 +437,12 @@ function SignUpPage() {
                     }}
                   />
                 </Field>
+                {errors["su-email"] === ACCOUNT_EXISTS && (
+                  <Link to="/connexion" className={cn(SECTION_LINK, "group")}>
+                    Se connecter avec ce compte
+                    <ArrowRight className={cn("size-3.5", ARROW_NUDGE)} />
+                  </Link>
+                )}
                 <Field label="Mot de passe StageManager" htmlFor="su-password" required error={errors["su-password"]} hint="Un nouveau mot de passe, propre à StageManager : pas celui de votre messagerie. 8 caractères minimum.">
                   <PasswordInput
                     id="su-password"

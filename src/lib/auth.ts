@@ -45,18 +45,28 @@ export type Session = {
 };
 
 type Result =
-  | { ok: true; needsConfirmation?: boolean; reactivated?: boolean; /** L'adresse avait déjà un compte : il a été ouvert. */ existing?: boolean }
+  | { ok: true; needsConfirmation?: boolean; reactivated?: boolean }
   | { ok: false; error: string; field?: "email" | "password" };
 
 const WRONG_CREDENTIALS = "E-mail ou mot de passe incorrect.";
+
+/** Une personne = un compte : messages de refus (la base les impose aussi, par index uniques). */
+export const ACCOUNT_EXISTS = "Un compte existe déjà avec cette adresse e-mail. Une personne ne peut avoir qu'un seul compte : connectez-vous.";
+export const PHONE_TAKEN = "Ce numéro est déjà celui d'un autre compte. Une personne ne peut avoir qu'un seul compte : connectez-vous avec celui-ci.";
+export const COMPANY_TAKEN = "Cette entreprise a déjà un compte sur StageManager. Contactez son responsable ou l'administrateur de la plateforme.";
+
+/** Donnée d'identité déjà prise par un autre compte ? (téléphone d'étudiant, nom d'entreprise) */
+export async function identityTaken(kind: "telephone" | "entreprise", value: string): Promise<boolean> {
+  const { data, error } = await supabase.rpc("identity_taken", { kind, value });
+  return !error && data === true;
+}
 
 type AuthState = {
   session: Session | null;
   /** Vrai une fois la session Supabase lue (évite une redirection prématurée). */
   ready: boolean;
   init: () => void;
-  /** `expectedRole` : refuse d'ouvrir un compte d'un autre profil (inscription avec une adresse déjà prise). */
-  signIn: (email: string, password: string, expectedRole?: Exclude<Role, "admin">) => Promise<Result>;
+  signIn: (email: string, password: string) => Promise<Result>;
   signUp: (input: { role: Exclude<Role, "admin">; email: string; password: string }) => Promise<Result>;
   /** Fin de l'onboarding : profil étudiant ou fiche entreprise enregistrés en base. */
   completeOnboarding: (input: {
@@ -77,7 +87,9 @@ function translate(message: string): { error: string; field?: "email" | "passwor
   const m = message.toLowerCase();
   if (m.includes("invalid login credentials")) return { error: WRONG_CREDENTIALS, field: "password" };
   if (m.includes("email not confirmed")) return { error: "Confirmez d'abord votre adresse e-mail (lien reçu par e-mail).", field: "email" };
-  if (m.includes("already registered") || m.includes("already exists")) return { error: "Un compte existe déjà avec cette adresse e-mail.", field: "email" };
+  if (m.includes("already registered") || m.includes("already exists")) return { error: ACCOUNT_EXISTS, field: "email" };
+  if (m.includes("student_profiles_phone_unique")) return { error: PHONE_TAKEN };
+  if (m.includes("companies_name_unique")) return { error: COMPANY_TAKEN };
   if (m.includes("password should be") || m.includes("weak password")) return { error: "Mot de passe trop faible : 8 caractères minimum.", field: "password" };
   if (m.includes("email rate limit")) return { error: "L'e-mail de confirmation ne peut pas être envoyé pour le moment (limite d'envoi atteinte). Réessayez dans une heure.", field: "email" };
   if (m.includes("rate limit")) return { error: "Trop de tentatives. Patientez quelques minutes avant de réessayer." };
@@ -93,12 +105,18 @@ async function loadProfile(userId: string, email: string): Promise<Session | "su
   const { data, error } = await supabase.from("profiles").select("*").eq("id", userId).maybeSingle();
   if (error || !data) return null;
   if (data.suspended) return "suspended";
+  // Étudiant marqué inscrit sans profil enregistré : on reprend l'inscription plutôt qu'ouvrir un espace vide.
+  let onboarded = data.onboarded;
+  if (onboarded && data.role === "etudiant") {
+    const { count } = await supabase.from("student_profiles").select("id", { count: "exact", head: true }).eq("id", userId);
+    onboarded = (count ?? 0) > 0;
+  }
   return {
     userId,
     email: data.email || email,
     role: data.role as Role,
     name: data.full_name,
-    onboarded: data.onboarded,
+    onboarded,
     companyId: data.company_id,
     demo: false,
   };
@@ -135,7 +153,7 @@ export const useAuth = create<AuthState>()((set, get) => ({
     set({ session: session && session !== "suspended" ? session : null });
   },
 
-  signIn: async (email, password, expectedRole) => {
+  signIn: async (email, password) => {
     const { data, error } = await supabase.auth.signInWithPassword({ email: email.trim().toLowerCase(), password });
     if (error || !data.user) return { ok: false, ...translate(error?.message ?? "Connexion impossible.") };
     const session = await loadProfile(data.user.id, data.user.email ?? "");
@@ -146,20 +164,6 @@ export const useAuth = create<AuthState>()((set, get) => ({
     if (!session) {
       await supabase.auth.signOut();
       return { ok: false, error: "Profil introuvable pour ce compte. Contactez l'administrateur de la plateforme." };
-    }
-    // Un compte n'a qu'un profil : on n'ouvre pas un compte entreprise depuis « Je cherche un stage » (et inversement).
-    if (expectedRole && session.role !== expectedRole) {
-      await supabase.auth.signOut();
-      return {
-        ok: false,
-        field: "email",
-        error:
-          session.role === "entreprise"
-            ? "Cette adresse est déjà celle d'un compte entreprise. Pour chercher un stage, inscrivez-vous avec une autre adresse e-mail."
-            : session.role === "etudiant"
-              ? "Cette adresse est déjà celle d'un compte étudiant. Pour inscrire une entreprise, utilisez une autre adresse e-mail."
-              : "Cette adresse est déjà utilisée par un autre compte. Utilisez une autre adresse e-mail.",
-      };
     }
     // Compte désactivé par son titulaire : se reconnecter le réactive (comme annoncé à la désactivation).
     const { data: row } = await supabase.from("profiles").select("deactivated_at").eq("id", session.userId).maybeSingle();
@@ -173,33 +177,17 @@ export const useAuth = create<AuthState>()((set, get) => ({
   },
 
   signUp: async ({ role, email, password }) => {
-    const address = email.trim().toLowerCase();
-    // Adresse déjà inscrite (compte actif ou désactivé par son titulaire) : avec le bon mot de passe,
-    // on ouvre ce compte (la connexion réactive un compte désactivé) au lieu de bloquer l'inscription.
-    const openExisting = async (): Promise<Result> => {
-      const result = await get().signIn(address, password, role);
-      if (result.ok) return { ...result, existing: true };
-      if (result.error === WRONG_CREDENTIALS)
-        return {
-          ok: false,
-          error: "Un compte existe déjà avec cette adresse. Connectez-vous avec son mot de passe StageManager : la connexion réactive aussi un compte désactivé.",
-          field: "email",
-        };
-      return result;
-    };
+    // Une personne = un compte : une adresse déjà inscrite est refusée ; on se connecte depuis « Connexion »
+    // (qui réactive aussi un compte désactivé).
     const { data, error } = await supabase.auth.signUp({
-      email: address,
+      email: email.trim().toLowerCase(),
       password,
       // Le lien de confirmation ramène à la connexion de ce site (adresse à autoriser dans Supabase).
       options: { data: { role }, emailRedirectTo: `${window.location.origin}/connexion` },
     });
-    if (error) {
-      const translated = translate(error.message);
-      if (translated.error === "Un compte existe déjà avec cette adresse e-mail.") return openExisting();
-      return { ok: false, ...translated };
-    }
+    if (error) return { ok: false, ...translate(error.message) };
     // Supabase renvoie un utilisateur sans identités si l'adresse est déjà prise (protection anti-énumération).
-    if (data.user && data.user.identities && data.user.identities.length === 0) return openExisting();
+    if (data.user && data.user.identities && data.user.identities.length === 0) return { ok: false, error: ACCOUNT_EXISTS, field: "email" };
     if (!data.session) return { ok: true, needsConfirmation: true };
     const session = await loadProfile(data.user!.id, data.user!.email ?? "");
     if (session && session !== "suspended") set({ session });

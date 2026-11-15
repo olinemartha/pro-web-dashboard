@@ -8,7 +8,7 @@
  */
 import { toast } from "sonner";
 import { useAdminStore, type AdminUser } from "./admin-store";
-import type { HostingProfile, Session } from "./auth";
+import { COMPANY_TAKEN, PHONE_TAKEN, type HostingProfile, type Session } from "./auth";
 import type {
   AssignmentDecision,
   Candidate,
@@ -431,7 +431,12 @@ function push(label: string, run: () => PromiseLike<{ error: { message: string }
     // Une mise à jour suivie de .select() qui ne renvoie aucune ligne a été refusée sans erreur (droits).
     const refused = !error && Array.isArray(data) && data.length === 0;
     if (error || refused) {
-      const reason = error?.message ?? "modification refusée (droits insuffisants)";
+      // Une personne = un compte : la base refuse un téléphone ou un nom d'entreprise déjà pris.
+      const reason = error?.message.includes("student_profiles_phone_unique")
+        ? PHONE_TAKEN
+        : error?.message.includes("companies_name_unique")
+          ? COMPANY_TAKEN
+          : (error?.message ?? "modification refusée (droits insuffisants)");
       toast.error("Enregistrement impossible", { description: `${label} : ${reason}` });
       await loadForSession(session).catch(() => undefined);
     }

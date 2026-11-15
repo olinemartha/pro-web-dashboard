@@ -284,6 +284,7 @@ export type Database = {
     Functions: {
       complete_company_onboarding: { Args: { company: Json }; Returns: string };
       delete_my_account: { Args: Record<PropertyKey, never>; Returns: undefined };
+      identity_taken: { Args: { kind: string; value: string }; Returns: boolean };
     };
     Enums: { [_ in never]: never };
     CompositeTypes: { [_ in never]: never };
