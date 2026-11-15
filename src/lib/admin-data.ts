@@ -9,6 +9,8 @@ import { useCompanyStore } from "./company-store";
 import { DAY_MS, localIsoDate } from "./dates";
 
 export type AdminStudent = {
+  /** Compte de l'étudiant (pour ouvrir son espace en consultation). */
+  id?: string;
   email: string;
   name: string;
   initials: string;
@@ -47,6 +49,7 @@ export function useAdminData() {
         if (last > current.lastActivity) current.lastActivity = last;
       } else {
         byEmail.set(c.email, {
+          id: users.find((u) => u.email === c.email)?.id,
           email: c.email,
           name: c.name,
           initials: c.initials,
@@ -66,6 +69,7 @@ export function useAdminData() {
         continue;
       }
       byEmail.set(account.email, {
+        id: account.id,
         email: account.email,
         name: account.name,
         initials: initials(account.name),
@@ -86,6 +90,7 @@ export function useAdminData() {
       ? companyRows.map((c) => {
           const own = offers.filter((o) => o.companyId === c.id);
           return {
+            id: c.id as string | undefined,
             email: c.email,
             name: c.name,
             initials: c.initials,
@@ -99,6 +104,7 @@ export function useAdminData() {
         })
       : [
           {
+            id: undefined as string | undefined,
             email: profile.email,
             name: profile.name,
             initials: profile.initials,

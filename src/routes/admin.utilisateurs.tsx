@@ -1,6 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Ban, Building2, RotateCcw, UserPlus, Users } from "lucide-react";
+import { Ban, Building2, Eye, RotateCcw, UserPlus, Users } from "lucide-react";
 import { toast } from "sonner";
 import {
   ActionMenu,
@@ -21,6 +21,7 @@ import { Reveal } from "@/components/ui/motion";
 import { useAdminData } from "@/lib/admin-data";
 import { useAdminStore } from "@/lib/admin-store";
 import { fmtDate } from "@/lib/dates";
+import { VIEW_HOME, useViewAs, type ViewTarget } from "@/lib/view-as";
 
 export const Route = createFileRoute("/admin/utilisateurs")({
   validateSearch: (s: Record<string, unknown>): { q?: string } => (typeof s["q"] === "string" ? { q: s["q"] } : {}),
@@ -37,6 +38,7 @@ function UsersPage() {
   const data = useAdminData();
   const { q } = Route.useSearch();
   const { suspend, reactivate } = useAdminStore();
+  const navigate = useNavigate();
   const [tab, setTab] = useState<Tab>("etudiants");
   const [search, setSearch] = useState(q ?? "");
   const [target, setTarget] = useState<Target | null>(null);
@@ -50,6 +52,12 @@ function UsersPage() {
   const students = data.students.filter((s) => !query || `${s.name} ${s.email} ${s.filiere} ${s.universite}`.toLowerCase().includes(query));
   const companies = data.companies.filter((c) => !query || `${c.name} ${c.email} ${c.sector}`.toLowerCase().includes(query));
   const rows = tab === "etudiants" ? students : companies;
+
+  /** Consultation : l'administrateur voit l'espace du compte tel que son titulaire le voit (lecture seule). */
+  const openSpace = (target: ViewTarget) => {
+    useViewAs.getState().open(target);
+    navigate({ to: VIEW_HOME[target.kind] });
+  };
 
   const confirmSuspension = () => {
     if (!target) return;
@@ -125,6 +133,11 @@ function UsersPage() {
                         <span className="block">actif {fmtDate(s.lastActivity, false)}</span>
                       </p>
                       <ActionMenu label={`Actions pour ${s.name}`}>
+                        {s.id && (
+                          <MenuItem onSelect={() => openSpace({ kind: "etudiant", id: s.id!, name: s.name, email: s.email })}>
+                            <Eye className="size-4 text-muted-foreground" /> Ouvrir son espace
+                          </MenuItem>
+                        )}
                         {s.suspended ? (
                           <MenuItem
                             onSelect={() => {
@@ -171,6 +184,11 @@ function UsersPage() {
                         <span className="block">{plural(c.interns, "stagiaire")}</span>
                       </p>
                       <ActionMenu label={`Actions pour ${c.name}`}>
+                        {c.id && (
+                          <MenuItem onSelect={() => openSpace({ kind: "entreprise", id: c.id!, name: c.name, email: c.email })}>
+                            <Eye className="size-4 text-muted-foreground" /> Ouvrir son espace
+                          </MenuItem>
+                        )}
                         {c.suspended ? (
                           <MenuItem
                             onSelect={() => {

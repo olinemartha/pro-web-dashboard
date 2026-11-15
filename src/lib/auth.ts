@@ -9,6 +9,7 @@ import { create } from "zustand";
 import type { Profile } from "./rules";
 import type { CompanyProfile } from "./company-data";
 import { supabase } from "./supabase";
+import { READ_ONLY_MESSAGE, useViewAs } from "./view-as";
 
 export type Role = "etudiant" | "entreprise" | "admin";
 
@@ -42,6 +43,8 @@ export type Session = {
   companyId: string | null;
   /** Conservé pour compatibilité : il n'y a plus de compte de démonstration local. */
   demo: false;
+  /** Session de consultation : l'administrateur ouvre l'espace d'un autre compte, en lecture seule. */
+  viewing?: boolean;
 };
 
 type Result =
@@ -136,7 +139,10 @@ export const useAuth = create<AuthState>()((set, get) => ({
       set({ session: session && session !== "suspended" ? session : null, ready: true });
     });
     supabase.auth.onAuthStateChange((event, authSession) => {
-      if (event === "SIGNED_OUT") set({ session: null });
+      if (event === "SIGNED_OUT") {
+        useViewAs.getState().close();
+        set({ session: null });
+      }
       // La connexion elle-même charge le profil (signIn) ; ici, seulement le renouvellement du jeton.
       if (event === "TOKEN_REFRESHED" && authSession?.user && !get().session) {
         void loadProfile(authSession.user.id, authSession.user.email ?? "").then((session) => {
@@ -230,6 +236,7 @@ export const useAuth = create<AuthState>()((set, get) => ({
   },
 
   signOut: async () => {
+    useViewAs.getState().close();
     await supabase.auth.signOut();
     set({ session: null });
   },
@@ -237,6 +244,7 @@ export const useAuth = create<AuthState>()((set, get) => ({
   deactivate: async () => {
     const session = get().session;
     if (!session) return { ok: false, error: "Session expirée : reconnectez-vous." };
+    if (useViewAs.getState().target) return { ok: false, error: READ_ONLY_MESSAGE };
     const { error } = await supabase.from("profiles").update({ deactivated_at: new Date().toISOString() }).eq("id", session.userId);
     if (error) return { ok: false, ...translate(error.message) };
     if (session.role === "etudiant") {
@@ -250,6 +258,7 @@ export const useAuth = create<AuthState>()((set, get) => ({
 
   deleteAccount: async () => {
     if (!get().session) return { ok: false, error: "Session expirée : reconnectez-vous." };
+    if (useViewAs.getState().target) return { ok: false, error: READ_ONLY_MESSAGE };
     const { error } = await supabase.rpc("delete_my_account");
     if (error) return { ok: false, ...translate(error.message) };
     // Le compte n'existe plus côté serveur : on efface seulement la session de ce navigateur.

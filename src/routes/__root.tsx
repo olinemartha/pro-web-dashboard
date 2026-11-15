@@ -8,14 +8,15 @@ import {
   useRouterState,
   type ErrorComponentProps,
 } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import "../index.css";
 import { AppShell } from "../components/app/app-shell";
 import { CompanyShell } from "../components/company/company-shell";
 import { AdminShell } from "../components/admin/admin-shell";
-import { ROLE_HOME, isPublicPath, roleForPath, useAuth } from "../lib/auth";
+import { ROLE_HOME, isPublicPath, roleForPath, useAuth, type Session } from "../lib/auth";
 import { startRemote } from "../lib/remote";
+import { useViewAs } from "../lib/view-as";
 import { Toaster } from "../components/ui/sonner";
 import { queryClient } from "../lib/query-client";
 
@@ -101,27 +102,46 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 /**
  * Où doit aller la personne ? Sans session : connexion. Inscription inachevée : onboarding.
- * Connectée : uniquement l'espace de son rôle (le changement d'espace n'existe plus).
+ * Connectée : uniquement l'espace de son rôle. Seul l'administrateur ouvre aussi, en consultation,
+ * l'espace de l'entreprise ou de l'étudiant qu'il a choisi ; jamais l'inverse.
  */
 function useRedirect(pathname: string) {
   const session = useAuth((state) => state.session);
+  const target = useViewAs((state) => state.target);
   const isPublic = isPublicPath(pathname);
   if (!session) return isPublic ? null : "/connexion";
   if (!session.onboarded) return pathname === "/inscription" ? null : "/inscription";
   if (isPublic) return ROLE_HOME[session.role];
+  if (session.role === "admin" && target && roleForPath(pathname) === target.kind) return null;
   if (roleForPath(pathname) !== session.role) return ROLE_HOME[session.role];
   return null;
 }
 
-/** Compte connecté et inscrit : données chargées depuis Supabase, enregistrées et suivies en temps réel. */
-function useRemoteData() {
+/** Session dont on charge les données : celle du compte, ou celle de l'espace consulté par l'administrateur. */
+function useDataSession(pathname: string): Session | null {
   const session = useAuth((state) => state.session);
+  const target = useViewAs((state) => state.target);
+  if (!session || session.role !== "admin" || !target || roleForPath(pathname) !== target.kind) return session;
+  return {
+    ...session,
+    role: target.kind,
+    userId: target.kind === "etudiant" ? target.id : session.userId,
+    email: target.kind === "etudiant" ? target.email : session.email,
+    companyId: target.kind === "entreprise" ? target.id : null,
+    name: target.name,
+    viewing: true,
+  };
+}
+
+/** Compte connecté et inscrit : données chargées depuis Supabase, enregistrées et suivies en temps réel. */
+function useRemoteData(pathname: string) {
+  const session = useDataSession(pathname);
   const [loaded, setLoaded] = useState<string | null>(null);
-  const key = session?.onboarded ? `${session.userId}:${session.role}:${session.companyId ?? ""}` : null;
+  const key = session?.onboarded ? `${session.userId}:${session.role}:${session.companyId ?? ""}:${session.viewing ? "lecture" : ""}` : null;
   useEffect(() => {
     if (!session || !key) return;
     return startRemote(session, () => setLoaded(key));
-    // La session ne change de sens que si la clé change (rôle, entreprise, compte).
+    // La session ne change de sens que si la clé change (rôle, entreprise, compte, consultation).
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key]);
   return !key || loaded === key;
@@ -132,9 +152,18 @@ function RootComponent() {
   const navigate = useNavigate();
   const ready = useAuth((state) => state.ready);
   const redirect = useRedirect(pathname);
-  const dataReady = useRemoteData();
+  const dataReady = useRemoteData(pathname);
+  const isAdmin = useAuth((state) => state.session?.role === "admin");
 
   useEffect(() => useAuth.getState().init(), []);
+
+  // De retour dans l'espace administrateur (depuis l'espace consulté), la consultation est terminée.
+  const previousSpace = useRef<string | null>(null);
+  useEffect(() => {
+    const current = roleForPath(pathname);
+    if (isAdmin && current === "admin" && previousSpace.current && previousSpace.current !== "admin") useViewAs.getState().close();
+    previousSpace.current = current;
+  }, [isAdmin, pathname]);
 
   useEffect(() => {
     if (ready && redirect) navigate({ to: redirect, replace: true });

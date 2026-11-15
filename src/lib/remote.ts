@@ -28,6 +28,7 @@ import { DEFAULT_RULES } from "./expert-engine";
 import type { Json, Tables } from "./database.types";
 import type { Notification } from "./mock-data";
 import { remoteState } from "./remote-flag";
+import { READ_ONLY_MESSAGE } from "./view-as";
 import { profileCompletion, type AppStatus, type Application, type Profile } from "./rules";
 import { useStore } from "./store";
 import { supabase } from "./supabase";
@@ -151,16 +152,64 @@ async function must<T>(promise: PromiseLike<{ data: T | null; error: { message: 
   return (data ?? []) as T;
 }
 
+type Rows = {
+  offers: Tables<"offers">[];
+  applications: Tables<"applications">[];
+  interviews: Tables<"interviews">[];
+  interns: Tables<"interns">[];
+  runs: Tables<"expert_runs">[];
+  decisions: Tables<"assignment_decisions">[];
+  notifications: Tables<"notifications">[];
+};
+
+/**
+ * L'administrateur lit toute la base : en consultation, on ne garde que ce que voit le titulaire
+ * de l'espace ouvert (son entreprise, ou ses propres candidatures d'étudiant).
+ */
+function scopeRows(session: Session, rows: Rows): Rows {
+  const notifications = rows.notifications.filter((n) => n.user_id === session.userId);
+  if (!session.viewing) return { ...rows, notifications };
+  const applications =
+    session.role === "entreprise"
+      ? rows.applications.filter((a) => rows.offers.some((o) => o.id === a.offer_id && o.company_id === session.companyId))
+      : rows.applications.filter((a) => a.student_id === session.userId);
+  const appIds = new Set(applications.map((a) => a.id));
+  const interns = rows.interns.filter((i) => appIds.has(i.application_id) && (session.role !== "entreprise" || i.company_id === session.companyId));
+  const internIds = new Set(interns.map((i) => i.id));
+  const offers =
+    session.role === "entreprise"
+      ? rows.offers.filter((o) => o.company_id === session.companyId)
+      : rows.offers.filter((o) => o.status === "publiee" || applications.some((a) => a.offer_id === o.id));
+  return {
+    offers,
+    applications,
+    interviews: rows.interviews.filter((i) => appIds.has(i.application_id)),
+    interns,
+    runs: rows.runs.filter((r) => internIds.has(r.intern_id)),
+    decisions: rows.decisions.filter((d) => internIds.has(d.intern_id)),
+    notifications: session.role === "entreprise" ? [] : notifications,
+  };
+}
+
 export async function loadForSession(session: Session) {
-  const [offers, applications, interviews, interns, runs, decisions, notifications] = await Promise.all([
+  const [allOffers, allApplications, allInterviews, allInterns, allRuns, allDecisions, allNotifications] = await Promise.all([
     must(supabase.from("offers").select("*").order("published", { ascending: false })),
     must(supabase.from("applications").select("*").order("applied_at", { ascending: false })),
     must(supabase.from("interviews").select("*")),
     must(supabase.from("interns").select("*")),
     must(supabase.from("expert_runs").select("*").order("created_at", { ascending: false })),
     must(supabase.from("assignment_decisions").select("*").order("decided_at", { ascending: false })),
-    must(supabase.from("notifications").select("*").order("created_at", { ascending: false }).limit(60)),
+    must(supabase.from("notifications").select("*").order("created_at", { ascending: false }).limit(200)),
   ]);
+  const { offers, applications, interviews, interns, runs, decisions, notifications } = scopeRows(session, {
+    offers: allOffers,
+    applications: allApplications,
+    interviews: allInterviews,
+    interns: allInterns,
+    runs: allRuns,
+    decisions: allDecisions,
+    notifications: allNotifications,
+  });
 
   const counts = new Map<string, number>();
   applications.forEach((a) => counts.set(a.offer_id, (counts.get(a.offer_id) ?? 0) + 1));
@@ -230,7 +279,7 @@ async function loadCompanyOrAdmin(
   decisionRows: Tables<"assignment_decisions">[]
 ) {
   const studentIds = [...new Set(applications.map((a) => a.student_id))];
-  const [companies, services, supervisors, people, students, ruleRows] = await Promise.all([
+  const [companies, allServices, allSupervisors, people, students, allRuleRows] = await Promise.all([
     must(session.role === "entreprise" && session.companyId ? supabase.from("companies").select("*").eq("id", session.companyId) : supabase.from("companies").select("*")),
     must(supabase.from("services").select("*").order("name")),
     must(supabase.from("supervisors").select("*").order("name")),
@@ -250,6 +299,12 @@ async function loadCompanyOrAdmin(
     ),
     must(supabase.from("expert_rules").select("*").order("position")),
   ]);
+  // Consultation : l'administrateur lit tout, on ne garde que l'entreprise ou le dossier de l'étudiant ouvert.
+  const inScope = <T extends { company_id: string; id: string }>(rows: T[], ids: (string | null)[]) =>
+    !session.viewing ? rows : session.role === "entreprise" ? rows.filter((r) => r.company_id === session.companyId) : rows.filter((r) => ids.includes(r.id));
+  const services = inScope(allServices, internRows.map((i) => i.service_id));
+  const supervisors = inScope(allSupervisors, internRows.map((i) => i.supervisor_id));
+  const ruleRows = inScope(allRuleRows, []);
 
   const applicant = (id: string): Applicant => ({ profile: people.find((p) => p.id === id), student: students.find((s) => s.id === id) });
   const nameOf = (a: Applicant) =>
@@ -334,7 +389,7 @@ async function loadCompanyOrAdmin(
   // Base de règles : une entreprise qui n'en a pas encore reçoit les règles de départ, enregistrées
   // en base pour qu'elle puisse ensuite les modifier dans le module d'acquisition des connaissances.
   let rules: KnowledgeRule[] = ruleRows.map(toRule);
-  if (session.role === "entreprise" && session.companyId && rules.length === 0) {
+  if (session.role === "entreprise" && session.companyId && rules.length === 0 && !session.viewing) {
     const companyId = session.companyId;
     const { data } = await supabase
       .from("expert_rules")
@@ -563,6 +618,33 @@ function syncStudent(session: Session) {
   });
 }
 
+/**
+ * Consultation par l'administrateur : rien n'est enregistré au nom du titulaire. Une modification
+ * tentée dans l'espace consulté est signalée puis annulée (les vraies données sont relues).
+ */
+function readOnly(reload: () => void) {
+  const refuse = () => {
+    // Le message de réussite de la page (« Candidature retirée »…) part juste après : on le remplace.
+    setTimeout(() => {
+      toast.dismiss();
+      toast.info("Modification non enregistrée", { id: "lecture-seule", description: READ_ONLY_MESSAGE });
+    }, 60);
+    reload();
+  };
+  const COMPANY_KEYS = ["profile", "spaceActive", "hosting", "offers", "candidates", "interviews", "services", "supervisors", "interns", "expertRuns", "expertRules", "decisions"] as const;
+  const STUDENT_KEYS = ["profile", "applications", "notifications"] as const;
+  const stopCompany = useCompanyStore.subscribe((next, prev) => {
+    if (!applying && COMPANY_KEYS.some((key) => next[key] !== prev[key])) refuse();
+  });
+  const stopStudent = useStore.subscribe((next, prev) => {
+    if (!applying && STUDENT_KEYS.some((key) => next[key] !== prev[key])) refuse();
+  });
+  return () => {
+    stopCompany();
+    stopStudent();
+  };
+}
+
 /* ------------------------------------------------------------------ */
 /* Session                                                             */
 /* ------------------------------------------------------------------ */
@@ -583,7 +665,13 @@ export function startRemote(session: Session, onReady: () => void): () => void {
     .catch((error: Error) => toast.error("Chargement impossible", { description: error.message }))
     .finally(() => !stopped && onReady());
 
-  const unsubscribe = session.role === "etudiant" ? syncStudent(session) : session.role === "entreprise" ? syncCompany(session) : () => undefined;
+  const unsubscribe = session.viewing
+    ? readOnly(reload)
+    : session.role === "etudiant"
+      ? syncStudent(session)
+      : session.role === "entreprise"
+        ? syncCompany(session)
+        : () => undefined;
 
   const channel = supabase
     .channel(`stagemanager-${session.userId}`)
@@ -593,7 +681,8 @@ export function startRemote(session: Session, onReady: () => void): () => void {
     .on("postgres_changes", { event: "UPDATE", schema: "public", table: "companies" }, reload)
     .on("postgres_changes", { event: "INSERT", schema: "public", table: "notifications", filter: `user_id=eq.${session.userId}` }, (payload) => {
       const n = payload.new as Tables<"notifications">;
-      toast(n.title, { description: n.body });
+      // En consultation, la notification est celle du titulaire : elle s'ajoute à la liste sans alerte.
+      if (!session.viewing) toast(n.title, { description: n.body });
       reload();
     })
     .subscribe();

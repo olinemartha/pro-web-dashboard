@@ -2,6 +2,7 @@ import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { ChevronsUpDown, LogOut, Menu, PanelLeftClose, PanelLeftOpen, Plus, X } from "lucide-react";
 import { ShellPageTitleProvider } from "@/components/app/ui";
+import { ViewAsBanner } from "@/components/admin/view-as-banner";
 import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 
@@ -528,14 +529,17 @@ export function SpaceShell({ config, children }: { config: SpaceConfig; children
         </div>
       </aside>
 
-      <div ref={scrollRef} className="page-scroll flex min-w-0 flex-1 flex-col overflow-y-auto">
-        <TopBar config={config} pathname={pathname} />
-        <MobileBar config={config} pathname={pathname} />
-        <main className="flex-1 p-4 sm:p-6 xl:p-8">
-          <div key={pathname} className="page-enter mx-auto w-full max-w-[1360px]">
-            <ShellPageTitleProvider title={title}>{children}</ShellPageTitleProvider>
-          </div>
-        </main>
+      <div className="flex min-w-0 flex-1 flex-col">
+        <ViewAsBanner />
+        <div ref={scrollRef} className="page-scroll flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto">
+          <TopBar config={config} pathname={pathname} />
+          <MobileBar config={config} pathname={pathname} />
+          <main className="flex-1 p-4 sm:p-6 xl:p-8">
+            <div key={pathname} className="page-enter mx-auto w-full max-w-[1360px]">
+              <ShellPageTitleProvider title={title}>{children}</ShellPageTitleProvider>
+            </div>
+          </main>
+        </div>
       </div>
     </div>
   );
