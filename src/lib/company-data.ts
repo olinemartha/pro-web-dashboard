@@ -91,6 +91,18 @@ export interface InternReport {
 
 export type AssignmentSource = "recommandation" | "manuel";
 
+/** Relevé de présence d'une semaine, saisi par l'entreprise (en jours). */
+export interface AttendanceWeek {
+  id: string;
+  internId: string;
+  /** Lundi de la semaine (AAAA-MM-JJ). */
+  weekStart: string;
+  present: number;
+  late: number;
+  absent: number;
+  note: string;
+}
+
 export interface Intern {
   id: string;
   candidateId: string;

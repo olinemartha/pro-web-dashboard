@@ -11,6 +11,7 @@ import { useAdminStore, type AdminUser } from "./admin-store";
 import { COMPANY_TAKEN, PHONE_TAKEN, type HostingProfile, type Session } from "./auth";
 import type {
   AssignmentDecision,
+  AttendanceWeek,
   Candidate,
   CandidateStatus,
   CompanyOffer,
@@ -282,7 +283,7 @@ async function loadCompanyOrAdmin(
   decisionRows: Tables<"assignment_decisions">[]
 ) {
   const studentIds = [...new Set(applications.map((a) => a.student_id))];
-  const [companies, allServices, allSupervisors, people, students, allRuleRows] = await Promise.all([
+  const [companies, allServices, allSupervisors, people, students, allRuleRows, allAttendance] = await Promise.all([
     must(session.role === "entreprise" && session.companyId ? supabase.from("companies").select("*").eq("id", session.companyId) : supabase.from("companies").select("*")),
     must(supabase.from("services").select("*").order("name")),
     must(supabase.from("supervisors").select("*").order("name")),
@@ -301,6 +302,7 @@ async function loadCompanyOrAdmin(
           : supabase.from("student_profiles").select("*").eq("id", session.userId)
     ),
     must(supabase.from("expert_rules").select("*").order("position")),
+    must(supabase.from("attendance").select("*").order("week_start")),
   ]);
   // Consultation : l'administrateur lit tout, on ne garde que l'entreprise ou le dossier de l'étudiant ouvert.
   const inScope = <T extends { company_id: string; id: string }>(rows: T[], ids: (string | null)[]) =>
@@ -308,6 +310,11 @@ async function loadCompanyOrAdmin(
   const services = inScope(allServices, internRows.map((i) => i.service_id));
   const supervisors = inScope(allSupervisors, internRows.map((i) => i.supervisor_id));
   const ruleRows = inScope(allRuleRows, []);
+  // Présence : seulement celle des stagiaires chargés (consultation comprise).
+  const internIds = new Set(internRows.map((i) => i.id));
+  const attendance: AttendanceWeek[] = allAttendance
+    .filter((a) => internIds.has(a.intern_id))
+    .map((a) => ({ id: a.id, internId: a.intern_id, weekStart: a.week_start, present: a.present, late: a.late, absent: a.absent, note: a.note }));
 
   const applicant = (id: string): Applicant => ({ profile: people.find((p) => p.id === id), student: students.find((s) => s.id === id) });
   const nameOf = (a: Applicant) =>
@@ -437,6 +444,7 @@ async function loadCompanyOrAdmin(
     ),
     decisions,
     expertRules: rules,
+    attendance,
     readNotices: [],
   }));
 
@@ -592,6 +600,13 @@ function syncCompany(session: Session) {
     for (const r of removed(prev.expertRules, next.expertRules))
       push("Suppression de règle", () => supabase.from("expert_rules").delete().eq("id", r.id), session);
 
+    for (const a of changed(prev.attendance, next.attendance))
+      push("Présence", () => supabase.from("attendance").upsert({
+        id: a.id, intern_id: a.internId, company_id: companyId, week_start: a.weekStart, present: a.present, late: a.late,
+        absent: a.absent, note: a.note, updated_at: new Date().toISOString(),
+      }), session);
+    for (const a of removed(prev.attendance, next.attendance)) push("Suppression de relevé", () => supabase.from("attendance").delete().eq("id", a.id), session);
+
     for (const d of next.decisions.filter((d) => !prev.decisions.includes(d)))
       push("Décision d'affectation", () => supabase.from("assignment_decisions").insert({
         intern_id: d.internId, service_id: d.serviceId || null, service: d.service, source: d.source, reason: d.reason,
@@ -641,7 +656,7 @@ function readOnly(reload: () => void) {
     }, 60);
     reload();
   };
-  const COMPANY_KEYS = ["profile", "spaceActive", "hosting", "offers", "candidates", "interviews", "services", "supervisors", "interns", "expertRuns", "expertRules", "decisions"] as const;
+  const COMPANY_KEYS = ["profile", "spaceActive", "hosting", "offers", "candidates", "interviews", "services", "supervisors", "interns", "expertRuns", "expertRules", "decisions", "attendance"] as const;
   const STUDENT_KEYS = ["profile", "applications", "notifications"] as const;
   const stopCompany = useCompanyStore.subscribe((next, prev) => {
     if (!applying && COMPANY_KEYS.some((key) => next[key] !== prev[key])) refuse();
@@ -689,6 +704,7 @@ export function startRemote(session: Session, onReady: () => void): () => void {
     .on("postgres_changes", { event: "*", schema: "public", table: "interviews" }, reload)
     .on("postgres_changes", { event: "*", schema: "public", table: "offers" }, reload)
     .on("postgres_changes", { event: "*", schema: "public", table: "interns" }, reload)
+    .on("postgres_changes", { event: "*", schema: "public", table: "attendance" }, reload)
     .on("postgres_changes", { event: "UPDATE", schema: "public", table: "companies" }, reload)
     .on("postgres_changes", { event: "INSERT", schema: "public", table: "notifications", filter: `user_id=eq.${session.userId}` }, (payload) => {
       const n = payload.new as Tables<"notifications">;

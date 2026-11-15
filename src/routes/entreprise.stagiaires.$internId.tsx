@@ -42,6 +42,7 @@ import { Reveal } from "@/components/ui/motion";
 import { daysFromToday, fmtDate, relativeDay } from "@/lib/dates";
 import { cn } from "@/lib/utils";
 import { ExpertPanel } from "@/components/company/expert-panel";
+import { AttendanceSection } from "@/components/company/attendance";
 import { Stamp, stampDate } from "@/components/company/stamp";
 import { useCompanyStore } from "@/lib/company-store";
 import type { Intern, InternReport, ReportStatus } from "@/lib/company-data";
@@ -127,6 +128,7 @@ function InternDossierPage() {
   const tabs = [
     { href: "#affectation", label: "Affectation", badge: intern.confirmed ? undefined : "!" },
     { href: "#suivi", label: "Rapports", badge: pendingReports ? String(pendingReports) : undefined },
+    { href: "#presence", label: "Présence" },
     { href: "#evaluation", label: "Évaluation", done: Boolean(intern.evaluation) },
     { href: "#attestation", label: "Attestation", done: intern.certificate === "validee" },
   ];
@@ -288,6 +290,9 @@ function InternDossierPage() {
           </ul>
         )}
       </Reveal>
+
+      {/* Présence */}
+      <AttendanceSection intern={intern} />
 
       {/* Évaluation */}
       <EvaluationSection intern={intern} onSave={setEvaluation} />

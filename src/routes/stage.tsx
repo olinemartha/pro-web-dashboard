@@ -13,6 +13,8 @@ import { submitInternReport, type ReportInput } from "@/lib/remote";
 import type { Application } from "@/lib/rules";
 import { useMyAssignment, useStore } from "@/lib/store";
 import { AcceptedAnalysis, AssignmentCard } from "@/components/app/assignment";
+import { AttendanceRow, AttendanceTotals } from "@/components/company/attendance";
+import { useCompanyStore } from "@/lib/company-store";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/stage")({
@@ -73,7 +75,7 @@ function NotConfirmed({ applications }: { applications: Application[] }) {
             {[
               { title: "Vous confirmez votre stage", desc: "Une seule proposition acceptée ; les autres sont déclinées." },
               { title: "L'entreprise vous affecte", desc: "Elle choisit votre service, aidée par le système expert." },
-              { title: "Le suivi s'ouvre ici", desc: "Dates, missions, encadreur, rapports et attestation." },
+              { title: "Le suivi s'ouvre ici", desc: "Dates, missions, encadreur, présence, rapports et attestation." },
             ].map((step, index) => (
               <li key={step.title} className="flex gap-3">
                 <span
@@ -106,6 +108,8 @@ function ConfirmedStage({ app }: { app: Application }) {
   const company = companyOf(offer.companyId);
   const intern = assignment?.intern;
   const supervisor = assignment?.supervisor;
+  const allAttendance = useCompanyStore((state) => state.attendance);
+  const weeks = allAttendance.filter((a) => a.internId === intern?.id).sort((a, b) => b.weekStart.localeCompare(a.weekStart));
   const start = intern?.start ?? "";
   const end = intern?.end ?? "";
   const hasDates = Boolean(start && end);
@@ -273,6 +277,27 @@ function ConfirmedStage({ app }: { app: Application }) {
                   );
                 })}
               </ol>
+            )}
+          </Reveal>
+
+          {/* Présence : relevés hebdomadaires saisis par l'entreprise */}
+          <Reveal as="section" delay={180} className="card-surface overflow-hidden">
+            <div className="px-5 pt-5">
+              <SectionHeader title="Présence" description="Relevés saisis chaque semaine par l'entreprise" />
+            </div>
+            {weeks.length === 0 ? (
+              <p className="px-5 pb-5 pt-3 text-pretty text-[13px] leading-relaxed text-muted-foreground">
+                {started ? `${company.name} n'a pas encore saisi de relevé.` : "Le relevé de présence commencera au début du stage."}
+              </p>
+            ) : (
+              <>
+                <AttendanceTotals weeks={weeks} className="mx-5 mt-4" />
+                <ul className="mt-3 divide-y border-t">
+                  {weeks.map((week) => (
+                    <AttendanceRow key={week.id} week={week} />
+                  ))}
+                </ul>
+              </>
             )}
           </Reveal>
 

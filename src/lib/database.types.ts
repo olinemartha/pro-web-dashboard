@@ -15,6 +15,23 @@ export type Database = {
         Update: { admin_id?: string | null; created_at?: string; id?: string; kind?: string; reason?: string; target?: string };
         Relationships: Rel;
       };
+      attendance: {
+        Row: {
+          absent: number;
+          company_id: string;
+          created_at: string;
+          id: string;
+          intern_id: string;
+          late: number;
+          note: string;
+          present: number;
+          updated_at: string;
+          week_start: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["attendance"]["Row"]> & { company_id: string; intern_id: string; week_start: string };
+        Update: Partial<Database["public"]["Tables"]["attendance"]["Row"]>;
+        Relationships: Rel;
+      };
       applications: {
         Row: {
           applied_at: string;

@@ -8,6 +8,7 @@ import {
   demoServices,
   demoSupervisors,
   type AssignmentDecision,
+  type AttendanceWeek,
   type AssignmentSource,
   type Candidate,
   type CandidateStatus,
@@ -104,6 +105,11 @@ interface CompanyState {
   decisions: AssignmentDecision[];
   /** Identifiants des notifications déjà consultées. */
   readNotices: string[];
+  /** Relevés de présence hebdomadaires des stagiaires. */
+  attendance: AttendanceWeek[];
+  /** Enregistre (ou corrige) le relevé d'une semaine : une seule ligne par stagiaire et par semaine. */
+  saveAttendance: (entry: Omit<AttendanceWeek, "id">) => void;
+  removeAttendance: (id: string) => void;
 
   markNoticesRead: (ids: string[]) => void;
   updateProfile: (p: Partial<CompanyProfile>) => void;
@@ -172,6 +178,19 @@ export const useCompanyStore = create<CompanyState>((set, get) => ({
   decisions: seedDecisions,
   // Démo : les plus anciennes notifications sont déjà lues.
   readNotices: ["c-c2", "e-i5", "r-s1"],
+  attendance: [],
+
+  saveAttendance: (entry) =>
+    set((state) => {
+      const existing = state.attendance.find((a) => a.internId === entry.internId && a.weekStart === entry.weekStart);
+      return {
+        attendance: existing
+          ? state.attendance.map((a) => (a.id === existing.id ? { ...existing, ...entry } : a))
+          : [...state.attendance, { ...entry, id: crypto.randomUUID() }],
+      };
+    }),
+
+  removeAttendance: (id) => set((state) => ({ attendance: state.attendance.filter((a) => a.id !== id) })),
 
   markNoticesRead: (ids) =>
     set((state) => ({ readNotices: Array.from(new Set([...state.readNotices, ...ids])) })),
