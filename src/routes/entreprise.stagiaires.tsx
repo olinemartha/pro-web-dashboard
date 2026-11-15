@@ -3,7 +3,7 @@ import { useState } from "react";
 import { ArrowLeft, ClipboardCheck, FileText, UserCheck, Users } from "lucide-react";
 import { Reveal } from "@/components/ui/motion";
 import { AvatarInitials, EmptyNote, ExpertBadge, FilterChips, PageIntro, SECTION_LINK, StatCard } from "@/components/company/ui";
-import { latestRunFor } from "@/lib/expert-engine";
+import { latestRunFor, recommendedProposal } from "@/lib/expert-engine";
 import { useCompanyStore } from "@/lib/company-store";
 import { daysFromToday, fmtDate } from "@/lib/dates";
 import { cn } from "@/lib/utils";
@@ -33,7 +33,7 @@ function CompanyInternsLayout() {
   /** Service recommandé par la dernière analyse, pour les dossiers pas encore affectés. */
   const recommendedFor = (internId: string) => {
     const run = latestRunFor(expertRuns, internId);
-    return run?.status === "prete" ? run.proposals[0]?.serviceName : undefined;
+    return recommendedProposal(run)?.serviceName;
   };
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const dossierOpen = pathname.startsWith("/entreprise/stagiaires/");

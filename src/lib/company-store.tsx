@@ -14,6 +14,7 @@ import {
   type CompanyOffer,
   type CompanyProfile,
   type ExpertRun,
+  type KnowledgeRule,
   type Interview,
   type Intern,
   type OfferStatus,
@@ -24,7 +25,9 @@ import { localIsoDate } from "./dates";
 import type { HostingProfile } from "./auth";
 import {
   buildExpertRun,
+  DEFAULT_RULES,
   EXPERT_ENGINE_VERSION,
+  isRecommendedService,
   latestRunFor,
 } from "./expert-engine";
 
@@ -60,6 +63,7 @@ const seedRuns: ExpertRun[] = demoInterns.map((intern) =>
     offer: demoCompanyOffers.find((offer) => offer.id === intern.offerId),
     services: demoServices,
     interns: demoInterns,
+    rules: DEFAULT_RULES,
     id: `run-seed-${intern.id}`,
     createdAt: intern.assignmentDecidedAt ?? "2026-11-03T09:00:00.000Z",
   })
@@ -95,6 +99,8 @@ interface CompanyState {
   interns: Intern[];
   services: Service[];
   expertRuns: ExpertRun[];
+  /** Base de règles SI–ALORS de l'entreprise, saisie dans le module d'acquisition des connaissances. */
+  expertRules: KnowledgeRule[];
   decisions: AssignmentDecision[];
   /** Identifiants des notifications déjà consultées. */
   readNotices: string[];
@@ -124,6 +130,10 @@ interface CompanyState {
   addService: (s: Omit<Service, "id" | "updatedAt">) => void;
   updateService: (serviceId: string, patch: Partial<Omit<Service, "id">>) => void;
   removeService: (serviceId: string) => void;
+
+  addRule: (r: Omit<KnowledgeRule, "id" | "code" | "position" | "updatedAt">) => void;
+  updateRule: (ruleId: string, patch: Partial<Omit<KnowledgeRule, "id" | "code">>) => void;
+  removeRule: (ruleId: string) => void;
 
   /** Une candidature arrive de l'espace étudiant : elle devient un candidat « En attente ». */
   receiveApplication: (input: Omit<Candidate, "id" | "status" | "history">) => string;
@@ -158,6 +168,7 @@ export const useCompanyStore = create<CompanyState>((set, get) => ({
   spaceActive: true,
   setSpaceActive: (spaceActive) => set({ spaceActive }),
   expertRuns: seedRuns,
+  expertRules: DEFAULT_RULES,
   decisions: seedDecisions,
   // Démo : les plus anciennes notifications sont déjà lues.
   readNotices: ["c-c2", "e-i5", "r-s1"],
@@ -332,6 +343,7 @@ export const useCompanyStore = create<CompanyState>((set, get) => ({
       offer: state.offers.find((offer) => offer.id === intern.offerId),
       services: state.services,
       interns: state.interns,
+      rules: state.expertRules,
     });
 
     set({ expertRuns: [run, ...state.expertRuns] });
@@ -347,9 +359,7 @@ export const useCompanyStore = create<CompanyState>((set, get) => ({
     if (!service) return { ok: false, error: "Choisissez un service d'affectation." };
 
     const latestRun = latestRunFor(state.expertRuns, internId);
-    const recommended = Boolean(
-      latestRun?.proposals.some((proposal) => proposal.serviceId === serviceId)
-    );
+    const recommended = isRecommendedService(latestRun, serviceId);
     const motive = reason.trim();
 
     if (!recommended && !motive) {
@@ -468,6 +478,28 @@ export const useCompanyStore = create<CompanyState>((set, get) => ({
     set((state) => ({
       services: state.services.filter((service) => service.id !== serviceId),
     })),
+
+  addRule: (rule) =>
+    set((state) => {
+      const next = Math.max(0, ...state.expertRules.map((r) => Number(r.code.replace(/D/g, "")) || 0)) + 1;
+      const position = Math.max(0, ...state.expertRules.map((r) => r.position)) + 1;
+      return {
+        expertRules: [
+          ...state.expertRules,
+          { ...rule, id: crypto.randomUUID(), code: `R${next}`, position, updatedAt: new Date().toISOString() },
+        ],
+      };
+    }),
+
+  updateRule: (ruleId, patch) =>
+    set((state) => ({
+      expertRules: state.expertRules.map((rule) =>
+        rule.id === ruleId ? { ...rule, ...patch, updatedAt: new Date().toISOString() } : rule
+      ),
+    })),
+
+  removeRule: (ruleId) =>
+    set((state) => ({ expertRules: state.expertRules.filter((rule) => rule.id !== ruleId) })),
 
   receiveApplication: (input) => {
     const id = crypto.randomUUID();

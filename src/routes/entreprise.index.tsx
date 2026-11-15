@@ -36,7 +36,7 @@ import { DAY_MS, fmtDate, localIsoDate, relativeDay, shortDay } from "@/lib/date
 import { CompanyLogoUploader } from "@/components/company/company-logo";
 import { AnimatedNumber, Reveal } from "@/components/ui/motion";
 import { useCompanyStore } from "@/lib/company-store";
-import { latestRunFor } from "@/lib/expert-engine";
+import { latestRunFor, recommendedProposal } from "@/lib/expert-engine";
 import { cn } from "@/lib/utils";
 import { candidateStatusLabels, type CandidateStatus } from "@/lib/company-data";
 
@@ -444,7 +444,7 @@ function CompanyDashboard() {
   const todos: Todo[] = [];
   pendingAssignments.forEach((intern) => {
     const run = latestRunFor(expertRuns, intern.id);
-    const proposal = run?.proposals[0];
+    const proposal = recommendedProposal(run);
     const age = run ? Math.max(0, daysBetween(run.createdAt.slice(0, 10), todayIso)) : null;
     todos.push({
       kind: "affectation",

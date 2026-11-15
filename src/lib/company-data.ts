@@ -145,7 +145,47 @@ export type ExpertRunStatus = "prete" | "donnees_insuffisantes" | "aucune_propos
 export interface ExpertRule {
   id: string;
   label: string;
+  /** Pour les règles SI–ALORS : la règle écrite en entier (« SI … ET … ALORS … »). */
   description: string;
+  /** Fait déduit quand la règle se déclenche (absent des analyses de l'ancien moteur). */
+  conclusion?: string;
+}
+
+/* ---------- Base de règles (saisie dans le module d'acquisition) ---------- */
+
+/** Comparaisons possibles dans une condition. */
+export type ConditionOp = "vrai" | "faux" | "gte" | "lte" | "eq" | "contient";
+
+/** Une condition de la partie SI : « fait opérateur valeur ». */
+export interface RuleCondition {
+  fact: string;
+  op: ConditionOp;
+  value: string;
+}
+
+/** Une règle de production de la base de connaissances : SI conditions ALORS conclusion. */
+export interface KnowledgeRule {
+  id: string;
+  /** Numéro lisible : R1, R2… */
+  code: string;
+  label: string;
+  conditions: RuleCondition[];
+  /** Fait déduit (clé), et sa formulation. */
+  conclusion: string;
+  conclusionLabel: string;
+  active: boolean;
+  position: number;
+  updatedAt: string;
+}
+
+/** Une étape du chaînage avant : une règle déclenchée à un cycle donné. */
+export interface ExpertTraceStep {
+  cycle: number;
+  ruleId: string;
+  /** Les faits qui ont rendu la partie SI vraie, avec leur valeur. */
+  because: string[];
+  /** Le fait ajouté à la base de faits. */
+  deduced: string;
 }
 
 export interface ExpertFact {
@@ -176,6 +216,10 @@ export interface ExpertProposal {
   capacityAtRun: ExpertCapacity;
   summary: string;
   score: number;
+  /** Chaînage avant : la conclusion « service recommandé » a-t-elle été établie ? */
+  goalReached?: boolean;
+  /** Chaînage avant : les règles déclenchées, cycle par cycle. */
+  trace?: ExpertTraceStep[];
 }
 
 export interface ExpertRun {

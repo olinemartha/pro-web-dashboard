@@ -1,4 +1,4 @@
-import { Briefcase, Building2, CalendarClock, Layers, LayoutDashboard, Send, Settings, UserRoundCheck, Users } from "lucide-react";
+import { BookOpenCheck, Briefcase, Building2, CalendarClock, Layers, LayoutDashboard, Send, Settings, UserRoundCheck, Users } from "lucide-react";
 import { CompanyLogo } from "@/components/company/company-logo";
 import { NotificationBell, SearchCommand } from "@/components/company/topbar";
 import { SpaceShell, type SpaceConfig } from "@/components/shell/space-shell";
@@ -18,6 +18,7 @@ const PAGE_TITLES: Record<string, string> = {
   "/entreprise/stagiaires": "Mes stagiaires",
   "/entreprise/encadreurs": "Encadreurs",
   "/entreprise/services": "Services et besoins",
+  "/entreprise/regles": "Base de règles",
   "/entreprise/parametres": "Paramètres",
 };
 
@@ -40,6 +41,7 @@ const companyConfig: SpaceConfig = {
         { href: "/entreprise/stagiaires", label: "Mes stagiaires", icon: Users, motion: "bounce", count: "stagiaires" },
         { href: "/entreprise/encadreurs", label: "Encadreurs", icon: UserRoundCheck, motion: "bounce", count: "encadreurs" },
         { href: "/entreprise/services", label: "Services et besoins", icon: Layers, motion: "stack" },
+        { href: "/entreprise/regles", label: "Base de règles", icon: BookOpenCheck, motion: "lift" },
       ],
     },
     {

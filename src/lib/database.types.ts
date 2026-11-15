@@ -124,6 +124,29 @@ export type Database = {
         Update: Partial<Database["public"]["Tables"]["expert_runs"]["Row"]>;
         Relationships: Rel;
       };
+      expert_rules: {
+        Row: {
+          active: boolean;
+          code: string;
+          company_id: string;
+          conclusion: string;
+          conclusion_label: string;
+          conditions: Json;
+          id: string;
+          label: string;
+          position: number;
+          updated_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["expert_rules"]["Row"]> & {
+          company_id: string;
+          code: string;
+          label: string;
+          conclusion: string;
+          conclusion_label: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["expert_rules"]["Row"]>;
+        Relationships: Rel;
+      };
       interns: {
         Row: {
           application_id: string;

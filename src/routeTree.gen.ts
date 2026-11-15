@@ -33,6 +33,7 @@ import { Route as EntrepriseEntretiensRouteImport } from './routes/entreprise.en
 import { Route as EntrepriseOffresRouteImport } from './routes/entreprise.offres'
 import { Route as EntrepriseParametresRouteImport } from './routes/entreprise.parametres'
 import { Route as EntrepriseProfilRouteImport } from './routes/entreprise.profil'
+import { Route as EntrepriseReglesRouteImport } from './routes/entreprise.regles'
 import { Route as EntrepriseServicesRouteImport } from './routes/entreprise.services'
 import { Route as EntrepriseStagiairesRouteImport } from './routes/entreprise.stagiaires'
 import { Route as OffresIndexRouteImport } from './routes/offres.index'
@@ -160,6 +161,11 @@ const EntrepriseProfilRoute = EntrepriseProfilRouteImport.update({
   path: '/profil',
   getParentRoute: () => EntrepriseRoute,
 } as any)
+const EntrepriseReglesRoute = EntrepriseReglesRouteImport.update({
+  id: '/regles',
+  path: '/regles',
+  getParentRoute: () => EntrepriseRoute,
+} as any)
 const EntrepriseServicesRoute = EntrepriseServicesRouteImport.update({
   id: '/services',
   path: '/services',
@@ -216,6 +222,7 @@ export interface FileRoutesByFullPath {
   '/entreprise/offres': typeof EntrepriseOffresRoute
   '/entreprise/parametres': typeof EntrepriseParametresRoute
   '/entreprise/profil': typeof EntrepriseProfilRoute
+  '/entreprise/regles': typeof EntrepriseReglesRoute
   '/entreprise/services': typeof EntrepriseServicesRoute
   '/entreprise/stagiaires': typeof EntrepriseStagiairesRouteWithChildren
   '/offres/$id': typeof OffresIdRoute
@@ -247,6 +254,7 @@ export interface FileRoutesByTo {
   '/entreprise/offres': typeof EntrepriseOffresRoute
   '/entreprise/parametres': typeof EntrepriseParametresRoute
   '/entreprise/profil': typeof EntrepriseProfilRoute
+  '/entreprise/regles': typeof EntrepriseReglesRoute
   '/entreprise/services': typeof EntrepriseServicesRoute
   '/offres/$id': typeof OffresIdRoute
   '/admin': typeof AdminIndexRoute
@@ -279,6 +287,7 @@ export interface FileRoutesById {
   '/entreprise/offres': typeof EntrepriseOffresRoute
   '/entreprise/parametres': typeof EntrepriseParametresRoute
   '/entreprise/profil': typeof EntrepriseProfilRoute
+  '/entreprise/regles': typeof EntrepriseReglesRoute
   '/entreprise/services': typeof EntrepriseServicesRoute
   '/entreprise/stagiaires': typeof EntrepriseStagiairesRouteWithChildren
   '/offres/$id': typeof OffresIdRoute
@@ -313,6 +322,7 @@ export interface FileRouteTypes {
     | '/entreprise/offres'
     | '/entreprise/parametres'
     | '/entreprise/profil'
+    | '/entreprise/regles'
     | '/entreprise/services'
     | '/entreprise/stagiaires'
     | '/offres/$id'
@@ -344,6 +354,7 @@ export interface FileRouteTypes {
     | '/entreprise/offres'
     | '/entreprise/parametres'
     | '/entreprise/profil'
+    | '/entreprise/regles'
     | '/entreprise/services'
     | '/offres/$id'
     | '/admin'
@@ -375,6 +386,7 @@ export interface FileRouteTypes {
     | '/entreprise/offres'
     | '/entreprise/parametres'
     | '/entreprise/profil'
+    | '/entreprise/regles'
     | '/entreprise/services'
     | '/entreprise/stagiaires'
     | '/offres/$id'
@@ -577,6 +589,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EntrepriseProfilRouteImport
       parentRoute: typeof EntrepriseRoute
     }
+    '/entreprise/regles': {
+      id: '/entreprise/regles'
+      path: '/regles'
+      fullPath: '/entreprise/regles'
+      preLoaderRoute: typeof EntrepriseReglesRouteImport
+      parentRoute: typeof EntrepriseRoute
+    }
     '/entreprise/services': {
       id: '/entreprise/services'
       path: '/services'
@@ -642,6 +661,7 @@ interface EntrepriseRouteChildren {
   EntrepriseOffresRoute: typeof EntrepriseOffresRoute
   EntrepriseParametresRoute: typeof EntrepriseParametresRoute
   EntrepriseProfilRoute: typeof EntrepriseProfilRoute
+  EntrepriseReglesRoute: typeof EntrepriseReglesRoute
   EntrepriseServicesRoute: typeof EntrepriseServicesRoute
   EntrepriseStagiairesRoute: typeof EntrepriseStagiairesRouteWithChildren
   EntrepriseIndexRoute: typeof EntrepriseIndexRoute
@@ -654,6 +674,7 @@ const EntrepriseRouteChildren: EntrepriseRouteChildren = {
   EntrepriseOffresRoute: EntrepriseOffresRoute,
   EntrepriseParametresRoute: EntrepriseParametresRoute,
   EntrepriseProfilRoute: EntrepriseProfilRoute,
+  EntrepriseReglesRoute: EntrepriseReglesRoute,
   EntrepriseServicesRoute: EntrepriseServicesRoute,
   EntrepriseStagiairesRoute: EntrepriseStagiairesRouteWithChildren,
   EntrepriseIndexRoute: EntrepriseIndexRoute,

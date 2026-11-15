@@ -11,9 +11,12 @@ import { cn } from "@/lib/utils";
 
 export type Assignment = NonNullable<ReturnType<typeof useMyAssignment>>;
 
-/** Seuls les services qui satisfont au moins un critère sont présentés à l'étudiant comme des propositions. */
+/**
+ * Seuls les services pour lesquels le moteur a établi la conclusion « service recommandé » sont
+ * présentés à l'étudiant (ancien moteur : ceux qui satisfont au moins un critère).
+ */
 export function visibleProposals(run: ExpertRun | undefined) {
-  return (run?.proposals ?? []).filter((proposal) => proposal.satisfied.some((c) => c.satisfied));
+  return (run?.proposals ?? []).filter((proposal) => proposal.goalReached ?? proposal.satisfied.some((c) => c.satisfied));
 }
 
 /* ------------------------------------------------------------------ */

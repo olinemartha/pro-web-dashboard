@@ -17,12 +17,14 @@ import type {
   CompanyProfile,
   ExpertRun,
   Intern,
+  KnowledgeRule,
   Interview,
   OfferStatus,
   Service,
   Supervisor,
 } from "./company-data";
 import { useCompanyStore } from "./company-store";
+import { DEFAULT_RULES } from "./expert-engine";
 import type { Json, Tables } from "./database.types";
 import type { Notification } from "./mock-data";
 import { remoteState } from "./remote-flag";
@@ -113,6 +115,28 @@ const STATUS_FOR_STUDENT: Record<CandidateStatus, AppStatus> = {
   refusee: "refusee",
   retiree: "retiree",
 };
+
+const toRule = (r: Tables<"expert_rules">): KnowledgeRule => ({
+  id: r.id,
+  code: r.code,
+  label: r.label,
+  conditions: (r.conditions as unknown as KnowledgeRule["conditions"]) ?? [],
+  conclusion: r.conclusion,
+  conclusionLabel: r.conclusion_label,
+  active: r.active,
+  position: r.position,
+  updatedAt: r.updated_at,
+});
+
+const fromRule = (r: Omit<KnowledgeRule, "id" | "updatedAt">) => ({
+  code: r.code,
+  label: r.label,
+  conditions: r.conditions as unknown as Json,
+  conclusion: r.conclusion,
+  conclusion_label: r.conclusionLabel,
+  active: r.active,
+  position: r.position,
+});
 
 /* ------------------------------------------------------------------ */
 /* Chargement                                                          */
@@ -206,7 +230,7 @@ async function loadCompanyOrAdmin(
   decisionRows: Tables<"assignment_decisions">[]
 ) {
   const studentIds = [...new Set(applications.map((a) => a.student_id))];
-  const [companies, services, supervisors, people, students] = await Promise.all([
+  const [companies, services, supervisors, people, students, ruleRows] = await Promise.all([
     must(session.role === "entreprise" && session.companyId ? supabase.from("companies").select("*").eq("id", session.companyId) : supabase.from("companies").select("*")),
     must(supabase.from("services").select("*").order("name")),
     must(supabase.from("supervisors").select("*").order("name")),
@@ -224,6 +248,7 @@ async function loadCompanyOrAdmin(
           ? supabase.from("student_profiles").select("*").in("id", studentIds)
           : supabase.from("student_profiles").select("*").eq("id", session.userId)
     ),
+    must(supabase.from("expert_rules").select("*").order("position")),
   ]);
 
   const applicant = (id: string): Applicant => ({ profile: people.find((p) => p.id === id), student: students.find((s) => s.id === id) });
@@ -306,6 +331,18 @@ async function loadCompanyOrAdmin(
     };
   });
 
+  // Base de règles : une entreprise qui n'en a pas encore reçoit les règles de départ, enregistrées
+  // en base pour qu'elle puisse ensuite les modifier dans le module d'acquisition des connaissances.
+  let rules: KnowledgeRule[] = ruleRows.map(toRule);
+  if (session.role === "entreprise" && session.companyId && rules.length === 0) {
+    const companyId = session.companyId;
+    const { data } = await supabase
+      .from("expert_rules")
+      .insert(DEFAULT_RULES.map(({ id: _id, updatedAt: _u, ...r }) => ({ ...fromRule(r), company_id: companyId })))
+      .select("*");
+    rules = (data ?? []).map(toRule);
+  }
+
   const company = companies[0];
   useCompanyStore.setState((state) => ({
     profile: company ? { ...state.profile, ...toCompanyProfile(company) } : state.profile,
@@ -335,6 +372,7 @@ async function loadCompanyOrAdmin(
       })
     ),
     decisions,
+    expertRules: rules,
     readNotices: [],
   }));
 
@@ -476,6 +514,13 @@ function syncCompany(session: Session) {
         facts: r.facts as unknown as Json, rules: r.rules as unknown as Json, proposals: r.proposals as unknown as Json,
         missing_facts: r.missingFacts,
       }), session);
+
+    for (const r of changed(prev.expertRules, next.expertRules))
+      push("Règle du système expert", () => supabase.from("expert_rules").upsert({
+        id: r.id, company_id: companyId, ...fromRule(r), updated_at: r.updatedAt,
+      }), session);
+    for (const r of removed(prev.expertRules, next.expertRules))
+      push("Suppression de règle", () => supabase.from("expert_rules").delete().eq("id", r.id), session);
 
     for (const d of next.decisions.filter((d) => !prev.decisions.includes(d)))
       push("Décision d'affectation", () => supabase.from("assignment_decisions").insert({

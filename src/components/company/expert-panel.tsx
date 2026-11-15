@@ -22,7 +22,8 @@ import { useCompanyStore } from "@/lib/company-store";
 import { fmtDate } from "@/lib/dates";
 import type { Candidate, ExpertProposal, ExpertRun, Intern } from "@/lib/company-data";
 import { cn } from "@/lib/utils";
-import { isRecommendedService, latestRunFor } from "@/lib/expert-engine";
+import { GOAL_LABEL, isRecommendedService, latestRunFor } from "@/lib/expert-engine";
+import { Link } from "@tanstack/react-router";
 
 /* ------------------------------------------------------------------ */
 /* Outils de rédaction                                                 */
@@ -40,13 +41,21 @@ const shortRef = (id: string) => id.replace(/[^a-z0-9]/gi, "").slice(-6).toUpper
 
 const plural = (count: number, word: string, many = `${word}s`) => `${count} ${count > 1 ? many : word}`;
 
-/** Indice d'adéquation à partir des critères satisfaits par la proposition retenue. */
+/** Ancien moteur (demo-1.0) : indice d'adéquation selon la part de critères satisfaits. */
 function adequacy(met: number, total: number): { label: string; tone: Tone; bar: string } {
   const ratio = total ? met / total : 0;
   if (ratio >= 1) return { label: "Adéquation forte", tone: "success", bar: "bg-success" };
   if (ratio >= 0.75) return { label: "Bonne adéquation", tone: "primary", bar: "bg-primary" };
   if (ratio >= 0.5) return { label: "Adéquation partielle", tone: "warning", bar: "bg-warning" };
   return { label: "Adéquation faible", tone: "destructive", bar: "bg-destructive" };
+}
+
+/** Chaînage avant : la conclusion « service recommandé » est-elle établie ? */
+function verdict(proposal: ExpertProposal, met: number, total: number): { label: string; tone: Tone; bar: string } {
+  if (proposal.goalReached === undefined) return adequacy(met, total);
+  return proposal.goalReached
+    ? { label: "Conclusion établie", tone: "success", bar: "bg-success" }
+    : { label: "Conclusion non établie", tone: "warning", bar: "bg-warning" };
 }
 
 const metOf = (proposal: ExpertProposal) => proposal.satisfied.filter((criterion) => criterion.satisfied).length;
@@ -60,45 +69,32 @@ function joinFr(items: string[]) {
   return `${items.slice(0, -1).join(", ")} et ${items[items.length - 1]}`;
 }
 
-/** Une raison lisible par règle satisfaite. */
-function reasonFor(proposal: ExpertProposal, ruleId: string): string | null {
-  const criterion = proposal.satisfied.find((entry) => entry.ruleId === ruleId);
-  if (!criterion?.satisfied) return null;
-  switch (ruleId) {
-    case "R1":
-      return "une formation conforme aux attentes du service";
-    case "R2": {
-      const list = criterion.detail.split(":")[1]?.trim();
-      return list ? `des compétences communes (${list})` : "des compétences communes";
-    }
-    case "R3": {
-      const left = proposal.capacityAtRun.left;
-      return `${plural(left, "place encore disponible", "places encore disponibles")}`;
-    }
-    case "R4":
-      return "la continuité avec l'offre à laquelle la candidature a été déposée";
-    default:
-      return criterion.label.toLowerCase();
-  }
-}
+const fired = (count: number) => plural(count, "règle déclenchée", "règles déclenchées");
 
 /** Conclusion rédigée du rapport, à partir des seuls résultats du moteur. */
 function synthesis(run: ExpertRun, name: string, servicesCount: number) {
   const [top, second] = run.proposals;
-  const reasons = run.rules.map((rule) => reasonFor(top, rule.id)).filter(Boolean) as string[];
   const total = top.satisfied.length;
   const met = metOf(top);
-  const opening =
-    met === 0
-      ? `Après comparaison de ${plural(servicesCount, "service")} selon ${plural(run.rules.length, "règle")}, aucun service ne satisfait les critères du profil ${de(name)}. ${top.serviceName} reste le moins éloigné du profil.`
-      : `Après comparaison de ${plural(servicesCount, "service")} selon ${plural(run.rules.length, "règle")}, ${top.serviceName} présente la meilleure adéquation avec le profil ${de(name)} : ${joinFr(reasons)}.`;
+  let opening: string;
   let follow = "";
+
+  if (top.goalReached === undefined) {
+    // Analyse enregistrée par l'ancien moteur.
+    opening = `Après comparaison de ${plural(servicesCount, "service")} selon ${plural(run.rules.length, "règle")}, ${top.serviceName} présente la meilleure adéquation avec le profil ${de(name)}.`;
+    if (second) follow = `${second.serviceName} arrive en deuxième position, avec ${metOf(second)} critère${metOf(second) > 1 ? "s" : ""} sur ${total}.`;
+    return { opening, follow, met, total };
+  }
+
+  const deduced = (top.trace ?? []).map((step) => step.deduced).filter((label) => label !== GOAL_LABEL);
+  opening = top.goalReached
+    ? `Par chaînage avant, à partir des faits du profil ${de(name)} et de ${plural(servicesCount, "service")}, le moteur a établi la conclusion « ${GOAL_LABEL} » pour ${top.serviceName}${deduced.length ? ` après avoir déduit : ${joinFr(deduced.map((label) => `« ${label} »`))}` : ""}.`
+    : `Aucun service n'atteint la conclusion « ${GOAL_LABEL} » pour le profil ${de(name)}. ${top.serviceName} en est le plus proche, avec ${fired(met)} sur ${total}.`;
   if (second) {
     const metSecond = metOf(second);
-    follow =
-      metSecond === met
-        ? `${second.serviceName} obtient le même nombre de critères (${met} sur ${total}) ; la capacité et la continuité de l'offre départagent les deux services.`
-        : `${second.serviceName} arrive en deuxième position, avec ${metSecond} critère${metSecond > 1 ? "s" : ""} sur ${total}.`;
+    follow = second.goalReached
+      ? `${second.serviceName} atteint aussi la conclusion (${fired(metSecond)}) ; il est classé après ${top.serviceName}.`
+      : `${second.serviceName} arrive en deuxième position, sans atteindre la conclusion (${fired(metSecond)}).`;
   }
   return { opening, follow, met, total };
 }
@@ -271,7 +267,8 @@ export function ExpertPanel({ intern }: { intern: Intern }) {
   };
 
   const summary = top && latestRun ? synthesis(latestRun, intern.name, services.length) : null;
-  const level = summary ? adequacy(summary.met, summary.total) : null;
+  const level = summary && top ? verdict(top, summary.met, summary.total) : null;
+  const chained = top?.goalReached !== undefined;
   const profile = (
     <AnalyzedProfile
       intern={intern}
@@ -370,7 +367,7 @@ export function ExpertPanel({ intern }: { intern: Intern }) {
                       <div className="flex items-center justify-between gap-3 text-xs">
                         <Badge label={level.label} tone={level.tone} />
                         <span className="font-semibold tabular-nums">
-                          {summary.met}/{summary.total} critères
+                          {summary.met}/{summary.total} {chained ? "règles" : "critères"}
                         </span>
                       </div>
                       <div className="mt-2 flex gap-1" aria-hidden>
@@ -398,7 +395,8 @@ export function ExpertPanel({ intern }: { intern: Intern }) {
                     </ul>
                   ) : (
                     <p className="mt-4 flex items-center gap-2 text-[13px] font-medium text-success-ink">
-                      <Check className="size-3.5" /> Aucun point d'attention : toutes les règles sont satisfaites.
+                      <Check className="size-3.5" />{" "}
+                      {chained ? "Aucun point d'attention : tous les faits intermédiaires sont établis." : "Aucun point d'attention : toutes les règles sont satisfaites."}
                     </p>
                   )}
                 </section>
@@ -528,9 +526,22 @@ export function ExpertPanel({ intern }: { intern: Intern }) {
             <footer className="mt-auto flex flex-col gap-3 border-t bg-muted/30 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
               <p className="flex items-start gap-2 text-pretty text-xs leading-relaxed text-muted-foreground">
                 <Info className="mt-0.5 size-3.5 shrink-0" />
-                Analyse fondée sur {plural(latestRun.facts.length, "fait")} et {plural(latestRun.rules.length, "règle")} de
-                démonstration, qui ne reflètent pas encore les règles réelles de FINCA RDC. Le système recommande ; la décision
-                vous appartient.
+                {latestRun.engineVersion.startsWith("demo") ? (
+                  <>
+                    Analyse fondée sur {plural(latestRun.facts.length, "fait")} et {plural(latestRun.rules.length, "règle")} de
+                    démonstration (ancien moteur). Relancez l'analyse pour appliquer le chaînage avant. Le système recommande ; la
+                    décision vous appartient.
+                  </>
+                ) : (
+                  <>
+                    Chaînage avant sur {plural(latestRun.facts.length, "fait")} du profil et {plural(latestRun.rules.length, "règle")} de
+                    votre{" "}
+                    <Link to="/entreprise/regles" className="font-medium text-primary underline-offset-2 hover:underline">
+                      base de règles
+                    </Link>
+                    . Le système recommande ; la décision vous appartient.
+                  </>
+                )}
               </p>
               <button type="button" onClick={() => setTraceOpen(true)} className={cn(SECTION_LINK, "shrink-0")}>
                 <FileSearch className="size-3.5" /> Consulter la trace
@@ -705,8 +716,46 @@ export function ExpertPanel({ intern }: { intern: Intern }) {
           wide
         >
           <div className="grid gap-8 sm:grid-cols-2">
+            {top?.trace && (
+              <section className="sm:col-span-2">
+                <h3 className="text-[13px] font-semibold">Déroulement du chaînage avant · {top.serviceName}</h3>
+                <p className="mt-0.5 text-pretty text-xs text-muted-foreground">
+                  À chaque cycle, le moteur déclenche les règles dont toutes les conditions sont vraies et ajoute leur conclusion
+                  à la base de faits. Il s'arrête quand plus aucune règle ne produit de fait nouveau.
+                </p>
+                {top.trace.length === 0 ? (
+                  <p className="mt-3 text-[13px] text-muted-foreground">Aucune règle ne s'est déclenchée pour ce service.</p>
+                ) : (
+                  <ol className="mt-3 divide-y rounded-xl border">
+                    {top.trace.map((step) => (
+                      <li key={step.ruleId} className="grid gap-2 px-3.5 py-3 text-[13px] sm:grid-cols-[88px_minmax(0,1fr)]">
+                        <p className="flex items-center gap-2 text-xs tabular-nums text-muted-foreground">
+                          Cycle {step.cycle}
+                          <span className="rounded bg-primary-soft px-1.5 py-px text-[11px] font-semibold text-primary">{step.ruleId}</span>
+                        </p>
+                        <div className="min-w-0">
+                          <p className="text-pretty text-xs text-muted-foreground">
+                            <span className="font-medium text-foreground">SI</span> {step.because.join(" ET ")}
+                          </p>
+                          <p className="mt-1 text-pretty">
+                            <span className="text-xs font-medium text-muted-foreground">ALORS</span>{" "}
+                            <span className={cn("font-medium", step.deduced === GOAL_LABEL && "text-primary")}>« {step.deduced} »</span>
+                          </p>
+                        </div>
+                      </li>
+                    ))}
+                  </ol>
+                )}
+                <p className="mt-2 text-xs text-muted-foreground">
+                  {top.goalReached
+                    ? `Conclusion établie : « ${GOAL_LABEL} ».`
+                    : `Saturation atteinte sans établir « ${GOAL_LABEL} ».`}{" "}
+                  Le raisonnement des autres services s'ouvre avec « Voir le raisonnement ».
+                </p>
+              </section>
+            )}
             <section>
-              <h3 className="text-[13px] font-semibold">Faits utilisés</h3>
+              <h3 className="text-[13px] font-semibold">Faits de départ</h3>
               <dl className="mt-3 divide-y rounded-xl border">
                 {latestRun.facts.map((fact) => (
                   <div key={fact.label} className="grid grid-cols-[110px_minmax(0,1fr)] gap-3 px-3.5 py-2.5 text-[13px]">
@@ -717,7 +766,7 @@ export function ExpertPanel({ intern }: { intern: Intern }) {
               </dl>
             </section>
             <section>
-              <h3 className="text-[13px] font-semibold">Règles appliquées</h3>
+              <h3 className="text-[13px] font-semibold">Base de règles au moment de l'analyse</h3>
               <ol className="mt-3 space-y-3">
                 {latestRun.rules.map((rule) => (
                   <li key={rule.id} className="flex gap-3">

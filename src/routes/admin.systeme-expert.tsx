@@ -5,7 +5,7 @@ import { Reveal } from "@/components/ui/motion";
 import { useAdminData } from "@/lib/admin-data";
 import { useCompanyStore } from "@/lib/company-store";
 import { fmtDate } from "@/lib/dates";
-import { DEMO_RULES, EXPERT_ENGINE_VERSION } from "@/lib/expert-engine";
+import { EXPERT_ENGINE_VERSION, ruleText } from "@/lib/expert-engine";
 import { OFFER_MATCHING_VERSION, OFFER_RULES } from "@/lib/offer-matching";
 
 export const Route = createFileRoute("/admin/systeme-expert")({
@@ -37,7 +37,11 @@ function RuleList({ title, version, rules }: { title: string; version: string; r
 
 function ExpertPage() {
   const data = useAdminData();
-  const { expertRuns, decisions, interns, hosting } = useCompanyStore();
+  const { expertRuns, decisions, interns, hosting, expertRules } = useCompanyStore();
+  const activeRules = [...expertRules]
+    .filter((rule) => rule.active)
+    .sort((a, b) => a.position - b.position)
+    .map((rule) => ({ id: rule.code, label: rule.label, description: ruleText(rule, expertRules) }));
   const runs = [...expertRuns].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 
   return (
@@ -112,9 +116,9 @@ function ExpertPage() {
         </Reveal>
 
         <Reveal as="aside" delay={180} className="card-surface p-5">
-          <SectionHeader title="Base de règles" description="Règles de démonstration, à remplacer par les critères réels de FINCA RDC." />
+          <SectionHeader title="Base de règles" description="Règles SI–ALORS saisies par l'entreprise dans son module d'acquisition des connaissances, appliquées en chaînage avant." />
           <div className="mt-4 space-y-6">
-            <RuleList title="Affectation à un service" version={EXPERT_ENGINE_VERSION} rules={DEMO_RULES} />
+            <RuleList title="Affectation à un service" version={EXPERT_ENGINE_VERSION} rules={activeRules} />
             <RuleList title="Recommandation d'offres aux étudiants" version={OFFER_MATCHING_VERSION} rules={OFFER_RULES} />
             <div className="border-t pt-4">
               <p className="text-[13px] font-semibold">Critères déclarés par l'entreprise</p>
