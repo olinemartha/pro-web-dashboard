@@ -27,6 +27,27 @@ function LoginPage() {
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
   const [pending, setPending] = useState(false);
   const [forgotOpen, setForgotOpen] = useState(false);
+  const [resetPending, setResetPending] = useState(false);
+  const [resetSentTo, setResetSentTo] = useState<string | null>(null);
+
+  const sendReset = async () => {
+    const address = email.trim();
+    const error = !address ? "Saisissez l'adresse de votre compte pour recevoir le lien." : !/^\S+@\S+\.\S+$/.test(address) ? "Saisissez une adresse e-mail valide." : undefined;
+    if (error) {
+      setErrors({ email: error });
+      document.getElementById("login-email")?.focus();
+      return;
+    }
+    setResetPending(true);
+    const result = await useAuth.getState().requestPasswordReset(address);
+    setResetPending(false);
+    if (!result.ok) {
+      setErrors({ email: result.error });
+      document.getElementById("login-email")?.focus();
+      return;
+    }
+    setResetSentTo(address.toLowerCase());
+  };
 
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -106,9 +127,23 @@ function LoginPage() {
                 </button>
               </div>
               {forgotOpen && (
-                <p className="animate-fade-in rounded-lg border bg-muted/40 px-3.5 py-2.5 text-pretty text-xs leading-relaxed text-muted-foreground">
-                  La réinitialisation par e-mail sera active avec la connexion au serveur (Supabase). En attendant, contactez l'administrateur de la plateforme.
-                </p>
+                <div className="animate-fade-in space-y-3 rounded-lg border bg-muted/40 px-3.5 py-3">
+                  {resetSentTo ? (
+                    <p role="status" className="text-pretty text-xs leading-relaxed text-muted-foreground">
+                      Si un compte existe pour <span className="font-medium text-foreground">{resetSentTo}</span>, un lien vient d'y être envoyé. Ouvrez-le pour choisir un
+                      nouveau mot de passe StageManager (pensez aux courriers indésirables).
+                    </p>
+                  ) : (
+                    <>
+                      <p className="text-pretty text-xs leading-relaxed text-muted-foreground">
+                        Saisissez votre adresse e-mail ci-dessus : nous vous envoyons un lien pour choisir un nouveau mot de passe.
+                      </p>
+                      <Button type="button" variant="outline" size="sm" onClick={sendReset} disabled={resetPending}>
+                        {resetPending ? "Envoi…" : "Envoyer le lien"}
+                      </Button>
+                    </>
+                  )}
+                </div>
               )}
               <Button type="submit" className="group h-11 w-full" disabled={pending}>
                 {pending ? "Connexion…" : "Se connecter"}

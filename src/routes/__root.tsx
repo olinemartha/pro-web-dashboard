@@ -14,7 +14,7 @@ import "../index.css";
 import { AppShell } from "../components/app/app-shell";
 import { CompanyShell } from "../components/company/company-shell";
 import { AdminShell } from "../components/admin/admin-shell";
-import { ROLE_HOME, isPublicPath, roleForPath, useAuth, type Session } from "../lib/auth";
+import { RESET_PATH, ROLE_HOME, isPublicPath, roleForPath, useAuth, type Session } from "../lib/auth";
 import { startRemote } from "../lib/remote";
 import { useViewAs } from "../lib/view-as";
 import { Toaster } from "../components/ui/sonner";
@@ -110,6 +110,8 @@ function useRedirect(pathname: string) {
   const target = useViewAs((state) => state.target);
   const isPublic = isPublicPath(pathname);
   if (!session) return isPublic ? null : "/connexion";
+  // Lien « mot de passe oublié » : la session de récupération doit pouvoir choisir son nouveau mot de passe.
+  if (pathname === RESET_PATH) return null;
   if (!session.onboarded) return pathname === "/inscription" ? null : "/inscription";
   if (isPublic) return ROLE_HOME[session.role];
   if (session.role === "admin" && target && roleForPath(pathname) === target.kind) return null;

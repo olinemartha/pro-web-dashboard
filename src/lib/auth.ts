@@ -82,6 +82,10 @@ type AuthState = {
   deactivate: () => Promise<Result>;
   /** Suppression définitive (compte étudiant) : compte, profil et candidatures effacés ; l'adresse redevient libre. */
   deleteAccount: () => Promise<Result>;
+  /** Mot de passe oublié : Supabase envoie un lien vers /reinitialiser. */
+  requestPasswordReset: (email: string) => Promise<Result>;
+  /** Nouveau mot de passe, choisi depuis le lien reçu (ou une fois connecté). */
+  updatePassword: (password: string) => Promise<Result>;
   refresh: () => Promise<void>;
 };
 
@@ -93,6 +97,7 @@ function translate(message: string): { error: string; field?: "email" | "passwor
   if (m.includes("already registered") || m.includes("already exists")) return { error: ACCOUNT_EXISTS, field: "email" };
   if (m.includes("student_profiles_phone_unique")) return { error: PHONE_TAKEN };
   if (m.includes("companies_name_unique")) return { error: COMPANY_TAKEN };
+  if (m.includes("should be different from the old password")) return { error: "Choisissez un mot de passe différent de l'ancien.", field: "password" };
   if (m.includes("password should be") || m.includes("weak password")) return { error: "Mot de passe trop faible : 8 caractères minimum.", field: "password" };
   if (m.includes("email rate limit")) return { error: "L'e-mail de confirmation ne peut pas être envoyé pour le moment (limite d'envoi atteinte). Réessayez dans une heure.", field: "email" };
   if (m.includes("rate limit")) return { error: "Trop de tentatives. Patientez quelques minutes avant de réessayer." };
@@ -266,6 +271,20 @@ export const useAuth = create<AuthState>()((set, get) => ({
     set({ session: null });
     return { ok: true };
   },
+
+  requestPasswordReset: async (email) => {
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), {
+      redirectTo: `${window.location.origin}/reinitialiser`,
+    });
+    if (error) return { ok: false, ...translate(error.message) };
+    return { ok: true };
+  },
+
+  updatePassword: async (password) => {
+    const { error } = await supabase.auth.updateUser({ password });
+    if (error) return { ok: false, ...translate(error.message) };
+    return { ok: true };
+  },
 }));
 
 /** Espace d'une adresse : /admin, /entreprise, sinon l'espace étudiant. */
@@ -276,5 +295,7 @@ export function roleForPath(pathname: string): Role {
 }
 
 /** Pages accessibles sans être connecté. */
-export const PUBLIC_PATHS = ["/connexion", "/inscription"];
+export const PUBLIC_PATHS = ["/connexion", "/inscription", "/reinitialiser"];
+/** Page ouverte depuis le lien « mot de passe oublié » : accessible avec la session de récupération. */
+export const RESET_PATH = "/reinitialiser";
 export const isPublicPath = (pathname: string) => PUBLIC_PATHS.some((path) => pathname === path || pathname.startsWith(`${path}/`));

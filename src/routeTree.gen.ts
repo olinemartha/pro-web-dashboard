@@ -19,6 +19,7 @@ import { Route as InscriptionRouteImport } from './routes/inscription'
 import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as ParametresRouteImport } from './routes/parametres'
 import { Route as ProfilRouteImport } from './routes/profil'
+import { Route as ReinitialiserRouteImport } from './routes/reinitialiser'
 import { Route as StageRouteImport } from './routes/stage'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminJournalRouteImport } from './routes/admin.journal'
@@ -89,6 +90,11 @@ const ParametresRoute = ParametresRouteImport.update({
 const ProfilRoute = ProfilRouteImport.update({
   id: '/profil',
   path: '/profil',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReinitialiserRoute = ReinitialiserRouteImport.update({
+  id: '/reinitialiser',
+  path: '/reinitialiser',
   getParentRoute: () => rootRouteImport,
 } as any)
 const StageRoute = StageRouteImport.update({
@@ -210,6 +216,7 @@ export interface FileRoutesByFullPath {
   '/notifications': typeof NotificationsRoute
   '/parametres': typeof ParametresRoute
   '/profil': typeof ProfilRoute
+  '/reinitialiser': typeof ReinitialiserRoute
   '/stage': typeof StageRoute
   '/admin/journal': typeof AdminJournalRoute
   '/admin/offres': typeof AdminOffresRoute
@@ -242,6 +249,7 @@ export interface FileRoutesByTo {
   '/notifications': typeof NotificationsRoute
   '/parametres': typeof ParametresRoute
   '/profil': typeof ProfilRoute
+  '/reinitialiser': typeof ReinitialiserRoute
   '/stage': typeof StageRoute
   '/admin/journal': typeof AdminJournalRoute
   '/admin/offres': typeof AdminOffresRoute
@@ -275,6 +283,7 @@ export interface FileRoutesById {
   '/notifications': typeof NotificationsRoute
   '/parametres': typeof ParametresRoute
   '/profil': typeof ProfilRoute
+  '/reinitialiser': typeof ReinitialiserRoute
   '/stage': typeof StageRoute
   '/admin/journal': typeof AdminJournalRoute
   '/admin/offres': typeof AdminOffresRoute
@@ -310,6 +319,7 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/parametres'
     | '/profil'
+    | '/reinitialiser'
     | '/stage'
     | '/admin/journal'
     | '/admin/offres'
@@ -342,6 +352,7 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/parametres'
     | '/profil'
+    | '/reinitialiser'
     | '/stage'
     | '/admin/journal'
     | '/admin/offres'
@@ -374,6 +385,7 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/parametres'
     | '/profil'
+    | '/reinitialiser'
     | '/stage'
     | '/admin/journal'
     | '/admin/offres'
@@ -408,6 +420,7 @@ export interface RootRouteChildren {
   NotificationsRoute: typeof NotificationsRoute
   ParametresRoute: typeof ParametresRoute
   ProfilRoute: typeof ProfilRoute
+  ReinitialiserRoute: typeof ReinitialiserRoute
   StageRoute: typeof StageRoute
   AdminJournalRoute: typeof AdminJournalRoute
   AdminOffresRoute: typeof AdminOffresRoute
@@ -489,6 +502,13 @@ declare module '@tanstack/react-router' {
       path: '/profil'
       fullPath: '/profil'
       preLoaderRoute: typeof ProfilRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reinitialiser': {
+      id: '/reinitialiser'
+      path: '/reinitialiser'
+      fullPath: '/reinitialiser'
+      preLoaderRoute: typeof ReinitialiserRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/stage': {
@@ -695,6 +715,7 @@ const rootRouteChildren: RootRouteChildren = {
   NotificationsRoute: NotificationsRoute,
   ParametresRoute: ParametresRoute,
   ProfilRoute: ProfilRoute,
+  ReinitialiserRoute: ReinitialiserRoute,
   StageRoute: StageRoute,
   AdminJournalRoute: AdminJournalRoute,
   AdminOffresRoute: AdminOffresRoute,
