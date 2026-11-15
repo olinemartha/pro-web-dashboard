@@ -55,7 +55,8 @@ type AuthState = {
   /** Vrai une fois la session Supabase lue (évite une redirection prématurée). */
   ready: boolean;
   init: () => void;
-  signIn: (email: string, password: string) => Promise<Result>;
+  /** `expectedRole` : refuse d'ouvrir un compte d'un autre profil (inscription avec une adresse déjà prise). */
+  signIn: (email: string, password: string, expectedRole?: Exclude<Role, "admin">) => Promise<Result>;
   signUp: (input: { role: Exclude<Role, "admin">; email: string; password: string }) => Promise<Result>;
   /** Fin de l'onboarding : profil étudiant ou fiche entreprise enregistrés en base. */
   completeOnboarding: (input: {
@@ -134,7 +135,7 @@ export const useAuth = create<AuthState>()((set, get) => ({
     set({ session: session && session !== "suspended" ? session : null });
   },
 
-  signIn: async (email, password) => {
+  signIn: async (email, password, expectedRole) => {
     const { data, error } = await supabase.auth.signInWithPassword({ email: email.trim().toLowerCase(), password });
     if (error || !data.user) return { ok: false, ...translate(error?.message ?? "Connexion impossible.") };
     const session = await loadProfile(data.user.id, data.user.email ?? "");
@@ -145,6 +146,20 @@ export const useAuth = create<AuthState>()((set, get) => ({
     if (!session) {
       await supabase.auth.signOut();
       return { ok: false, error: "Profil introuvable pour ce compte. Contactez l'administrateur de la plateforme." };
+    }
+    // Un compte n'a qu'un profil : on n'ouvre pas un compte entreprise depuis « Je cherche un stage » (et inversement).
+    if (expectedRole && session.role !== expectedRole) {
+      await supabase.auth.signOut();
+      return {
+        ok: false,
+        field: "email",
+        error:
+          session.role === "entreprise"
+            ? "Cette adresse est déjà celle d'un compte entreprise. Pour chercher un stage, inscrivez-vous avec une autre adresse e-mail."
+            : session.role === "etudiant"
+              ? "Cette adresse est déjà celle d'un compte étudiant. Pour inscrire une entreprise, utilisez une autre adresse e-mail."
+              : "Cette adresse est déjà utilisée par un autre compte. Utilisez une autre adresse e-mail.",
+      };
     }
     // Compte désactivé par son titulaire : se reconnecter le réactive (comme annoncé à la désactivation).
     const { data: row } = await supabase.from("profiles").select("deactivated_at").eq("id", session.userId).maybeSingle();
@@ -162,7 +177,7 @@ export const useAuth = create<AuthState>()((set, get) => ({
     // Adresse déjà inscrite (compte actif ou désactivé par son titulaire) : avec le bon mot de passe,
     // on ouvre ce compte (la connexion réactive un compte désactivé) au lieu de bloquer l'inscription.
     const openExisting = async (): Promise<Result> => {
-      const result = await get().signIn(address, password);
+      const result = await get().signIn(address, password, role);
       if (result.ok) return { ...result, existing: true };
       if (result.error === WRONG_CREDENTIALS)
         return {
