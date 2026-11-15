@@ -64,7 +64,7 @@ function AdminSettingsPage() {
           </div>
           <div className="divide-y">
             <Row icon={ShieldCheck} title="Moteurs du système expert" desc={`Affectation ${EXPERT_ENGINE_VERSION} · recommandation d'offres ${OFFER_MATCHING_VERSION}`} />
-            <Row icon={Database} title="Données" desc="Stockées dans ce navigateur (démonstration). La connexion à Supabase remplacera ce stockage." />
+            <Row icon={Database} title="Données" desc="Enregistrées dans Supabase (base PostgreSQL, région Londres) : chaque compte n'accède qu'à ce que son rôle autorise ; les CV sont privés." />
           </div>
         </Reveal>
       </div>

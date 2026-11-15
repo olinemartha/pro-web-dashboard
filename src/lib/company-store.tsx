@@ -481,7 +481,8 @@ export const useCompanyStore = create<CompanyState>((set, get) => ({
 
   addRule: (rule) =>
     set((state) => {
-      const next = Math.max(0, ...state.expertRules.map((r) => Number(r.code.replace(/D/g, "")) || 0)) + 1;
+      // Code suivant : « R8 » après « R7 » (on lit les chiffres du code, jamais de doublon).
+      const next = Math.max(0, ...state.expertRules.map((r) => Number(r.code.replace(/\D/g, "")) || 0)) + 1;
       const position = Math.max(0, ...state.expertRules.map((r) => r.position)) + 1;
       return {
         expertRules: [

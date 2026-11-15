@@ -20,6 +20,7 @@ import { Reveal } from "@/components/ui/motion";
 import { useAdminStore } from "@/lib/admin-store";
 import { offerStatusLabels, type CompanyOffer, type OfferStatus } from "@/lib/company-data";
 import { useCompanyStore } from "@/lib/company-store";
+import { companyOf } from "@/lib/mock-data";
 import { fmtDate } from "@/lib/dates";
 
 export const Route = createFileRoute("/admin/offres")({
@@ -31,7 +32,7 @@ export const Route = createFileRoute("/admin/offres")({
 type Filter = "toutes" | OfferStatus;
 
 function OffersPage() {
-  const { offers, candidates, profile, setOfferStatus } = useCompanyStore();
+  const { offers, candidates, setOfferStatus } = useCompanyStore();
   const logOfferWithdrawal = useAdminStore((state) => state.logOfferWithdrawal);
   const { q } = Route.useSearch();
   const [filter, setFilter] = useState<Filter>("toutes");
@@ -58,7 +59,7 @@ function OffersPage() {
       return;
     }
     setOfferStatus(target.id, "desactivee");
-    logOfferWithdrawal(`${target.title} (${profile.name})`, reason.trim(), target.id);
+    logOfferWithdrawal(`${target.title} (${companyOf(target.companyId ?? "").name})`, reason.trim(), target.id);
     toast.success("Offre retirée", { description: "Elle n'est plus visible par les étudiants." });
     setTarget(null);
   };
@@ -115,7 +116,7 @@ function OffersPage() {
                     <div className="min-w-0">
                       <p className="truncate text-[13px] font-semibold">{offer.title}</p>
                       <p className="truncate text-xs text-muted-foreground">
-                        {profile.name} · {offer.department} · {offer.location}
+                        {companyOf(offer.companyId ?? "").name} · {offer.department} · {offer.location}
                       </p>
                       <p className="mt-1.5 flex flex-wrap items-center gap-2 text-xs text-muted-foreground md:hidden">
                         <Badge label={status.label} tone={status.tone} className="text-[11px]" />
@@ -158,7 +159,7 @@ function OffersPage() {
         onClose={() => setTarget(null)}
         icon={CircleSlash}
         title="Retirer cette offre ?"
-        description={target ? `${target.title} · ${profile.name}` : undefined}
+        description={target ? `${target.title} · ${companyOf(target.companyId ?? "").name}` : undefined}
         footer={
           <>
             <Button variant="outline" onClick={() => setTarget(null)}>

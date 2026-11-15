@@ -95,6 +95,8 @@ type AuthState = {
 function translate(message: string): { error: string; field?: "email" | "password" } {
   const m = message.toLowerCase();
   if (m.includes("invalid login credentials")) return { error: WRONG_CREDENTIALS, field: "password" };
+  if (m.includes("user is banned") || m.includes("user_banned"))
+    return { error: "Ce compte est suspendu. Contactez l'administrateur de la plateforme.", field: "email" };
   if (m.includes("email not confirmed")) return { error: "Confirmez d'abord votre adresse e-mail (lien reçu par e-mail).", field: "email" };
   if (m.includes("already registered") || m.includes("already exists")) return { error: ACCOUNT_EXISTS, field: "email" };
   if (m.includes("student_profiles_phone_unique")) return { error: PHONE_TAKEN };
@@ -266,6 +268,8 @@ export const useAuth = create<AuthState>()((set, get) => ({
   deleteAccount: async () => {
     if (!get().session) return { ok: false, error: "Session expirée : reconnectez-vous." };
     if (useViewAs.getState().target) return { ok: false, error: READ_ONLY_MESSAGE };
+    // Le CV (fichier privé) part avec le compte ; s'il n'y en a pas, rien à effacer.
+    await supabase.storage.from("cv").remove([`${get().session!.userId}/cv.pdf`]);
     const { error } = await supabase.rpc("delete_my_account");
     if (error) return { ok: false, ...translate(error.message) };
     // Le compte n'existe plus côté serveur : on efface seulement la session de ce navigateur.

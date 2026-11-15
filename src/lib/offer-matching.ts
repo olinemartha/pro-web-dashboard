@@ -9,7 +9,7 @@ import { daysFromToday, fmtDate } from "./dates";
 import type { Offer } from "./mock-data";
 import type { Profile } from "./rules";
 
-export const OFFER_MATCHING_VERSION = "demo-1.0";
+export const OFFER_MATCHING_VERSION = "regles-offres-1.0";
 
 export const OFFER_RULES: ExpertRule[] = [
   {

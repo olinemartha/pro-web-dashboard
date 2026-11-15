@@ -187,10 +187,11 @@ export function useAdminData() {
         .filter((i) => i.status === "annule")
         .map((i) => ({
           id: `i-${i.id}`,
-          date: i.date,
+          // Un entretien annulé d'avance ne se range pas dans le futur : il compte au plus tard aujourd'hui.
+          date: i.date > today ? today : i.date,
           kind: "entretien" as LogKind,
           title: `Entretien annulé · ${candidates.find((c) => c.id === i.candidateId)?.name ?? "Candidat"}`,
-          detail: `${i.time} · ${i.location}`,
+          detail: `Prévu le ${i.date.split("-").reverse().join("/")} à ${i.time} · ${i.location}`,
         })),
       ...actions.map((a) => ({
         id: a.id,
