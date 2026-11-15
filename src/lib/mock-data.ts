@@ -84,13 +84,20 @@ export const internshipExtras = {
   ] as Doc[],
 };
 
-export const companyOf = (id: string) => companies.find((c) => c.id === id)!;
+/** Remplace l'annuaire par les entreprises enregistrées en base (chargées à la connexion). */
+export function setCompanies(list: Company[]) {
+  companies.splice(0, companies.length, ...list);
+}
+
+/** Entreprise d'une offre ; jamais de nom inventé si elle n'est pas (encore) chargée. */
+export const companyOf = (id: string): Company => companies.find((c) => c.id === id) ?? { id, name: "Entreprise", initials: "E", about: "" };
+
 /** Offre de l'entreprise vue par l'étudiant (le profil recherché vient du détail de démonstration). */
 export function toStudentOffer(offer: CompanyOffer): Offer {
   const detail = offers.find((o) => o.id === offer.id);
   return {
     id: offer.id,
-    companyId: "finca",
+    companyId: offer.companyId ?? "finca",
     title: offer.title,
     department: offer.department,
     location: offer.location,
@@ -109,5 +116,12 @@ export function toStudentOffer(offer: CompanyOffer): Offer {
 /** L'offre telle que l'entreprise la publie ; à défaut, la fiche de démonstration. */
 export const offerOf = (id: string): Offer => {
   const live = useCompanyStore.getState().offers.find((o) => o.id === id);
-  return live ? toStudentOffer(live) : offers.find((o) => o.id === id)!;
+  if (live) return toStudentOffer(live);
+  // Offre supprimée ou plus visible : une fiche neutre plutôt qu'une erreur.
+  return (
+    offers.find((o) => o.id === id) ?? {
+      id, companyId: "", title: "Offre retirée", department: "", location: "", type: "", duration: "", level: "",
+      deadline: "", published: "", description: "", missions: [], profile: "", skills: [],
+    }
+  );
 };

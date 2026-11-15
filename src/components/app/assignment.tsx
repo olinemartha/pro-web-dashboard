@@ -6,6 +6,7 @@ import { useMyAssignment as useAssignment } from "@/lib/store";
 import { Reveal } from "@/components/ui/motion";
 import type { ExpertCriterion, ExpertRun } from "@/lib/company-data";
 import { fmtDate } from "@/lib/dates";
+import { companyOf, offerOf } from "@/lib/mock-data";
 import type { useMyAssignment } from "@/lib/store";
 import { cn } from "@/lib/utils";
 
@@ -59,6 +60,7 @@ export function AssignmentCard({
   delay?: number;
 }) {
   const { intern, run, decision } = assignment;
+  const companyName = companyOf(offerOf(intern.offerId).companyId).name;
   const decided = intern.confirmed;
   const retained = decided ? run?.proposals.find((proposal) => proposal.serviceId === intern.serviceId) : undefined;
   const proposals = visibleProposals(run);
@@ -78,10 +80,10 @@ export function AssignmentCard({
           </h2>
           <p className="mt-0.5 max-w-[68ch] text-pretty text-xs text-muted-foreground">
             {decided
-              ? `FINCA RDC a validé votre service d'accueil${decision ? ` le ${fmtDate(decision.decidedAt.slice(0, 10))}` : ""}.`
+              ? `${companyName} a validé votre service d'accueil${decision ? ` le ${fmtDate(decision.decidedAt.slice(0, 10))}` : ""}.`
               : run
-                ? "Le système expert a comparé votre profil aux besoins des services. FINCA RDC choisira votre service d'accueil parmi ses propositions."
-                : "FINCA RDC n'a pas encore lancé l'analyse de votre profil."}
+                ? `Le système expert a comparé votre profil aux besoins des services. ${companyName} choisira votre service d'accueil parmi ses propositions.`
+                : `${companyName} n'a pas encore lancé l'analyse de votre profil.`}
           </p>
         </div>
         <Badge label={decided ? "Service retenu" : "Analyse en cours"} tone={decided ? "success" : "primary"} dot={decided ? "acceptee" : "examen"} />
@@ -211,7 +213,7 @@ export function ExpertHint({ candidateId, offerTitle }: { candidateId?: string; 
           ))}
         </ul>
         <p className="mt-3 text-pretty text-xs text-muted-foreground">
-          Le système expert recommande ; FINCA RDC choisira votre service d'accueil une fois votre stage confirmé.
+          Le système expert recommande ; l'entreprise choisira votre service d'accueil une fois votre stage confirmé.
         </p>
       </Modal>
     </>

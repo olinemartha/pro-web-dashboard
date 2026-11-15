@@ -86,6 +86,8 @@ type AuthState = {
   requestPasswordReset: (email: string) => Promise<Result>;
   /** Nouveau mot de passe, choisi depuis le lien reçu (ou une fois connecté). */
   updatePassword: (password: string) => Promise<Result>;
+  /** Paramètres : l'ancien mot de passe est vérifié avant d'enregistrer le nouveau. */
+  changePassword: (current: string, next: string) => Promise<{ ok: true } | { ok: false; error: string; field?: "current" | "next" }>;
   refresh: () => Promise<void>;
 };
 
@@ -285,6 +287,17 @@ export const useAuth = create<AuthState>()((set, get) => ({
     if (error) return { ok: false, ...translate(error.message) };
     return { ok: true };
   },
+
+  changePassword: async (current, next) => {
+    const session = get().session;
+    if (!session) return { ok: false, error: "Session expirée : reconnectez-vous." };
+    if (useViewAs.getState().target) return { ok: false, error: READ_ONLY_MESSAGE };
+    const check = await supabase.auth.signInWithPassword({ email: session.email, password: current });
+    if (check.error) return { ok: false, error: "Mot de passe actuel incorrect.", field: "current" };
+    const { error } = await supabase.auth.updateUser({ password: next });
+    if (error) return { ok: false, error: translate(error.message).error, field: "next" };
+    return { ok: true };
+  },
 }));
 
 /** Espace d'une adresse : /admin, /entreprise, sinon l'espace étudiant. */
@@ -296,6 +309,9 @@ export function roleForPath(pathname: string): Role {
 
 /** Pages accessibles sans être connecté. */
 export const PUBLIC_PATHS = ["/connexion", "/inscription", "/reinitialiser"];
+/** Pages communes aux espaces (connexion requise), affichées sans le menu : l'attestation imprimable. */
+export const SHARED_PATHS = ["/attestation"];
+export const isSharedPath = (pathname: string) => SHARED_PATHS.some((path) => pathname === path || pathname.startsWith(`${path}/`));
 /** Page ouverte depuis le lien « mot de passe oublié » : accessible avec la session de récupération. */
 export const RESET_PATH = "/reinitialiser";
 export const isPublicPath = (pathname: string) => PUBLIC_PATHS.some((path) => pathname === path || pathname.startsWith(`${path}/`));

@@ -1,5 +1,6 @@
 import { DatePicker } from "@/components/company/date-picker";
 import { Field, Select, inputClass } from "@/components/company/ui";
+import { useCompanyStore } from "@/lib/company-store";
 import { localIsoDate } from "@/lib/dates";
 
 /**
@@ -18,7 +19,8 @@ export const TIME_SLOTS = Array.from({ length: 20 }, (_, index) => {
   return `${String(Math.floor(minutes / 60)).padStart(2, "0")}:${String(minutes % 60).padStart(2, "0")}`;
 });
 
-const LOCATION_SUGGESTIONS = ["Siège FINCA — Salle 1", "Siège FINCA — Salle 2", "Siège FINCA — Salle 3", "Visio"];
+/** Lieux proposés : le siège de l'entreprise connectée, puis la visio. */
+const locationSuggestions = (company: string) => [`Siège ${company} — Salle 1`, `Siège ${company} — Salle 2`, `Siège ${company} — Salle 3`, "Visio"];
 
 export function validateInterview(draft: InterviewDraft, allowPast = false) {
   const errors: Partial<Record<keyof InterviewDraft, string>> = {};
@@ -42,6 +44,7 @@ export function InterviewFields({
   idPrefix?: string;
   allowPast?: boolean;
 }) {
+  const company = useCompanyStore((state) => state.profile.name) || "de l'entreprise";
   const slots = value.time && !TIME_SLOTS.includes(value.time) ? [value.time, ...TIME_SLOTS] : TIME_SLOTS;
   return (
     <>
@@ -81,13 +84,13 @@ export function InterviewFields({
           list={`${idPrefix}-lieux`}
           autoComplete="off"
           className={inputClass}
-          placeholder="Ex. Siège FINCA — Salle 1"
+          placeholder={`Ex. Siège ${company} — Salle 1`}
           value={value.location}
           onChange={(event) => onChange({ location: event.target.value })}
         />
       </Field>
       <datalist id={`${idPrefix}-lieux`}>
-        {LOCATION_SUGGESTIONS.map((place) => (
+        {locationSuggestions(company).map((place) => (
           <option key={place} value={place} />
         ))}
       </datalist>

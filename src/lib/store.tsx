@@ -8,6 +8,7 @@ import {
   demoSaved,
   demoNotifications,
   demoActivity,
+  companyOf,
   offerOf,
   toStudentOffer,
   type Activity,
@@ -85,7 +86,7 @@ export const useStore = create<AppState>((set, get) => ({
     set((state) => ({
       applications: [...state.applications, { id: appId, offerId, date: localIsoDate(), status: "envoyee", candidateId }],
       activity: [
-        { id: `ac-${appId}`, label: "Candidature envoyée", detail: `${offer.title} · FINCA RDC`, date: nowIso(), kind: "envoi" },
+        { id: `ac-${appId}`, label: "Candidature envoyée", detail: `${offer.title} · ${companyOf(offer.companyId).name}`, date: nowIso(), kind: "envoi" },
         ...state.activity,
       ],
     }));

@@ -139,10 +139,12 @@ function OfferDetail() {
                 ))}
               </ul>
             </div>
-            <div>
-              <h3 className="text-[13px] font-semibold">Profil recherché</h3>
-              <p className="mt-1.5 max-w-[68ch] text-pretty text-sm leading-relaxed text-muted-foreground">{offer.profile}</p>
-            </div>
+            {offer.profile && (
+              <div>
+                <h3 className="text-[13px] font-semibold">Profil recherché</h3>
+                <p className="mt-1.5 max-w-[68ch] text-pretty text-sm leading-relaxed text-muted-foreground">{offer.profile}</p>
+              </div>
+            )}
             <div>
               <h3 className="text-[13px] font-semibold">Après votre candidature</h3>
               <ol className="mt-3 grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-4">
@@ -269,7 +271,7 @@ function OfferDetail() {
                 <p className="truncate text-xs text-muted-foreground">Microfinance · {offer.location.split(",")[0]}</p>
               </div>
             </div>
-            <p className="mt-3 text-pretty text-[13px] leading-relaxed text-muted-foreground">{company.about}</p>
+            {company.about && <p className="mt-3 text-pretty text-[13px] leading-relaxed text-muted-foreground">{company.about}</p>}
             <dl className="mt-4 grid grid-cols-2 divide-x rounded-xl border py-3">
               <div className="px-3.5">
                 <dt className="text-[11px] font-medium text-muted-foreground">Offres ouvertes</dt>

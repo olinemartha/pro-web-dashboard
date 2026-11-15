@@ -48,6 +48,7 @@ import {
 } from "@/components/company/interview-fields";
 import { useCompanyStore } from "@/lib/company-store";
 import { fmtDate, relativeDay } from "@/lib/dates";
+import { downloadCv } from "@/lib/files";
 import { cn } from "@/lib/utils";
 import {
   candidateStatusLabels,
@@ -588,15 +589,21 @@ function CompanyApplicationsPage() {
                 <section className="flex items-center justify-between gap-3 rounded-xl border px-4 py-3">
                   <span className="flex min-w-0 items-center gap-2.5 text-[13px]">
                     <FileText className="size-4 shrink-0 text-muted-foreground" />
-                    <span className="truncate font-medium">{detail.cvName}</span>
+                    <span className="truncate font-medium">{detail.cvName || "Aucun CV déposé"}</span>
                   </span>
-                  <button
-                    type="button"
-                    onClick={() => toast.success("Téléchargement du CV", { description: detail.cvName })}
-                    className={SECTION_LINK}
-                  >
-                    <Download className="size-3.5" /> Télécharger
-                  </button>
+                  {detail.cvName && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        detail.studentId
+                          ? void downloadCv(detail.studentId, detail.cvName)
+                          : toast.info("CV de démonstration", { description: "Aucun fichier réel n'est associé à ce candidat." })
+                      }
+                      className={SECTION_LINK}
+                    >
+                      <Download className="size-3.5" /> Télécharger
+                    </button>
+                  )}
                 </section>
 
                 <section>

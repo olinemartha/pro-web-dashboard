@@ -153,6 +153,8 @@ export type Database = {
           assignment_reason: string;
           assignment_source: string | null;
           certificate: string;
+          certificate_generated_at: string | null;
+          certificate_validated_at: string | null;
           company_id: string;
           confirmed: boolean;
           created_at: string;
@@ -285,6 +287,10 @@ export type Database = {
       complete_company_onboarding: { Args: { company: Json }; Returns: string };
       delete_my_account: { Args: Record<PropertyKey, never>; Returns: undefined };
       identity_taken: { Args: { kind: string; value: string }; Returns: boolean };
+      submit_report: {
+        Args: { intern: string; period: string; activites: string; difficultes?: string; competences?: string; replaces?: string };
+        Returns: Json;
+      };
     };
     Enums: { [_ in never]: never };
     CompositeTypes: { [_ in never]: never };

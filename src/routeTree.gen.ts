@@ -27,6 +27,7 @@ import { Route as AdminOffresRouteImport } from './routes/admin.offres'
 import { Route as AdminParametresRouteImport } from './routes/admin.parametres'
 import { Route as AdminSystemeExpertRouteImport } from './routes/admin.systeme-expert'
 import { Route as AdminUtilisateursRouteImport } from './routes/admin.utilisateurs'
+import { Route as AttestationInternIdRouteImport } from './routes/attestation.$internId'
 import { Route as EntrepriseIndexRouteImport } from './routes/entreprise.index'
 import { Route as EntrepriseCandidaturesRouteImport } from './routes/entreprise.candidatures'
 import { Route as EntrepriseEncadreursRouteImport } from './routes/entreprise.encadreurs'
@@ -132,6 +133,11 @@ const AdminUtilisateursRoute = AdminUtilisateursRouteImport.update({
   path: '/admin/utilisateurs',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AttestationInternIdRoute = AttestationInternIdRouteImport.update({
+  id: '/attestation/$internId',
+  path: '/attestation/$internId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const EntrepriseIndexRoute = EntrepriseIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -223,6 +229,7 @@ export interface FileRoutesByFullPath {
   '/admin/parametres': typeof AdminParametresRoute
   '/admin/systeme-expert': typeof AdminSystemeExpertRoute
   '/admin/utilisateurs': typeof AdminUtilisateursRoute
+  '/attestation/$internId': typeof AttestationInternIdRoute
   '/entreprise/candidatures': typeof EntrepriseCandidaturesRoute
   '/entreprise/encadreurs': typeof EntrepriseEncadreursRoute
   '/entreprise/entretiens': typeof EntrepriseEntretiensRoute
@@ -256,6 +263,7 @@ export interface FileRoutesByTo {
   '/admin/parametres': typeof AdminParametresRoute
   '/admin/systeme-expert': typeof AdminSystemeExpertRoute
   '/admin/utilisateurs': typeof AdminUtilisateursRoute
+  '/attestation/$internId': typeof AttestationInternIdRoute
   '/entreprise/candidatures': typeof EntrepriseCandidaturesRoute
   '/entreprise/encadreurs': typeof EntrepriseEncadreursRoute
   '/entreprise/entretiens': typeof EntrepriseEntretiensRoute
@@ -290,6 +298,7 @@ export interface FileRoutesById {
   '/admin/parametres': typeof AdminParametresRoute
   '/admin/systeme-expert': typeof AdminSystemeExpertRoute
   '/admin/utilisateurs': typeof AdminUtilisateursRoute
+  '/attestation/$internId': typeof AttestationInternIdRoute
   '/entreprise/candidatures': typeof EntrepriseCandidaturesRoute
   '/entreprise/encadreurs': typeof EntrepriseEncadreursRoute
   '/entreprise/entretiens': typeof EntrepriseEntretiensRoute
@@ -326,6 +335,7 @@ export interface FileRouteTypes {
     | '/admin/parametres'
     | '/admin/systeme-expert'
     | '/admin/utilisateurs'
+    | '/attestation/$internId'
     | '/entreprise/candidatures'
     | '/entreprise/encadreurs'
     | '/entreprise/entretiens'
@@ -359,6 +369,7 @@ export interface FileRouteTypes {
     | '/admin/parametres'
     | '/admin/systeme-expert'
     | '/admin/utilisateurs'
+    | '/attestation/$internId'
     | '/entreprise/candidatures'
     | '/entreprise/encadreurs'
     | '/entreprise/entretiens'
@@ -392,6 +403,7 @@ export interface FileRouteTypes {
     | '/admin/parametres'
     | '/admin/systeme-expert'
     | '/admin/utilisateurs'
+    | '/attestation/$internId'
     | '/entreprise/candidatures'
     | '/entreprise/encadreurs'
     | '/entreprise/entretiens'
@@ -427,6 +439,7 @@ export interface RootRouteChildren {
   AdminParametresRoute: typeof AdminParametresRoute
   AdminSystemeExpertRoute: typeof AdminSystemeExpertRoute
   AdminUtilisateursRoute: typeof AdminUtilisateursRoute
+  AttestationInternIdRoute: typeof AttestationInternIdRoute
   OffresIdRoute: typeof OffresIdRoute
   AdminIndexRoute: typeof AdminIndexRoute
   OffresIndexRoute: typeof OffresIndexRoute
@@ -558,6 +571,13 @@ declare module '@tanstack/react-router' {
       path: '/admin/utilisateurs'
       fullPath: '/admin/utilisateurs'
       preLoaderRoute: typeof AdminUtilisateursRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/attestation/$internId': {
+      id: '/attestation/$internId'
+      path: '/attestation/$internId'
+      fullPath: '/attestation/$internId'
+      preLoaderRoute: typeof AttestationInternIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/entreprise/': {
@@ -722,6 +742,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminParametresRoute: AdminParametresRoute,
   AdminSystemeExpertRoute: AdminSystemeExpertRoute,
   AdminUtilisateursRoute: AdminUtilisateursRoute,
+  AttestationInternIdRoute: AttestationInternIdRoute,
   OffresIdRoute: OffresIdRoute,
   AdminIndexRoute: AdminIndexRoute,
   OffresIndexRoute: OffresIndexRoute,

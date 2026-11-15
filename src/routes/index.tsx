@@ -25,7 +25,7 @@ import {
 } from "@/components/company/ui";
 import { AnimatedNumber, Reveal } from "@/components/ui/motion";
 import { daysFromToday, fmtDate, relativeDay } from "@/lib/dates";
-import { companyOf, internshipExtras, offerOf } from "@/lib/mock-data";
+import { companyOf, offerOf } from "@/lib/mock-data";
 import { missingFields } from "@/lib/rules";
 import { useMyAssignment, usePublishedOffers, useStore } from "@/lib/store";
 import { rankOffers, VERDICT_LABELS } from "@/lib/offer-matching";
@@ -95,8 +95,9 @@ function Dashboard() {
     });
   }
   if (confirmedApp) {
-    const start = daysFromToday(assignment?.intern.start ?? internshipExtras.start);
-    const supervisorName = assignment ? assignment.supervisor?.name : internshipExtras.supervisor.name;
+    const startDate = assignment?.intern.start;
+    const start = startDate ? daysFromToday(startDate) : 1;
+    const supervisorName = assignment?.supervisor?.name;
     todos.push({
       id: "stage",
       icon: GraduationCap,
@@ -104,7 +105,7 @@ function Dashboard() {
       subject: offerOf(confirmedApp.offerId).title,
       task: start > 0 ? "Stage confirmé" : "Stage en cours",
       context: supervisorName ? `Encadreur : ${supervisorName}` : "Encadreur à désigner par l'entreprise",
-      when: start > 0 ? `début dans ${start} j` : "en cours",
+      when: !startDate ? "dates à fixer" : start > 0 ? `début dans ${start} j` : "en cours",
       urgent: false,
       action: "Mon stage",
       to: "/stage",

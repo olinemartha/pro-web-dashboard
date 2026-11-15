@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Camera, CheckCircle2, Clock, Eye, EyeOff, FileText, FileUp, Save, ShieldCheck } from "lucide-react";
+import { Camera, CheckCircle2, Clock, Download, Eye, EyeOff, FileText, FileUp, Save, ShieldCheck } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { TagInput } from "@/components/company/tag-input";
@@ -10,6 +10,9 @@ import { Switch } from "@/components/ui/switch";
 import { fmtDate, localIsoDate } from "@/lib/dates";
 import { missingFields, profileCompletion, type Profile } from "@/lib/rules";
 import { useStore } from "@/lib/store";
+import { useAuth } from "@/lib/auth";
+import { downloadCv, uploadCv } from "@/lib/files";
+import { remoteState } from "@/lib/remote-flag";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/profil")({
@@ -53,6 +56,7 @@ function ProfilePage() {
   const [errors, setErrors] = useState<Partial<Record<keyof Profile, string>>>({});
   const photoRef = useRef<HTMLInputElement>(null);
   const cvRef = useRef<HTMLInputElement>(null);
+  const [cvPending, setCvPending] = useState(false);
 
   // La photo, le CV et la visibilité s'enregistrent aussitôt : ils n'entrent pas dans la comparaison.
   const dirty = useMemo(() => {
@@ -105,10 +109,18 @@ function ProfilePage() {
     reader.readAsDataURL(file);
   };
 
-  const onCv = (file?: File) => {
+  const onCv = async (file?: File) => {
     if (!file) return;
     if (file.type !== "application/pdf") return void toast.error("Le CV doit être au format PDF");
     if (file.size > 5e6) return void toast.error("Fichier trop volumineux", { description: "5 Mo maximum." });
+    // Le fichier lui-même part dans le stockage privé : l'entreprise pourra l'ouvrir après votre candidature.
+    const userId = useAuth.getState().session?.userId;
+    if (remoteState.active && userId) {
+      setCvPending(true);
+      const error = await uploadCv(userId, file);
+      setCvPending(false);
+      if (error) return void toast.error("CV non enregistré", { description: error });
+    }
     updateProfile({ cv: { name: file.name, size: file.size, date: localIsoDate() } });
     toast.success("CV téléversé", { description: file.name });
   };
@@ -187,8 +199,8 @@ function ProfilePage() {
               <Field label="Téléphone" htmlFor="p-telephone" required error={errors.telephone}>
                 {input("telephone", "p-telephone", "Ex. +243 81 000 0000", { type: "tel", inputMode: "tel", autoComplete: "tel" })}
               </Field>
-              <Field label="E-mail" htmlFor="p-email" required error={errors.email}>
-                {input("email", "p-email", "Ex. prenom.nom@exemple.cd", { type: "email", inputMode: "email", autoComplete: "email" })}
+              <Field label="E-mail" htmlFor="p-email" hint="L'adresse de votre compte : elle sert à la connexion et ne se modifie pas ici.">
+                {input("email", "p-email", "Ex. prenom.nom@exemple.cd", { type: "email", readOnly: true, className: cn(inputClass, "bg-muted/40 text-muted-foreground") })}
               </Field>
               <Field label="Adresse" htmlFor="p-adresse">
                 {input("adresse", "p-adresse", "Ex. Av. de la Justice 24, Gombe", { autoComplete: "street-address" })}
@@ -307,6 +319,19 @@ function ProfilePage() {
                     {Math.round(profile.cv.size / 1000)} Ko · ajouté le {fmtDate(profile.cv.date.slice(0, 10))}
                   </p>
                 </div>
+                {remoteState.active && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const userId = useAuth.getState().session?.userId;
+                      if (userId) void downloadCv(userId, profile.cv?.name ?? "CV.pdf");
+                    }}
+                    aria-label={`Télécharger ${profile.cv.name}`}
+                    className="press grid size-8 shrink-0 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  >
+                    <Download className="size-4" />
+                  </button>
+                )}
               </div>
             ) : (
               <p className="mt-3 text-[13px] font-medium text-warning">Aucun CV : ajoutez-le pour pouvoir postuler.</p>
@@ -314,6 +339,7 @@ function ProfilePage() {
             <button
               type="button"
               onClick={() => cvRef.current?.click()}
+              disabled={cvPending}
               onDragOver={(event) => event.preventDefault()}
               onDrop={(event) => {
                 event.preventDefault();
@@ -322,7 +348,7 @@ function ProfilePage() {
               className="press group mt-4 flex w-full flex-col items-center gap-1 rounded-lg border border-dashed px-4 py-5 text-[13px] font-medium text-muted-foreground transition-colors hover:border-accent hover:bg-primary-soft/50 hover:text-primary"
             >
               <FileUp className="nav-icon nav-icon--lift size-[18px]" />
-              {profile.cv ? "Remplacer le CV" : "Téléverser mon CV"}
+              {cvPending ? "Envoi du CV…" : profile.cv ? "Remplacer le CV" : "Téléverser mon CV"}
               <span className="text-xs font-normal text-muted-foreground">PDF, 5 Mo maximum · glisser-déposer possible</span>
             </button>
             <input ref={cvRef} type="file" accept="application/pdf" hidden onChange={(event) => onCv(event.target.files?.[0])} />

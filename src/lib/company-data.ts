@@ -61,6 +61,8 @@ export interface Candidate {
   refusalReason?: string;
   /** Candidature déposée depuis l'espace étudiant (lien entre les deux espaces). */
   studentAppId?: string;
+  /** Compte de l'étudiant (pour ouvrir son CV, stocké à son nom). */
+  studentId?: string;
 }
 
 export type InterviewStatus = "programme" | "realise" | "annule";
@@ -81,6 +83,10 @@ export interface InternReport {
   period: string;
   date: string;
   status: ReportStatus;
+  /** Contenu rédigé par le stagiaire (dépôt depuis « Suivi du stage »). */
+  activites?: string;
+  difficultes?: string;
+  competences?: string;
 }
 
 export type AssignmentSource = "recommandation" | "manuel";

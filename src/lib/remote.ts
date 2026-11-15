@@ -26,9 +26,9 @@ import type {
 import { useCompanyStore } from "./company-store";
 import { DEFAULT_RULES } from "./expert-engine";
 import type { Json, Tables } from "./database.types";
-import type { Notification } from "./mock-data";
+import { setCompanies, type Notification } from "./mock-data";
 import { remoteState } from "./remote-flag";
-import { READ_ONLY_MESSAGE } from "./view-as";
+import { READ_ONLY_MESSAGE, useViewAs } from "./view-as";
 import { profileCompletion, type AppStatus, type Application, type Profile } from "./rules";
 import { useStore } from "./store";
 import { supabase } from "./supabase";
@@ -168,6 +168,9 @@ type Rows = {
  */
 function scopeRows(session: Session, rows: Rows): Rows {
   const notifications = rows.notifications.filter((n) => n.user_id === session.userId);
+  // Une entreprise lit aussi les offres publiées des autres (règle de lecture publique) : son espace ne garde que les siennes.
+  if (!session.viewing && session.role === "entreprise")
+    return { ...rows, offers: rows.offers.filter((o) => o.company_id === session.companyId), notifications };
   if (!session.viewing) return { ...rows, notifications };
   const applications =
     session.role === "entreprise"
@@ -332,6 +335,7 @@ async function loadCompanyOrAdmin(
       history: (a.history as unknown as Candidate["history"]) ?? [],
       refusalReason: a.refusal_reason ?? undefined,
       studentAppId: a.id,
+      studentId: a.student_id,
     };
   });
 
@@ -383,6 +387,8 @@ async function loadCompanyOrAdmin(
       reports: (i.reports as unknown as Intern["reports"]) ?? [],
       evaluation: (i.evaluation as Intern["evaluation"]) ?? null,
       certificate: i.certificate as Intern["certificate"],
+      certificateGeneratedAt: i.certificate_generated_at ?? undefined,
+      certificateValidatedAt: i.certificate_validated_at ?? undefined,
     };
   });
 
@@ -398,7 +404,10 @@ async function loadCompanyOrAdmin(
     rules = (data ?? []).map(toRule);
   }
 
-  const company = companies[0];
+  // Annuaire de l'espace étudiant : le vrai nom et la présentation de chaque entreprise.
+  setCompanies(companies.map((c) => ({ id: c.id, name: c.name, initials: c.initials || initials(c.name), about: c.description })));
+
+  const company = session.role === "entreprise" ? companies.find((c) => c.id === session.companyId) : companies[0];
   useCompanyStore.setState((state) => ({
     profile: company ? { ...state.profile, ...toCompanyProfile(company) } : state.profile,
     hosting: (company?.hosting as HostingProfile | null) ?? null,
@@ -565,6 +574,7 @@ function syncCompany(session: Session) {
         assignment_source: i.assignmentSource ?? null, assignment_reason: i.assignmentReason ?? "",
         decided_at: i.assignmentDecidedAt ?? null, decided_by: i.assignmentDecidedBy ?? null,
         reports: i.reports as unknown as Json, evaluation: i.evaluation as unknown as Json, certificate: i.certificate,
+        certificate_generated_at: i.certificateGeneratedAt ?? null, certificate_validated_at: i.certificateValidatedAt ?? null,
       }), session);
     for (const i of removed(prev.interns, next.interns)) push("Suppression de dossier", () => supabase.from("interns").delete().eq("id", i.id), session);
 
@@ -678,6 +688,7 @@ export function startRemote(session: Session, onReady: () => void): () => void {
     .on("postgres_changes", { event: "*", schema: "public", table: "applications" }, reload)
     .on("postgres_changes", { event: "*", schema: "public", table: "interviews" }, reload)
     .on("postgres_changes", { event: "*", schema: "public", table: "offers" }, reload)
+    .on("postgres_changes", { event: "*", schema: "public", table: "interns" }, reload)
     .on("postgres_changes", { event: "UPDATE", schema: "public", table: "companies" }, reload)
     .on("postgres_changes", { event: "INSERT", schema: "public", table: "notifications", filter: `user_id=eq.${session.userId}` }, (payload) => {
       const n = payload.new as Tables<"notifications">;
@@ -694,6 +705,43 @@ export function startRemote(session: Session, onReady: () => void): () => void {
     void supabase.removeChannel(channel);
     remoteState.active = false;
   };
+}
+
+/* ------------------------------------------------------------------ */
+/* Actions de l'étudiant                                               */
+/* ------------------------------------------------------------------ */
+
+export type ReportInput = { period: string; activites: string; difficultes: string; competences: string };
+
+/**
+ * Dépôt d'un rapport de stage (ou de sa version corrigée). La base vérifie que le dossier est
+ * bien celui de l'étudiant et que son affectation est validée, puis prévient l'entreprise.
+ */
+export async function submitInternReport(internId: string, input: ReportInput, replaces?: string): Promise<string | null> {
+  if (useViewAs.getState().target) return READ_ONLY_MESSAGE;
+  const { data, error } = await supabase.rpc("submit_report", {
+    intern: internId,
+    period: input.period,
+    activites: input.activites,
+    difficultes: input.difficultes,
+    competences: input.competences,
+    ...(replaces ? { replaces } : {}),
+  });
+  if (error) return error.message;
+  const report = data as unknown as Intern["reports"][number];
+  applying = true;
+  try {
+    useCompanyStore.setState((state) => ({
+      interns: state.interns.map((intern) =>
+        intern.id !== internId
+          ? intern
+          : { ...intern, reports: replaces ? intern.reports.map((r) => (r.id === replaces ? report : r)) : [...intern.reports, report] }
+      ),
+    }));
+  } finally {
+    applying = false;
+  }
+  return null;
 }
 
 /* ------------------------------------------------------------------ */

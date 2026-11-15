@@ -106,7 +106,7 @@ function Offers() {
 
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 lg:gap-6">
         {[
-          <StatCard key="ouvertes" label="Offres ouvertes" value={open.length} icon={Briefcase} motion="lift" foot={`sur ${plural(offers.length, "offre")} publiée${offers.length > 1 ? "s" : ""} par FINCA RDC`} />,
+          <StatCard key="ouvertes" label="Offres ouvertes" value={open.length} icon={Briefcase} motion="lift" foot={`sur ${plural(offers.length, "offre")} publiée${offers.length > 1 ? "s" : ""}`} />,
           <StatCard key="pour-vous" label="Pour votre profil" value={forYou.length} icon={Sparkles} motion="pop" foot="recommandées par le système expert" />,
           <StatCard key="enregistrees" label="Offres enregistrées" value={saved.length} icon={Bookmark} motion="lift" foot={saved.length ? "à relire avant de postuler" : "aucune pour le moment"} />,
           <StatCard

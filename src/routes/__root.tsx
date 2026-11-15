@@ -14,7 +14,7 @@ import "../index.css";
 import { AppShell } from "../components/app/app-shell";
 import { CompanyShell } from "../components/company/company-shell";
 import { AdminShell } from "../components/admin/admin-shell";
-import { RESET_PATH, ROLE_HOME, isPublicPath, roleForPath, useAuth, type Session } from "../lib/auth";
+import { RESET_PATH, ROLE_HOME, isPublicPath, isSharedPath, roleForPath, useAuth, type Session } from "../lib/auth";
 import { startRemote } from "../lib/remote";
 import { useViewAs } from "../lib/view-as";
 import { Toaster } from "../components/ui/sonner";
@@ -114,6 +114,8 @@ function useRedirect(pathname: string) {
   if (pathname === RESET_PATH) return null;
   if (!session.onboarded) return pathname === "/inscription" ? null : "/inscription";
   if (isPublic) return ROLE_HOME[session.role];
+  // L'attestation se consulte depuis chaque espace ; ses droits sont vérifiés par la base et par la page.
+  if (isSharedPath(pathname)) return null;
   if (session.role === "admin" && target && roleForPath(pathname) === target.kind) return null;
   if (roleForPath(pathname) !== session.role) return ROLE_HOME[session.role];
   return null;
@@ -174,7 +176,7 @@ function RootComponent() {
   const space = roleForPath(pathname);
   const content = !ready || redirect || (!isPublicPath(pathname) && !dataReady) ? (
     <div className="min-h-screen bg-background" aria-busy="true" />
-  ) : isPublicPath(pathname) ? (
+  ) : isPublicPath(pathname) || isSharedPath(pathname) ? (
     <Outlet />
   ) : space === "admin" ? (
     <AdminShell>

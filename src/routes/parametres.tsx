@@ -1,9 +1,8 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { ArrowRight, CalendarClock, CheckCircle2, KeyRound, LogOut, Save, Sparkles, Trash2, UserRound, UserX } from "lucide-react";
+import { ArrowRight, CalendarClock, CheckCircle2, KeyRound, LogOut, Sparkles, Trash2, UserRound, UserX } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
 import { Reveal } from "@/components/ui/motion";
 import { ARROW_NUDGE, Badge, Field, Modal, PageIntro, SECTION_LINK, iconMotion, inputClass, type IconMotion } from "@/components/company/ui";
 import { useStore } from "@/lib/store";
@@ -62,7 +61,7 @@ function SettingRow({
 type PasswordErrors = Partial<Record<"current" | "next" | "confirm", string>>;
 
 function SettingsPage() {
-  const { profile, updateProfile } = useStore();
+  const { profile } = useStore();
   const signOut = useAuth((state) => state.signOut);
   const deactivate = useAuth((state) => state.deactivate);
   const [deactivatingPending, setDeactivatingPending] = useState(false);
@@ -97,31 +96,17 @@ function SettingsPage() {
     navigate({ to: "/connexion" });
   };
 
-  const [email, setEmail] = useState(profile.email);
-  const [emailError, setEmailError] = useState<string>();
-  const emailDirty = email.trim() !== profile.email;
+  const accountEmail = useAuth((state) => state.session?.email) ?? profile.email;
 
   const [current, setCurrent] = useState("");
   const [next, setNext] = useState("");
   const [confirm, setConfirm] = useState("");
   const [passwordErrors, setPasswordErrors] = useState<PasswordErrors>({});
+  const [passwordPending, setPasswordPending] = useState(false);
 
-  const [notify, setNotify] = useState({ answers: true, interviews: true, offers: true });
   const [deactivating, setDeactivating] = useState(false);
 
-  const saveEmail = () => {
-    const value = email.trim();
-    const error = !value ? "L'e-mail du compte est obligatoire." : !/^\S+@\S+\.\S+$/.test(value) ? "Saisissez une adresse e-mail valide." : undefined;
-    setEmailError(error);
-    if (error) {
-      document.getElementById("settings-email")?.focus();
-      return;
-    }
-    updateProfile({ email: value });
-    toast.success("E-mail du compte enregistré");
-  };
-
-  const savePassword = () => {
+  const savePassword = async () => {
     const errors: PasswordErrors = {};
     if (!current) errors.current = "Saisissez votre mot de passe actuel.";
     if (!next) errors.next = "Choisissez un nouveau mot de passe.";
@@ -133,15 +118,19 @@ function SettingsPage() {
       document.getElementById(`pwd-${first}`)?.focus();
       return;
     }
+    setPasswordPending(true);
+    const result = await useAuth.getState().changePassword(current, next);
+    setPasswordPending(false);
+    if (!result.ok) {
+      const field = result.field ?? "next";
+      setPasswordErrors({ [field]: result.error });
+      document.getElementById(`pwd-${field}`)?.focus();
+      return;
+    }
     setCurrent("");
     setNext("");
     setConfirm("");
-    toast.success("Mot de passe modifié");
-  };
-
-  const toggleNotify = (key: keyof typeof notify, label: string) => (value: boolean) => {
-    setNotify((state) => ({ ...state, [key]: value }));
-    toast.success(value ? "Notification activée" : "Notification désactivée", { description: label });
+    toast.success("Mot de passe modifié", { description: "Utilisez-le à votre prochaine connexion." });
   };
 
   const passwordField = (key: keyof PasswordErrors, value: string, setValue: (v: string) => void, autoComplete: string) => (
@@ -167,22 +156,10 @@ function SettingsPage() {
         <div className="flex flex-col gap-6">
           {/* Compte */}
           <Reveal as="section" className="card-surface flex flex-col overflow-hidden" aria-labelledby="compte-titre">
-            <CardHeader id="compte-titre" title="Compte" desc="L'adresse utilisée pour vous connecter et recevoir les alertes." />
+            <CardHeader id="compte-titre" title="Compte" desc="L'adresse utilisée pour vous connecter." />
             <div className="grid gap-4 px-5 py-5">
-              <Field label="E-mail du compte" htmlFor="settings-email" required error={emailError} hint="Sert à la connexion et aux notifications.">
-                <input
-                  id="settings-email"
-                  type="email"
-                  inputMode="email"
-                  autoComplete="email"
-                  className={inputClass}
-                  placeholder="Ex. prenom.nom@exemple.cd"
-                  value={email}
-                  onChange={(event) => {
-                    setEmail(event.target.value);
-                    setEmailError(undefined);
-                  }}
-                />
+              <Field label="E-mail du compte" htmlFor="settings-email" hint="Une personne, un compte : l'adresse de connexion ne se change pas ici.">
+                <input id="settings-email" type="email" readOnly className={cn(inputClass, "bg-muted/40 text-muted-foreground")} value={accountEmail} />
               </Field>
               <div className="flex items-center justify-between gap-3 rounded-lg border px-3.5 py-3">
                 <div className="min-w-0">
@@ -197,30 +174,20 @@ function SettingsPage() {
                 </Link>
               </div>
             </div>
-            <div className="mt-auto flex justify-end border-t bg-muted/30 px-5 py-3">
-              <Button onClick={saveEmail} disabled={!emailDirty}>
-                <Save className="mr-2 size-4" /> Enregistrer
-              </Button>
-            </div>
           </Reveal>
 
-          {/* Notifications */}
+          {/* Notifications : elles arrivent dans StageManager (cloche), à chaque étape */}
           <Reveal as="section" delay={120} className="card-surface flex flex-1 flex-col overflow-hidden" aria-labelledby="alertes-titre">
-            <CardHeader
-              id="alertes-titre"
-              title="Notifications par e-mail"
-              desc="Choisissez ce que vous recevez par e-mail."
-              aside={<Badge label="Démonstration" tone="muted" className="shrink-0" />}
-            />
+            <CardHeader id="alertes-titre" title="Notifications" desc="Vous êtes prévenu dans StageManager, sur la cloche, à chaque étape." />
             <div className="flex-1 divide-y">
-              <SettingRow icon={CheckCircle2} motion="pop" title="Réponses des entreprises" desc="Quand une candidature est acceptée ou refusée.">
-                <Switch checked={notify.answers} onCheckedChange={toggleNotify("answers", "Réponses des entreprises")} aria-label="Notifications : réponses des entreprises" />
+              <SettingRow icon={CheckCircle2} motion="pop" title="Réponses des entreprises" desc="Examen, acceptation ou refus de chaque candidature.">
+                <Badge label="Activée" tone="success" className="shrink-0" />
               </SettingRow>
-              <SettingRow icon={CalendarClock} motion="tilt" title="Rappels d'entretien" desc="La veille de chaque entretien programmé.">
-                <Switch checked={notify.interviews} onCheckedChange={toggleNotify("interviews", "Rappels d'entretien")} aria-label="Notifications : rappels d'entretien" />
+              <SettingRow icon={CalendarClock} motion="tilt" title="Entretiens" desc="Date, heure et lieu ; déplacement ou annulation.">
+                <Badge label="Activée" tone="success" className="shrink-0" />
               </SettingRow>
-              <SettingRow icon={Sparkles} motion="pop" title="Offres pour vous" desc="Quand une offre correspond à vos compétences.">
-                <Switch checked={notify.offers} onCheckedChange={toggleNotify("offers", "Offres pour vous")} aria-label="Notifications : offres pour vous" />
+              <SettingRow icon={Sparkles} motion="pop" title="Votre stage" desc="Affectation, encadreur, rapports relus et attestation.">
+                <Badge label="Activée" tone="success" className="shrink-0" />
               </SettingRow>
             </div>
           </Reveal>
@@ -242,8 +209,8 @@ function SettingsPage() {
               </Field>
             </div>
             <div className="mt-auto flex justify-end border-t bg-muted/30 px-5 py-3">
-              <Button variant="outline" onClick={savePassword}>
-                <KeyRound className="mr-2 size-4" /> Modifier le mot de passe
+              <Button variant="outline" onClick={savePassword} disabled={passwordPending}>
+                <KeyRound className="mr-2 size-4" /> {passwordPending ? "Vérification…" : "Modifier le mot de passe"}
               </Button>
             </div>
           </Reveal>

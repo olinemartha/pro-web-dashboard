@@ -29,6 +29,7 @@ import {
   EmptyNote,
   Field,
   MenuItem,
+  Modal,
   SECTION_LINK,
   Select,
   iconMotion,
@@ -43,7 +44,7 @@ import { cn } from "@/lib/utils";
 import { ExpertPanel } from "@/components/company/expert-panel";
 import { Stamp, stampDate } from "@/components/company/stamp";
 import { useCompanyStore } from "@/lib/company-store";
-import type { Intern, ReportStatus } from "@/lib/company-data";
+import type { Intern, InternReport, ReportStatus } from "@/lib/company-data";
 import { isRecommendedService, latestRunFor } from "@/lib/expert-engine";
 
 export const Route = createFileRoute("/entreprise/stagiaires/$internId")({
@@ -93,6 +94,7 @@ function InternDossierPage() {
   } = useCompanyStore();
 
   const intern = interns.find((entry) => entry.id === internId);
+  const [reading, setReading] = useState<InternReport | null>(null);
 
   if (!intern) {
     return (
@@ -265,8 +267,8 @@ function InternDossierPage() {
                       <CheckCircle2 className="size-3.5" /> Valider
                     </MenuItem>
                   )}
-                  <MenuItem onSelect={() => toast.success("Téléchargement du rapport", { description: report.period })}>
-                    <Download className="size-3.5" /> Télécharger
+                  <MenuItem onSelect={() => setReading(report)}>
+                    <FileText className="size-3.5" /> Lire le rapport
                   </MenuItem>
                   {report.status === "soumis" && (
                     <MenuItem
@@ -338,13 +340,9 @@ function InternDossierPage() {
               </Button>
             )}
             {intern.certificate !== "non_generee" && (
-              <button
-                type="button"
-                onClick={() => toast.success("Téléchargement de l'attestation", { description: `Attestation_${intern.name}.pdf` })}
-                className={SECTION_LINK}
-              >
-                <Download className="size-3.5" /> Télécharger
-              </button>
+              <Link to="/attestation/$internId" params={{ internId: intern.id }} className={SECTION_LINK}>
+                <Download className="size-3.5" /> Ouvrir l'attestation
+              </Link>
             )}
             {intern.certificate === "generee" && (
               <Button
@@ -365,6 +363,38 @@ function InternDossierPage() {
           </p>
         )}
       </Reveal>
+
+      <Modal
+        open={Boolean(reading)}
+        onClose={() => setReading(null)}
+        icon={FileText}
+        title={reading ? `Rapport « ${reading.period} »` : "Rapport"}
+        description={reading ? `Déposé par ${intern.name} ${relativeDay(reading.date)}` : undefined}
+        footer={
+          <Button variant="outline" onClick={() => setReading(null)}>
+            Fermer
+          </Button>
+        }
+      >
+        {reading && (reading.activites || reading.difficultes || reading.competences) ? (
+          <dl className="space-y-4 text-[13px] leading-relaxed">
+            {[
+              { label: "Activités réalisées", value: reading.activites },
+              { label: "Difficultés rencontrées", value: reading.difficultes },
+              { label: "Compétences acquises", value: reading.competences },
+            ]
+              .filter((item) => item.value)
+              .map((item) => (
+                <div key={item.label}>
+                  <dt className="text-xs font-medium text-muted-foreground">{item.label}</dt>
+                  <dd className="mt-1 whitespace-pre-line text-pretty">{item.value}</dd>
+                </div>
+              ))}
+          </dl>
+        ) : (
+          <p className="text-[13px] text-muted-foreground">Ce rapport ne contient pas de texte (rapport de démonstration).</p>
+        )}
+      </Modal>
     </div>
   );
 }
@@ -480,8 +510,8 @@ function ManualAdjust({ intern, run }: { intern: Intern; run?: ReturnType<typeof
 
   const clear = (key: string) => setErrors((current) => ({ ...current, [key]: "", form: "" }));
 
-  /** Revenir aux valeurs enregistrées et refermer. */
-  const cancel = () => {
+  /** Repartir des valeurs enregistrées (le dossier a pu changer depuis : affectation validée, encadreur…). */
+  const reset = () => {
     setServiceId(intern.serviceId ?? "");
     setSupervisor(intern.supervisorId ?? "");
     setStart(intern.start);
@@ -490,7 +520,15 @@ function ManualAdjust({ intern, run }: { intern: Intern; run?: ReturnType<typeof
     setObjectives(intern.objectives);
     setReason("");
     setErrors({});
+  };
+  /** Revenir aux valeurs enregistrées et refermer. */
+  const cancel = () => {
+    reset();
     setOpen(false);
+  };
+  const openForm = () => {
+    reset();
+    setOpen(true);
   };
 
   const save = () => {
@@ -575,7 +613,7 @@ function ManualAdjust({ intern, run }: { intern: Intern; run?: ReturnType<typeof
         </div>
         <button
           type="button"
-          onClick={() => (open ? cancel() : setOpen(true))}
+          onClick={() => (open ? cancel() : openForm())}
           aria-expanded={open}
           aria-controls={panelId}
           className={cn(SECTION_LINK, "self-start sm:self-center")}
