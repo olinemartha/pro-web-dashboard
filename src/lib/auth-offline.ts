@@ -7,6 +7,7 @@ import type { AuthState, Role, Session } from "./auth";
 import { useAdminStore } from "./admin-store";
 import { OFFLINE_ACCOUNTS, forgetOfflineStudent, offlinePasswordKey, saveOfflineStudent } from "./offline";
 import { useStore } from "./store";
+import { READ_ONLY_MESSAGE, useViewAs } from "./view-as";
 
 type LocalAccount = { email: string; passwordHash: string; role: Role; name: string; onboarded: boolean };
 
@@ -110,9 +111,13 @@ export const createOfflineAuth: StateCreator<AuthState> = (set, get) => {
       return { ok: true };
     },
 
-    signOut: async () => open(null),
+    signOut: async () => {
+      useViewAs.getState().close();
+      open(null);
+    },
 
     deactivate: async () => {
+      if (useViewAs.getState().target) return { ok: false, error: READ_ONLY_MESSAGE };
       open(null);
       return { ok: true };
     },
@@ -120,6 +125,7 @@ export const createOfflineAuth: StateCreator<AuthState> = (set, get) => {
     deleteAccount: async () => {
       const session = get().session;
       if (!session) return { ok: false, error: "Session expirée : reconnectez-vous." };
+      if (useViewAs.getState().target) return { ok: false, error: READ_ONLY_MESSAGE };
       if (knownAccount(session.email)) return { ok: false, error: "Hors ligne, ce compte ne peut pas être supprimé : faites-le depuis la version en ligne." };
       save(ACCOUNTS_KEY, accounts().filter((entry) => entry.email !== session.email));
       forgetOfflineStudent(session.email);
@@ -134,6 +140,7 @@ export const createOfflineAuth: StateCreator<AuthState> = (set, get) => {
     changePassword: async (current, next) => {
       const session = get().session;
       if (!session) return { ok: false, error: "Session expirée : reconnectez-vous." };
+      if (useViewAs.getState().target) return { ok: false, error: READ_ONLY_MESSAGE, field: "current" };
       if (knownAccount(session.email)) {
         const stored = load<string | null>(offlinePasswordKey(session.email), null);
         if (!stored || (await hash(current)) !== stored) return { ok: false, error: "Mot de passe actuel incorrect.", field: "current" };

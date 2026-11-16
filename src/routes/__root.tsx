@@ -147,7 +147,7 @@ function useRemoteData(pathname: string) {
     if (!session || !key) return;
     // Hors ligne : les données viennent de cet ordinateur, rien n'est demandé au serveur.
     if (OFFLINE) {
-      const stop = startOffline(session.email, session.role);
+      const stop = startOffline(session.email, session.role, !!session.viewing);
       setLoaded(key);
       return stop;
     }

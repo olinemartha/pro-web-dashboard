@@ -7,6 +7,7 @@ import { useAdminStore } from "./admin-store";
 import type { CandidateStatus } from "./company-data";
 import { useCompanyStore } from "./company-store";
 import { DAY_MS, localIsoDate } from "./dates";
+import { OFFLINE, OFFLINE_COMPANY_ID } from "./offline";
 
 export type AdminStudent = {
   /** Compte de l'étudiant (pour ouvrir son espace en consultation). */
@@ -104,7 +105,8 @@ export function useAdminData() {
         })
       : [
           {
-            id: undefined as string | undefined,
+            // Hors ligne, l'entreprise de l'ordinateur (FINCA) peut aussi être consultée.
+            id: OFFLINE ? OFFLINE_COMPANY_ID : (undefined as string | undefined),
             email: profile.email,
             name: profile.name,
             initials: profile.initials,
