@@ -1,8 +1,9 @@
 /**
  * Niveaux d'études en RDC. Deux systèmes coexistent :
  * - l'ancien système : graduat (G1 à G3), puis licence en deux ans (L1, L2) ;
- * - le système LMD : licence en trois ans (L1 à L3), puis master (M1, M2).
+ * - le système LMD : licence en trois ans (L1 à L3).
  * « L1 » ou « L2 » ne veut donc rien dire sans le système : il est toujours précisé.
+ * Le master (M1, M2) est commun aux deux systèmes.
  */
 export const LEVEL_GROUPS = [
   {
@@ -11,7 +12,11 @@ export const LEVEL_GROUPS = [
   },
   {
     label: "Système LMD",
-    levels: ["Licence LMD (L1)", "Licence LMD (L2)", "Licence LMD (L3)", "Master (M1)", "Master (M2)"],
+    levels: ["Licence LMD (L1)", "Licence LMD (L2)", "Licence LMD (L3)"],
+  },
+  {
+    label: "Master (les deux systèmes)",
+    levels: ["Master (M1)", "Master (M2)"],
   },
 ];
 
