@@ -12,15 +12,19 @@ import { useStore } from "./store";
 
 export const OFFLINE = import.meta.env.MODE === "offline";
 
-/** Mot de passe commun des comptes de démonstration hors ligne (n'existe que sur cet ordinateur). */
-export const OFFLINE_PASSWORD = "StageManager2026";
-
-/** Comptes prêts à l'emploi : ils ouvrent les données d'exemple (FINCA RDC, Grâce Mukendi). */
+/**
+ * Comptes reconnus hors ligne : les mêmes adresses que dans la version en ligne.
+ * Rien n'est affiché sur la page de connexion. L'adresse de l'administratrice vient de
+ * `.env.offline.local` (fichier local, jamais envoyé sur GitHub).
+ * Le mot de passe est choisi à la première connexion sur cet ordinateur (seule son empreinte est gardée).
+ */
 export const OFFLINE_ACCOUNTS: { email: string; role: Role; name: string }[] = [
-  { email: "admin@stagemanager.local", role: "admin", name: "Administratrice StageManager" },
-  { email: "finca@stagemanager.local", role: "entreprise", name: "FINCA RDC" },
-  { email: "etudiant@stagemanager.local", role: "etudiant", name: "Grâce Mukendi" },
+  { email: (import.meta.env.VITE_OFFLINE_ADMIN_EMAIL ?? "admin@stagemanager.local").trim().toLowerCase(), role: "admin", name: "Administratrice StageManager" },
+  { email: "sm1@example.com", role: "entreprise", name: "FINCA RDC" },
 ];
+
+/** Clé de l'empreinte du mot de passe d'un compte reconnu. */
+export const offlinePasswordKey = (email: string) => `sm.offline.password.${email}`;
 
 const KEY = {
   company: "sm.offline.company",

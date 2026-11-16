@@ -5,7 +5,7 @@
 import type { StateCreator } from "zustand";
 import type { AuthState, Role, Session } from "./auth";
 import { useAdminStore } from "./admin-store";
-import { OFFLINE_ACCOUNTS, OFFLINE_PASSWORD, forgetOfflineStudent, saveOfflineStudent } from "./offline";
+import { OFFLINE_ACCOUNTS, forgetOfflineStudent, offlinePasswordKey, saveOfflineStudent } from "./offline";
 import { useStore } from "./store";
 
 type LocalAccount = { email: string; passwordHash: string; role: Role; name: string; onboarded: boolean };
@@ -37,7 +37,7 @@ async function hash(value: string) {
 }
 
 const normalize = (email: string) => email.trim().toLowerCase();
-const demoAccount = (email: string) => OFFLINE_ACCOUNTS.find((account) => account.email === email);
+const knownAccount = (email: string) => OFFLINE_ACCOUNTS.find((account) => account.email === email);
 const accounts = () => load<LocalAccount[]>(ACCOUNTS_KEY, []);
 const sessionFor = (email: string, role: Role, name: string, onboarded: boolean): Session => ({
   userId: email,
@@ -67,10 +67,16 @@ export const createOfflineAuth: StateCreator<AuthState> = (set, get) => {
       const key = normalize(email);
       if (useAdminStore.getState().suspended.includes(key))
         return { ok: false, error: "Ce compte est suspendu. Contactez l'administrateur de la plateforme.", field: "email" };
-      const demo = demoAccount(key);
-      if (demo) {
-        if (password !== OFFLINE_PASSWORD) return { ok: false, error: "E-mail ou mot de passe incorrect.", field: "password" };
-        open(sessionFor(demo.email, demo.role, demo.name, true));
+      // Comptes de la version en ligne (administratrice, FINCA) : leur mot de passe est enregistré
+      // à la première connexion sur cet ordinateur, puis exigé à chaque fois.
+      const known = knownAccount(key);
+      if (known) {
+        const stored = load<string | null>(offlinePasswordKey(key), null);
+        if (!stored) {
+          if (password.length < 8) return { ok: false, error: "E-mail ou mot de passe incorrect.", field: "password" };
+          save(offlinePasswordKey(key), await hash(password));
+        } else if ((await hash(password)) !== stored) return { ok: false, error: "E-mail ou mot de passe incorrect.", field: "password" };
+        open(sessionFor(known.email, known.role, known.name, true));
         return { ok: true };
       }
       const account = accounts().find((entry) => entry.email === key);
@@ -83,9 +89,9 @@ export const createOfflineAuth: StateCreator<AuthState> = (set, get) => {
     signUp: async ({ role, email, password }) => {
       // Hors ligne, l'espace entreprise est celui de FINCA RDC (compte de démonstration).
       if (role === "entreprise")
-        return { ok: false, error: "Hors ligne, l'espace entreprise est celui de FINCA RDC : connectez-vous avec son compte de démonstration.", field: "email" };
+        return { ok: false, error: "Hors ligne, l'espace entreprise est celui de FINCA RDC : connectez-vous avec son compte.", field: "email" };
       const key = normalize(email);
-      if (demoAccount(key) || accounts().some((entry) => entry.email === key))
+      if (knownAccount(key) || accounts().some((entry) => entry.email === key))
         return { ok: false, error: "Un compte existe déjà avec cette adresse e-mail. Une personne ne peut avoir qu'un seul compte : connectez-vous.", field: "email" };
       save(ACCOUNTS_KEY, [...accounts(), { email: key, passwordHash: await hash(password), role, name: "", onboarded: false }]);
       open(sessionFor(key, role, "", false));
@@ -114,7 +120,7 @@ export const createOfflineAuth: StateCreator<AuthState> = (set, get) => {
     deleteAccount: async () => {
       const session = get().session;
       if (!session) return { ok: false, error: "Session expirée : reconnectez-vous." };
-      if (demoAccount(session.email)) return { ok: false, error: "Le compte de démonstration ne peut pas être supprimé." };
+      if (knownAccount(session.email)) return { ok: false, error: "Hors ligne, ce compte ne peut pas être supprimé : faites-le depuis la version en ligne." };
       save(ACCOUNTS_KEY, accounts().filter((entry) => entry.email !== session.email));
       forgetOfflineStudent(session.email);
       open(null);
@@ -128,7 +134,12 @@ export const createOfflineAuth: StateCreator<AuthState> = (set, get) => {
     changePassword: async (current, next) => {
       const session = get().session;
       if (!session) return { ok: false, error: "Session expirée : reconnectez-vous." };
-      if (demoAccount(session.email)) return { ok: false, error: "Compte de démonstration : son mot de passe ne change pas.", field: "current" };
+      if (knownAccount(session.email)) {
+        const stored = load<string | null>(offlinePasswordKey(session.email), null);
+        if (!stored || (await hash(current)) !== stored) return { ok: false, error: "Mot de passe actuel incorrect.", field: "current" };
+        save(offlinePasswordKey(session.email), await hash(next));
+        return { ok: true };
+      }
       const list = accounts();
       const account = list.find((entry) => entry.email === session.email);
       if (!account || (await hash(current)) !== account.passwordHash) return { ok: false, error: "Mot de passe actuel incorrect.", field: "current" };
