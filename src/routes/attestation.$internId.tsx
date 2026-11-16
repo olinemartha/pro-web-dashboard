@@ -8,6 +8,7 @@ import { useAuth } from "@/lib/auth";
 import { useCompanyStore } from "@/lib/company-store";
 import { fmtDate } from "@/lib/dates";
 import { supabase } from "@/lib/supabase";
+import { OFFLINE } from "@/lib/offline";
 import { Award } from "lucide-react";
 
 export const Route = createFileRoute("/attestation/$internId")({
@@ -27,10 +28,15 @@ function CertificatePage() {
   const role = useAuth((state) => state.session?.role);
   const intern = useCompanyStore((state) => state.interns.find((entry) => entry.id === internId));
   const offer = useCompanyStore((state) => state.offers.find((entry) => entry.id === intern?.offerId));
-  const [issuer, setIssuer] = useState<Issuer | null>(null);
+  const [remoteIssuer, setIssuer] = useState<Issuer | null>(null);
+  const profile = useCompanyStore((state) => state.profile);
+  // Hors ligne, l'entreprise est celle de l'espace gardé sur l'ordinateur.
+  const issuer: Issuer | null = OFFLINE
+    ? { name: profile.name, address: profile.address, city: profile.city, representative_name: profile.representativeName, representative_role: profile.representativeRole }
+    : remoteIssuer;
 
   useEffect(() => {
-    if (!offer?.companyId) return;
+    if (OFFLINE || !offer?.companyId) return;
     void supabase
       .from("companies")
       .select("name, address, city, representative_name, representative_role")

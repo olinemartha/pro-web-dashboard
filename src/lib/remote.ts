@@ -735,6 +735,16 @@ export type ReportInput = { period: string; activites: string; difficultes: stri
  */
 export async function submitInternReport(internId: string, input: ReportInput, replaces?: string): Promise<string | null> {
   if (useViewAs.getState().target) return READ_ONLY_MESSAGE;
+  // Hors ligne : le rapport est ajouté au dossier gardé sur l'ordinateur.
+  if (!remoteState.active) {
+    const report = { ...input, id: replaces ?? crypto.randomUUID(), period: input.period.trim(), date: new Date().toISOString().slice(0, 10), status: "soumis" as const };
+    useCompanyStore.setState((state) => ({
+      interns: state.interns.map((intern) =>
+        intern.id !== internId ? intern : { ...intern, reports: replaces ? intern.reports.map((r) => (r.id === replaces ? report : r)) : [...intern.reports, report] }
+      ),
+    }));
+    return null;
+  }
   const { data, error } = await supabase.rpc("submit_report", {
     intern: internId,
     period: input.period,

@@ -10,10 +10,15 @@ import type { Database } from "./database.types";
 const url = (import.meta.env.VITE_SUPABASE_URL as string | undefined)?.trim();
 const key = ((import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? import.meta.env.VITE_SUPABASE_ANON_KEY) as string | undefined)?.trim();
 
-if (!url || !key) {
+// Hors ligne (npm run hors-ligne), le client existe mais n'est jamais appelé : aucune clé n'est exigée.
+const offline = import.meta.env.MODE === "offline";
+
+if (!offline && (!url || !key)) {
   throw new Error("Configuration Supabase manquante : copiez .env.example en .env.local et renseignez le projet.");
 }
 
-export const supabase = createClient<Database>(url, key, {
-  auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
+export const supabase = createClient<Database>(url || "http://localhost", key || "hors-ligne", {
+  auth: offline
+    ? { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
+    : { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
 });

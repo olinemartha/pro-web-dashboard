@@ -5,7 +5,9 @@
  * de l'inscription sont dans la table `profiles`, créée par le serveur à l'inscription.
  * Le rôle administrateur n'est jamais accordé par l'inscription publique.
  */
-import { create } from "zustand";
+import { create, type StateCreator } from "zustand";
+import { createOfflineAuth } from "./auth-offline";
+import { OFFLINE } from "./offline";
 import type { Profile } from "./rules";
 import type { CompanyProfile } from "./company-data";
 import { supabase } from "./supabase";
@@ -60,11 +62,12 @@ export const COMPANY_TAKEN = "Cette entreprise a déjà un compte sur StageManag
 
 /** Donnée d'identité déjà prise par un autre compte ? (téléphone d'étudiant, nom d'entreprise) */
 export async function identityTaken(kind: "telephone" | "entreprise", value: string): Promise<boolean> {
+  if (OFFLINE) return false;
   const { data, error } = await supabase.rpc("identity_taken", { kind, value });
   return !error && data === true;
 }
 
-type AuthState = {
+export type AuthState = {
   session: Session | null;
   /** Vrai une fois la session Supabase lue (évite une redirection prématurée). */
   ready: boolean;
@@ -134,7 +137,7 @@ async function loadProfile(userId: string, email: string): Promise<Session | "su
   };
 }
 
-export const useAuth = create<AuthState>()((set, get) => ({
+const onlineAuth: StateCreator<AuthState> = (set, get) => ({
   session: null,
   ready: false,
 
@@ -302,7 +305,10 @@ export const useAuth = create<AuthState>()((set, get) => ({
     if (error) return { ok: false, error: translate(error.message).error, field: "next" };
     return { ok: true };
   },
-}));
+});
+
+/** En ligne : Supabase. Hors ligne (npm run hors-ligne) : comptes et données gardés sur cet ordinateur. */
+export const useAuth = create<AuthState>()(OFFLINE ? createOfflineAuth : onlineAuth);
 
 /** Espace d'une adresse : /admin, /entreprise, sinon l'espace étudiant. */
 export function roleForPath(pathname: string): Role {

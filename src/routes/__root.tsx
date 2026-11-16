@@ -17,6 +17,7 @@ import { AdminShell } from "../components/admin/admin-shell";
 import { RESET_PATH, ROLE_HOME, isPublicPath, isSharedPath, roleForPath, useAuth, type Session } from "../lib/auth";
 import { startRemote } from "../lib/remote";
 import { useViewAs } from "../lib/view-as";
+import { OFFLINE, startOffline } from "../lib/offline";
 import { Toaster } from "../components/ui/sonner";
 import { queryClient } from "../lib/query-client";
 
@@ -144,6 +145,12 @@ function useRemoteData(pathname: string) {
   const key = session?.onboarded ? `${session.userId}:${session.role}:${session.companyId ?? ""}:${session.viewing ? "lecture" : ""}` : null;
   useEffect(() => {
     if (!session || !key) return;
+    // Hors ligne : les données viennent de cet ordinateur, rien n'est demandé au serveur.
+    if (OFFLINE) {
+      const stop = startOffline(session.email, session.role);
+      setLoaded(key);
+      return stop;
+    }
     return startRemote(session, () => setLoaded(key));
     // La session ne change de sens que si la clé change (rôle, entreprise, compte, consultation).
     // eslint-disable-next-line react-hooks/exhaustive-deps

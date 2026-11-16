@@ -1,12 +1,13 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, WifiOff } from "lucide-react";
 import { AuthBrand, AuthPreview, PasswordInput } from "@/components/auth/auth-ui";
 import { ARROW_NUDGE, Field, inputClass } from "@/components/company/ui";
 import { Button } from "@/components/ui/button";
 import { Reveal } from "@/components/ui/motion";
-import { ROLE_HOME, useAuth } from "@/lib/auth";
+import { ROLE_HOME, ROLE_LABEL, useAuth } from "@/lib/auth";
+import { OFFLINE, OFFLINE_ACCOUNTS, OFFLINE_PASSWORD } from "@/lib/offline";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/connexion")({
@@ -87,6 +88,38 @@ function LoginPage() {
             <p className="mt-2 text-pretty text-sm leading-relaxed text-muted-foreground">
               Connectez-vous avec votre adresse e-mail et le mot de passe créé à l'inscription sur StageManager. Votre espace s'ouvre selon votre profil.
             </p>
+
+            {OFFLINE && (
+              <section aria-labelledby="hors-ligne-titre" className="mt-6 rounded-xl border border-primary/20 bg-primary-soft px-4 py-3.5">
+                <h2 id="hors-ligne-titre" className="flex items-center gap-2 text-[13px] font-semibold text-primary">
+                  <WifiOff className="size-4" /> Mode hors ligne
+                </h2>
+                <p className="mt-1 text-pretty text-xs leading-relaxed text-muted-foreground">
+                  Les données restent sur cet ordinateur. Choisissez un compte de démonstration (mot de passe : {OFFLINE_PASSWORD}).
+                </p>
+                <ul className="mt-2.5 grid gap-1.5">
+                  {OFFLINE_ACCOUNTS.map((account) => (
+                    <li key={account.email}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEmail(account.email);
+                          setPassword(OFFLINE_PASSWORD);
+                          setErrors({});
+                        }}
+                        aria-label={`Remplir le compte de démonstration ${account.name}`}
+                        className="press flex w-full flex-col items-start rounded-lg bg-card px-3 py-2 text-left transition-colors hover:bg-card/70"
+                      >
+                        <span className="text-[13px] font-medium">{account.name}</span>
+                        <span className="w-full truncate text-xs text-muted-foreground">
+                          {ROLE_LABEL[account.role]} · {account.email}
+                        </span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
 
             <form className="mt-8 space-y-4" onSubmit={submit} noValidate>
               <Field label="E-mail" htmlFor="login-email" error={errors.email}>
