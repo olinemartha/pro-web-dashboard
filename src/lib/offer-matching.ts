@@ -7,6 +7,7 @@
 import type { ExpertCriterion, ExpertRule } from "./company-data";
 import { daysFromToday, fmtDate } from "./dates";
 import type { Offer } from "./mock-data";
+import { studyYears } from "./levels";
 import type { Profile } from "./rules";
 
 export const OFFER_MATCHING_VERSION = "regles-offres-1.0";
@@ -53,13 +54,8 @@ export const VERDICT_LABELS: Record<OfferVerdict, string> = {
   close: "Candidatures closes",
 };
 
-const LEVELS = ["G1", "G2", "G3", "L1", "L2", "L3", "M1", "M2"];
-
-/** « Licence (L3) » → rang 5 ; inconnu → -1. */
-function levelRank(value: string) {
-  const code = value.match(/\b([GLM][1-3])\b/)?.[1];
-  return code ? LEVELS.indexOf(code) : -1;
-}
+/** Niveau comparable entre ancien système et LMD (années d'études) ; inconnu → -1. */
+const levelRank = studyYears;
 
 function normalize(value: string) {
   return value.toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "");

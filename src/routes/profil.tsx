@@ -13,6 +13,7 @@ import { useStore } from "@/lib/store";
 import { useAuth } from "@/lib/auth";
 import { downloadCv, uploadCv } from "@/lib/files";
 import { remoteState } from "@/lib/remote-flag";
+import { LevelOptions } from "@/components/app/level-options";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/profil")({
@@ -25,7 +26,6 @@ export const Route = createFileRoute("/profil")({
   component: ProfilePage,
 });
 
-const LEVELS = ["Graduat (G1)", "Graduat (G2)", "Graduat (G3)", "Licence (L1)", "Licence (L2)", "Licence (L3)", "Master (M1)", "Master (M2)"];
 
 const SKILL_SUGGESTIONS = ["Excel", "Analyse financière", "Comptabilité", "Rédaction", "SQL", "Python", "Communication", "Organisation", "Canva", "React"];
 
@@ -219,11 +219,7 @@ function ProfilePage() {
               </Field>
               <Field label="Niveau d'études" htmlFor="p-niveau" required error={errors.niveau}>
                 <Select id="p-niveau" value={draft.niveau} placeholder="Choisir un niveau" onChange={(event) => set({ niveau: event.target.value })}>
-                  {LEVELS.map((level) => (
-                    <option key={level} value={level}>
-                      {level}
-                    </option>
-                  ))}
+                  <LevelOptions current={draft.niveau} />
                 </Select>
               </Field>
             </FormSection>

@@ -11,6 +11,7 @@
 //
 // Le système recommande ; l'entreprise décide.
 
+import { studyYears } from "./levels";
 import type {
   Candidate,
   CompanyOffer,
@@ -59,11 +60,8 @@ export const BASE_FACTS: FactDefinition[] = [
 
 export const LEVELS = ["G1", "G2", "G3", "L1", "L2", "L3", "M1", "M2"];
 
-/** « Licence (L3) » → 5 ; inconnu → -1. */
-export function levelRank(value: string) {
-  const match = value.toUpperCase().match(/\b([GLM])\s*([1-3])\b/);
-  return match ? LEVELS.indexOf(`${match[1]}${match[2]}`) : -1;
-}
+/** Niveau comparable entre ancien système et LMD (années d'études) ; inconnu → -1. */
+export const levelRank = studyYears;
 
 export const OPS_BY_TYPE: Record<FactType, ConditionOp[]> = {
   booleen: ["vrai", "faux"],

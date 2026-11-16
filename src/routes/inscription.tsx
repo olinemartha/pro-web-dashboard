@@ -8,6 +8,7 @@ import { ARROW_NUDGE, Field, SECTION_LINK, Select, inputClass } from "@/componen
 import { Button } from "@/components/ui/button";
 import { Reveal } from "@/components/ui/motion";
 import { ACCOUNT_EXISTS, COMPANY_TAKEN, PHONE_TAKEN, ROLE_HOME, identityTaken, useAuth, type HostingProfile } from "@/lib/auth";
+import { LevelOptions } from "@/components/app/level-options";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/inscription")({
@@ -28,7 +29,6 @@ const STEPS: Record<Role | "aucun", string[]> = {
   entreprise: ["Début", "Compte", "Entreprise", "Responsable", "Stagiaires", "Affectation"],
 };
 
-const LEVELS = ["Graduat (G1)", "Graduat (G2)", "Graduat (G3)", "Licence (L1)", "Licence (L2)", "Licence (L3)", "Master (M1)", "Master (M2)"];
 const SKILL_SUGGESTIONS = ["Excel", "Analyse financière", "Comptabilité", "Rédaction", "SQL", "Python", "Communication", "Organisation", "Canva", "React"];
 
 /* Questions reprises du questionnaire d'enquête mené auprès de FINCA RDC. */
@@ -507,11 +507,7 @@ function SignUpPage() {
                 </Field>
                 <Field label="Niveau d'études" htmlFor="st-niveau" required error={errors["st-niveau"]} className="sm:col-span-2">
                   <Select id="st-niveau" placeholder="Choisir un niveau" value={student.niveau} onChange={(e) => { setStudent({ ...student, niveau: e.target.value }); clear("st-niveau"); }}>
-                    {LEVELS.map((level) => (
-                      <option key={level} value={level}>
-                        {level}
-                      </option>
-                    ))}
+                    <LevelOptions current={student.niveau} />
                   </Select>
                 </Field>
               </div>
