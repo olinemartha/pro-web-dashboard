@@ -3,15 +3,18 @@
  * - l'ancien système : graduat (G1 à G3), puis licence en deux ans (L1, L2) ;
  * - le système LMD : licence en trois ans (L1 à L3), puis master (M1, M2).
  * « L1 » ou « L2 » ne veut donc rien dire sans le système : il est toujours précisé.
+ *
+ * Seules les années où l'on peut faire un stage sont proposées à l'étudiant :
+ * G2, G3 et L2 (ancien système), L3, M1 et M2 (nouveau système).
  */
 export const LEVEL_GROUPS = [
   {
     label: "Ancien système",
-    levels: ["Graduat (G1)", "Graduat (G2)", "Graduat (G3)", "Licence ancien système (L1)", "Licence ancien système (L2)"],
+    levels: ["Graduat (G2)", "Graduat (G3)", "Licence ancien système (L2)"],
   },
   {
-    label: "Système LMD",
-    levels: ["Licence LMD (L1)", "Licence LMD (L2)", "Licence LMD (L3)", "Master (M1)", "Master (M2)"],
+    label: "Nouveau système (LMD)",
+    levels: ["Licence LMD (L3)", "Master (M1)", "Master (M2)"],
   },
 ];
 
