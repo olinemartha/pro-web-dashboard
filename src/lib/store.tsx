@@ -154,7 +154,7 @@ export const useStore = create<AppState>((set, get) => ({
 /* ------------------------------------------------------------------ */
 
 /** Statut côté entreprise → statut vu par l'étudiant. */
-const FROM_COMPANY: Record<CandidateStatus, AppStatus> = {
+export const FROM_COMPANY: Record<CandidateStatus, AppStatus> = {
   en_attente: "envoyee",
   examen: "examen",
   entretien: "entretien",

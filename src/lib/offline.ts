@@ -9,7 +9,8 @@ import { toast } from "sonner";
 import type { Role } from "./auth";
 import { useAdminStore, type AdminUser } from "./admin-store";
 import { useCompanyStore } from "./company-store";
-import { useStore } from "./store";
+import { profileCompletion, type Application, type Profile } from "./rules";
+import { FROM_COMPANY, useStore } from "./store";
 import { READ_ONLY_MESSAGE } from "./view-as";
 
 export const OFFLINE = import.meta.env.MODE === "offline";
@@ -62,6 +63,46 @@ const STUDENT_DEMO = dataOf(useStore.getState());
 /** Enregistre tout de suite le dossier de l'étudiant connecté (fin d'inscription hors ligne). */
 export function saveOfflineStudent(email: string) {
   write(KEY.student(email), dataOf(useStore.getState()));
+}
+
+/**
+ * Dossier d'un étudiant sans compte sur cet ordinateur (candidats d'exemple), reconstitué à partir
+ * de ses candidatures chez FINCA : ce que l'administratrice voit en ouvrant son espace.
+ */
+function dossierFromCandidates(email: string): object | null {
+  const demo = STUDENT_DEMO as { profile?: Profile };
+  if (demo.profile?.email === email) return STUDENT_DEMO;
+  const { candidates, interviews, interns } = useCompanyStore.getState();
+  const own = candidates.filter((candidate) => candidate.email === email);
+  const first = own[0];
+  if (!first) return null;
+  const [prenom = "", ...rest] = first.name.split(/s+/);
+  const profile: Profile = {
+    nom: rest.join(" "), postnom: "", prenom, adresse: "", email, telephone: first.phone, photo: first.photo ?? null,
+    universite: first.universite, faculte: "", filiere: first.filiere, niveau: first.niveau, competences: first.competences,
+    experiences: "", projets: "", infos: "", cv: first.cvName ? { name: first.cvName, size: 0, date: first.appliedAt } : null, visible: true,
+  };
+  const applications: Application[] = own.map((candidate) => {
+    const interview = interviews.find((entry) => entry.candidateId === candidate.id && entry.status === "programme");
+    const confirmed = interns.some((intern) => intern.candidateId === candidate.id);
+    return {
+      id: candidate.studentAppId ?? `app-${candidate.id}`,
+      offerId: candidate.offerId,
+      date: candidate.appliedAt,
+      status: confirmed ? "confirmee" : FROM_COMPANY[candidate.status],
+      candidateId: candidate.id,
+      ...(interview ? { interview: { date: interview.date, time: interview.time, place: interview.location } } : {}),
+    };
+  });
+  return {
+    profile,
+    applications,
+    saved: [],
+    notifications: [],
+    activity: [],
+    completion: profileCompletion(profile),
+    confirmed: applications.some((application) => application.status === "confirmee"),
+  };
 }
 
 type StudentDossier = { profile?: { filiere?: string; niveau?: string; universite?: string } };
@@ -134,7 +175,8 @@ export function startOffline(email: string, role: Role, viewing = false): () => 
   if (admin) useAdminStore.setState(admin);
   if (role === "etudiant") {
     // Son propre dossier ; à défaut, celui de l'étudiante de démonstration (jamais celui d'un autre compte).
-    useStore.setState(read<object>(KEY.student(email)) ?? STUDENT_DEMO);
+    // En consultation, un étudiant sans compte ici est vu à travers ses candidatures.
+    useStore.setState(read<object>(KEY.student(email)) ?? (viewing ? dossierFromCandidates(email) : null) ?? STUDENT_DEMO);
   }
   if (viewing) return offlineReadOnly();
   if (role === "admin") useAdminStore.setState({ users: offlineStudents() });

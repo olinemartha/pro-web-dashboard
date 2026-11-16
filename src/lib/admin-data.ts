@@ -50,7 +50,8 @@ export function useAdminData() {
         if (last > current.lastActivity) current.lastActivity = last;
       } else {
         byEmail.set(c.email, {
-          id: users.find((u) => u.email === c.email)?.id,
+          // Hors ligne, chaque étudiant connu s'ouvre par son adresse (dossier tiré de ses candidatures).
+          id: OFFLINE ? c.email : users.find((u) => u.email === c.email)?.id,
           email: c.email,
           name: c.name,
           initials: c.initials,
