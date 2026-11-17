@@ -312,6 +312,8 @@ export interface CompanyProfile {
 export const demoCompanyProfile: CompanyProfile = {
   name: "FINCA RDC",
   initials: "FR",
+  /** Logo officiel de FINCA RDC (fichier public/finca-logo.svg). */
+  logo: "/finca-logo.svg",
   sector: "Microfinance",
   description: "Institution de microfinance engagée pour l'inclusion financière en République Démocratique du Congo.",
   address: "12, avenue de la Justice",

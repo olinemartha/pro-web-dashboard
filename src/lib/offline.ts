@@ -8,6 +8,7 @@
 import { toast } from "sonner";
 import type { Role } from "./auth";
 import { useAdminStore, type AdminUser } from "./admin-store";
+import { demoCompanyProfile, type CompanyProfile } from "./company-data";
 import { useCompanyStore } from "./company-store";
 import { profileCompletion, type Application, type Profile } from "./rules";
 import { FROM_COMPANY, useStore } from "./store";
@@ -169,8 +170,12 @@ function offlineReadOnly(): () => void {
  * sauf en consultation par l'administratrice (lecture seule).
  */
 export function startOffline(email: string, role: Role, viewing = false): () => void {
-  const company = read<object>(KEY.company);
-  if (company) useCompanyStore.setState(company);
+  const company = read<{ profile?: CompanyProfile }>(KEY.company);
+  if (company) {
+    // Un espace enregistré avant l'ajout du logo reçoit celui de FINCA.
+    if (company.profile && !company.profile.logo) company.profile.logo = demoCompanyProfile.logo;
+    useCompanyStore.setState(company);
+  }
   const admin = read<object>(KEY.admin);
   if (admin) useAdminStore.setState(admin);
   if (role === "etudiant") {
